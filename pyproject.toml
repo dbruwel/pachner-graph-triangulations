@@ -1,0 +1,14 @@
+[project]
+name = "pachner_graph_triangulations"
+version = "0.1.0"
+description = "Honours project: Navigating the Pachner Graph: Algorithms for Searching and Sampling Triangulations"
+authors = [
+    { name = "Daniel Bruwel", email = "d.bruwel@maths.usyd.edu.au" }
+]
+requires-python = ">=3.11"
+license = { file = "LICENSE" }
+dependencies = []
+
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
