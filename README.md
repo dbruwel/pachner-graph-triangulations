@@ -2,6 +2,16 @@
 
 This repository contains a script that is an almost identical copy of a file from the repository `https://github.com/jspreer/MCMCForTriangulations`. Access to this script has been granted by its owner - Jonathan Spreer. The script is included at `src/pachner_graph_triangulations/functions3d.py`.
 
+## Overview
+This project was completed in partial fulfillment of the requirements for the degree of B.Sc. (Honours) under the supervision of Jonathan Spreer.
+
+### Project
+The aim of this project is to investigate triangulations of manifolds, with a focus on sampling triangulations and optimizing objective functions defined over them. The study primarily considers single-vertex 3-spheres. Methodologies explored include Markov Chain Monte Carlo (MCMC), simulated annealing, and direct ascent, alongside machine learning techniques employing autoregressive transformers and reinforcement learning.
+
+This repository is not intended as a Python package but serves to showcase the work conducted. However, it is structured so that it can be easily forked and modified for those interested in exploring these techniques in other directions.
+
+The outcomes of this research are documented in a PDF available in this repository under the `thesis` section.
+
 ## Installation
 This project has been written with Sage. Not all of the scripts require Sage, and many can be run in a standard Python environment. However, for working with the triangulations as actual manifold objects, Sage is required. Sage is installable via conda, and requires either Linux or macOS (if you have Windows you will have to use WSL). The installation for Sage is as follows:
 1. Ensure conda is installed.
