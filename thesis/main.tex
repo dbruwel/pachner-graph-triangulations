@@ -82,16 +82,17 @@
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\chapter*{Introduction} 
+\chapter*{Introduction}
 describing the objective and contents of the essay \cite{altmann2025sampling}
 
 % reset the page numbering and change to arabic numbers
 \newpage\setcounter{page}{1}\pagenumbering{arabic}
 
 \chapter{Preliminaries}
+test
 \section{Mathematical Preliminaries}
 \subsection{Manifolds}
-A $n-$\emph{dimensional manifold} or a $n-$\textit{manifold} is a topological generalisation of a surface, they are topological spaces that are ``well behaved'' and locally homeomorphic to $\mathbb{R}^n$. We recall the following basic definitions before precisely defining a manifold. 
+A $n-$\emph{dimensional manifold} or a $n-$\textit{manifold} is a topological generalisation of a surface, they are topological spaces that are ``well behaved'' and locally homeomorphic to $\mathbb{R}^n$. We recall the following basic definitions before precisely defining a manifold.
 
 \begin{Definition}[Second Countable]
     A Topological space $\mathcal{T}$ is \textit{Second Countable} if the topology $\tau_\mathcal{T}$ of $\mathcal{T}$ has a countable base.
@@ -162,13 +163,13 @@ We can easily extend this to define gluings of faces of the same triangulation, 
 \end{Definition}
 
 \subsection{Isomorphism Signatures}
-We say that two PL-triangulations are \textit{combinatorially isomorphic} if they are the same up to relabelling of vertices. Because there is no interesting mathematical information in the labelling, we typically define a canonical labelling. While the exact details of constructing a canonical labelling are specific and can depend on the software choice, the general idea is as follows. 
+We say that two PL-triangulations are \textit{combinatorially isomorphic} if they are the same up to relabelling of vertices. Because there is no interesting mathematical information in the labelling, we typically define a canonical labelling. While the exact details of constructing a canonical labelling are specific and can depend on the software choice, the general idea is as follows.
 \begin{enumerate}
     \item For each facet, calculate some label independent invariant (e.g. the number of unique facets being glued to).
     \item Partition the facets into labelled bins based on this invariant (this labelling is canonical based on the value of the invariant)
     \item For each facet in each bin (containing multiple facets), look at which bins the facets neighbouring (from gluing) facets are in, use this information to construct a new label, if there are facets in the same bin that get a different new label, split the bin in some canonical way and create a new labelling.
-    \item Repeat the above process, constructing a splitting tree. This tree is canonical. This tree is not guaranteed to split the bins into singletons. If it gets ``stuck'', make an arbitrary choice and continue the algorithm until everything falls into a singleton. This is a possible canonical labelling. 
-    \item if an arbitrary choice had to be made (or perhaps multiple), rerun the entire algorithm for each possible choice that could have been made, creating a small list of possible canonical labelling. Chose the lexicographically smallest labelling. 
+    \item Repeat the above process, constructing a splitting tree. This tree is canonical. This tree is not guaranteed to split the bins into singletons. If it gets ``stuck'', make an arbitrary choice and continue the algorithm until everything falls into a singleton. This is a possible canonical labelling.
+    \item if an arbitrary choice had to be made (or perhaps multiple), rerun the entire algorithm for each possible choice that could have been made, creating a small list of possible canonical labelling. Chose the lexicographically smallest labelling.
 \end{enumerate}
 The details of the initial invariant, how the bins are labelled, and optimisations can be found in \cite{}. In the worst case scenario this process takes $\mathcal{O}(n!\cdot k^2)$ where $n$ is the dimension and $k$ is the number of facets. For a $3-$dimensional triangulation the $n!$ term is small and this algorithm is fast.
 
@@ -180,7 +181,7 @@ Once a canonical labelling is found, an ``isomorphism signature'' is calculated.
     \item Convert $I$ to base 64 and store as a string.
     \item Convert $k$ to some string and append to the front of the string representation of $I$.
 \end{enumerate}
-This process form a string / number representing the unique combinatorial isomorphism signature for any given triangulation of a $3-$manifold (practically there are size restrictions on the number of facets $k$). 
+This process form a string / number representing the unique combinatorial isomorphism signature for any given triangulation of a $3-$manifold (practically there are size restrictions on the number of facets $k$).
 
 \subsection{Computational Complexity}
 \begin{Definition}[Time Complexity]
@@ -196,9 +197,9 @@ This process form a string / number representing the unique combinatorial isomor
 \end{Definition}
 
 \begin{Remark}
-    While most problems are not decision problems, it is often possible to convert many problems into a decision problem. For example, if the problem is to multiply two numbers together, we can convert this to a decision problem of ``is the $i$th binary digit a $0$?'', this can be repeated for all digits. 
+    While most problems are not decision problems, it is often possible to convert many problems into a decision problem. For example, if the problem is to multiply two numbers together, we can convert this to a decision problem of ``is the $i$th binary digit a $0$?'', this can be repeated for all digits.
 \end{Remark}
-    
+
 \begin{Definition}[Complexity Class]
     A complexity class is a class of problems that can be solved under some model of computation within some resource bound i.e. some time or space bound. A problem belongs to a given complexity class if there exist an algorithm to solve the problem within this bound. For ``turning machines'', the main complexity classes are
     \begin{enumerate}
@@ -213,7 +214,7 @@ This process form a string / number representing the unique combinatorial isomor
 \end{Definition}
 
 \begin{Remark}
-    A turning machine is a common model for computation, we do not define it here but there are many resources available. 
+    A turning machine is a common model for computation, we do not define it here but there are many resources available.
 \end{Remark}
 
 \begin{Remark}
@@ -229,7 +230,7 @@ This process form a string / number representing the unique combinatorial isomor
 \end{Remark}
 
 \begin{Definition}[Hard Problem]
-    For a given complexity class $C$, a problem $P$ is called a $C-$hard problem if every problem $P'\in C$ can be ``reduced'' to $P$ via some algorithm that is ``efficient'' relative to $C$. 
+    For a given complexity class $C$, a problem $P$ is called a $C-$hard problem if every problem $P'\in C$ can be ``reduced'' to $P$ via some algorithm that is ``efficient'' relative to $C$.
 \end{Definition}
 
 \begin{Remark}
@@ -240,7 +241,7 @@ This process form a string / number representing the unique combinatorial isomor
     For a given complexity class $C$, a problem $P$ is called a $C-$complete problem if it is a $C-$hard problem and $P\in C$
 \end{Definition}
 
-Practically, problems that belong to $P$ can be solved tractable on a modern computer, we can typically scale resources and solve the problem. However, all the algorithms we have for $NP$ complete problems require exponential resources to run, which becomes computationally infeasible quickly. As such, if we find a problem to be $NP-$complete or harder, it means we can't just ``throw more compute'' at the problem to solve it and may have to resort to suboptimal solutions. 
+Practically, problems that belong to $P$ can be solved tractable on a modern computer, we can typically scale resources and solve the problem. However, all the algorithms we have for $NP$ complete problems require exponential resources to run, which becomes computationally infeasible quickly. As such, if we find a problem to be $NP-$complete or harder, it means we can't just ``throw more compute'' at the problem to solve it and may have to resort to suboptimal solutions.
 
 \subsection{Pachner Moves and the Pachner Graph}
 A Pachner move is a specific process that changes a PL-manifold without changing the underlying topological space.
@@ -264,7 +265,7 @@ For triangulations of $3-$manifolds, we can take $i=0, 1, 2, 3$, where $i=0, 3$ 
 Because all triangulations of a specific PL-manifold can be reached through Pachner moves, we define
 
 \begin{Definition}[Pachner Graph]
-    For a given PL-manifold $\mathcal{M}$, the Pachner graph for $\mathcal{M}$ us the graph $(V, E)$ given by $V=\{\text{triangulations of }\mathcal{M}\}$ and for $v_i, v_j\in V$, $e_{ij}=(v_i, v_j)\in E\iff v_i, v_j$ are related via a single Pachner move. 
+    For a given PL-manifold $\mathcal{M}$, the Pachner graph for $\mathcal{M}$ us the graph $(V, E)$ given by $V=\{\text{triangulations of }\mathcal{M}\}$ and for $v_i, v_j\in V$, $e_{ij}=(v_i, v_j)\in E\iff v_i, v_j$ are related via a single Pachner move.
 \end{Definition}
 
 Because of the above theorem, the Pachner graph is fully connected for any PL-manifold. The Pachner graph is however, infinite. We additionally endow the Pachner graph with ``levels'' where each level encodes the number of facets in the triangulation.
@@ -361,9 +362,9 @@ In particular, if we have some process $\hat{P}$ that takes in some $x(t)$ and p
 \end{Remark}
 
 \subsection{Simulated Annealing}
-For a measurable space $(\mathcal{X}, \mathcal{F}, \mu)$ with base measure $\mu$ (typically the Lebesgue, or count measure), we may have some measurable function $E:\mathcal{X}\to\mathbb{R}$ known as the energy. In thermal physics, for a thermodynamic system at temperature $T$, the probability of finding a particle in a given energy $E$ is given by the Gibbs distribution $\pi_{T}(A)=\frac{1}{Z}\int_Ae^{-E(A)/T}d\mu(x)$ where $Z=\int_\mathcal{X} e^{-E(A)/T}d\mu(x)$ is a normalising factor. Typically as a system ``cools down'' it ``finds its way'' to low energies. Simulated annealing is inspired by this thermodynamic concept, simulating a particle over time as the temperature $T\to 0$ heuristically conjecturing that it will find its way to the lowest energy state. The simulation at a given temperature $T$ is typically done using the Metropolis Hastings algorithm. 
+For a measurable space $(\mathcal{X}, \mathcal{F}, \mu)$ with base measure $\mu$ (typically the Lebesgue, or count measure), we may have some measurable function $E:\mathcal{X}\to\mathbb{R}$ known as the energy. In thermal physics, for a thermodynamic system at temperature $T$, the probability of finding a particle in a given energy $E$ is given by the Gibbs distribution $\pi_{T}(A)=\frac{1}{Z}\int_Ae^{-E(A)/T}d\mu(x)$ where $Z=\int_\mathcal{X} e^{-E(A)/T}d\mu(x)$ is a normalising factor. Typically as a system ``cools down'' it ``finds its way'' to low energies. Simulated annealing is inspired by this thermodynamic concept, simulating a particle over time as the temperature $T\to 0$ heuristically conjecturing that it will find its way to the lowest energy state. The simulation at a given temperature $T$ is typically done using the Metropolis Hastings algorithm.
 
-While the concept above is inspired as a Heuristic from concepts in thermal physics, it has valid grounding in probability and machine learning. At a high level, this is because for any $x, x'\in \mathcal{X}$, $\pi_T(x')/\pi_T(x)=e^{-(E(x')-E(x))/T}$, which if $E(x') > E(x)$ tends to $0$ as $T\to 0$, but if $E(x') < E(x)$ tends to $\infty$. As such, a sharp delta function is formed around $x_{min}=\arg\min(E)$. While this does mean that at $T=0$ we have that $\pi(x)=\delta(x-x_{min})$ is the stationary solution to our Metropolis Hastings Markov Transition Kernel, at $T=0$ the measure of valid starting points $\{x_0\}$ tends to have measure $1$ under $\pi$ but measure $0$ under $\nu$. Informally, at low $T$ we almost always accept points where $E(x')<E(x)$ and almost never accept points where $E(x')>E(x)$, so this is just hill climbing and unless $E$ is convex, the sampling will likely get stuck in a local minima. 
+While the concept above is inspired as a Heuristic from concepts in thermal physics, it has valid grounding in probability and machine learning. At a high level, this is because for any $x, x'\in \mathcal{X}$, $\pi_T(x')/\pi_T(x)=e^{-(E(x')-E(x))/T}$, which if $E(x') > E(x)$ tends to $0$ as $T\to 0$, but if $E(x') < E(x)$ tends to $\infty$. As such, a sharp delta function is formed around $x_{min}=\arg\min(E)$. While this does mean that at $T=0$ we have that $\pi(x)=\delta(x-x_{min})$ is the stationary solution to our Metropolis Hastings Markov Transition Kernel, at $T=0$ the measure of valid starting points $\{x_0\}$ tends to have measure $1$ under $\pi$ but measure $0$ under $\nu$. Informally, at low $T$ we almost always accept points where $E(x')<E(x)$ and almost never accept points where $E(x')>E(x)$, so this is just hill climbing and unless $E$ is convex, the sampling will likely get stuck in a local minima.
 
 
 \subsection{Transformers}
@@ -381,7 +382,7 @@ An abstract transformer head is a function $H:F^n\otimes V\to F^n\otimes W$ defi
 \end{Definition}
 
 \begin{Definition}[Abstract Multi-Head Attention]
-For a collection of vectors $(v_1, v_2, ..., v_n)$ where $v_i\in V$ an vector space over a field $F$. Form spaces $V_1, V_2, ..., V_q$ from $V$ by equipping $V$ with a, possibly unique, inner product. Let $\iota_i:V\to V_i$ be the operation of endowing $V$ with the inner product structure of $V_i$. Let $H_i$ denote the transformer head from $F^n\otimes V_i\to F^n\otimes W_i$ where $W_i, W_j$ may be distinct. Define $O:W_0\oplus W_1\oplus \cdots\oplus W_q\to V$ 
+For a collection of vectors $(v_1, v_2, ..., v_n)$ where $v_i\in V$ an vector space over a field $F$. Form spaces $V_1, V_2, ..., V_q$ from $V$ by equipping $V$ with a, possibly unique, inner product. Let $\iota_i:V\to V_i$ be the operation of endowing $V$ with the inner product structure of $V_i$. Let $H_i$ denote the transformer head from $F^n\otimes V_i\to F^n\otimes W_i$ where $W_i, W_j$ may be distinct. Define $O:W_0\oplus W_1\oplus \cdots\oplus W_q\to V$
 
 The multi-head attention is an operation $A:F^n\otimes V\to F^n\otimes V$ defined as
 \begin{equation}
@@ -402,11 +403,11 @@ While these abstract formulations of the Transformer are theocratically rich, in
 
 \begin{Definition}[Standard Transformer Head]
     For a collection of vectors $(v_1, v_2, ..., v_n)$ where $v_i\in \mathbb{R}^d$ we construct $X\in\mathbb{R}^{n\times d}$ by stacking these vectors up as columns. The head is calculated as
-    
+
     \begin{equation}
         h(X)=\operatorname{softmax}\left(\frac{(XW^Q)(XW^k)}{\sqrt{d_k}}+M\right)(ZW^V)
     \end{equation}
-    
+
     Where the $\operatorname{softmax}$ is applied along each row. The $W^Q, W^K, W^V\in\mathbb{R}^{n\times d_k}$ are called the ``query'', ``key'', and ``value'' weights. $M\in M_n(\mathbb{R}\cup\{-\infty, \infty\})$ is called the causal mask.
 \end{Definition}
 
@@ -415,7 +416,7 @@ While these abstract formulations of the Transformer are theocratically rich, in
 \end{Definition}
 
 \begin{Definition}[Standard Feedforward Neural Network]
-    For $x\in \mathbb{R^n}$, $FFN(x)=\sigma(xW_1+b_1)W_2+b_2$ where the $W_i$ are called weights and the $b_i$ are called biases. $\sigma$ is a parameter-less ``activation function''. 
+    For $x\in \mathbb{R^n}$, $FFN(x)=\sigma(xW_1+b_1)W_2+b_2$ where the $W_i$ are called weights and the $b_i$ are called biases. $\sigma$ is a parameter-less ``activation function''.
 \end{Definition}
 
 \begin{Definition}[Layer Norm]
@@ -489,7 +490,7 @@ The most direct way to update $\pi_\theta$ is to simply take a number of samples
 
 and then use this $g$ in gradient decent as described above.
 
-While the above techniques makes logical sense, the use of $J(\theta)$ being the expected reward can become problematic, for example if our reward function is binary, returning a score of $1$ if the output meets some criteria, and returning a score of $-1$ if it does not, once the parameter set has settled into a stable configuration where each output is valid and produces a score of $1$, $J(\theta)$ continues to update $\theta$ which can lead to oscillations. As such we often use an ``advantage'' function $A$ which is an estimate of how the score $R(y_i)$ for a specific sample compares to the expected score. That is $A(y_i)=R(y_i)-\mathbb{E}_{y\sim \pi_\theta}[R(y)]$. We can estimate the expected score by simply sampling from $\pi_\theta$ a few times, and taking the average, and for a simple problem this is sufficient. 
+While the above techniques makes logical sense, the use of $J(\theta)$ being the expected reward can become problematic, for example if our reward function is binary, returning a score of $1$ if the output meets some criteria, and returning a score of $-1$ if it does not, once the parameter set has settled into a stable configuration where each output is valid and produces a score of $1$, $J(\theta)$ continues to update $\theta$ which can lead to oscillations. As such we often use an ``advantage'' function $A$ which is an estimate of how the score $R(y_i)$ for a specific sample compares to the expected score. That is $A(y_i)=R(y_i)-\mathbb{E}_{y\sim \pi_\theta}[R(y)]$. We can estimate the expected score by simply sampling from $\pi_\theta$ a few times, and taking the average, and for a simple problem this is sufficient.
 
 \begin{Remark}
     This average often has a high variance, so a ``critic'' model is often trained instead to try and learn the baseline. We won't explore this technique here.
@@ -506,7 +507,7 @@ Where $r(\theta)=\frac{\pi_\theta(y)}{\pi_{\theta_{old}}(y)}$ is called the impo
 \end{equation}
 
 \chapter{Search and Sampling Algorithms}
-We are often interested in exploring the characteristics and properties of triangulations of a manifold $\mathcal{M}$. Due to the unwieldy size of $\mathcal{T}(\mathcal{M})$, it is typical to sample from $\mathcal{T}(\mathcal{M})$ and study these samples. This is the task of a sampling algorithm. There are particular situations in which we may want to find a triangulation that has a particularly ``high score''. This is a search task, with an ``objective function'' $O:\mathcal{T}(\mathcal{M})\to \mathbb{R}$ where we aim to find a triangulation $\Delta\in\mathcal{T}(\mathcal{M})$ such that $O(\Delta)$ is ``high'' (we use high somewhat informally, as we do not know much of the geometry of different objective functions over $\mathcal{T}(\mathcal{M})$). 
+We are often interested in exploring the characteristics and properties of triangulations of a manifold $\mathcal{M}$. Due to the unwieldy size of $\mathcal{T}(\mathcal{M})$, it is typical to sample from $\mathcal{T}(\mathcal{M})$ and study these samples. This is the task of a sampling algorithm. There are particular situations in which we may want to find a triangulation that has a particularly ``high score''. This is a search task, with an ``objective function'' $O:\mathcal{T}(\mathcal{M})\to \mathbb{R}$ where we aim to find a triangulation $\Delta\in\mathcal{T}(\mathcal{M})$ such that $O(\Delta)$ is ``high'' (we use high somewhat informally, as we do not know much of the geometry of different objective functions over $\mathcal{T}(\mathcal{M})$).
 
 \section{Classical Techniques}
 \subsection{Direct Accent}
@@ -536,7 +537,7 @@ For an objective function $O:\mathcal{T}(\mathcal{M})\to\R$, for small triangula
 \subsection{Markov Chain Monte Carlo}
 
 \subsection{Simulated Annealing}
-Because the above Markov Chain Monte Carlo algorithm leads to a uniform distribution, we can use it as a symmetric proposal distribution \textbf{(need to check this)}. 
+Because the above Markov Chain Monte Carlo algorithm leads to a uniform distribution, we can use it as a symmetric proposal distribution \textbf{(need to check this)}.
 We implement a standard simulated aneling algorithm as described in algorithm~\ref{alg:simulated-annealing}
 
 \begin{algorithm}
@@ -584,7 +585,7 @@ As a baseline, we use Markov Chain Monte Carlo to generate a sample of triangula
 We use the direct accent algorithm as described in section~\ref{...}, starting with the census of all $\Delta\in\mathcal{T}_1(S^3)$ that are formed with 5-tetrahedra. There are ... of these, for each one we perform direct accent for 20 steps to get a triangulation with 25 tetrahedra. This is done with both objective functions for a range of different temperatures.
 
 \subsection{Simulated Annealing}
-We perform simulated annealing on $O_{det}$ and $O_{deg}$. We use a constant temperature, and a cooling schedule of $...$. 
+We perform simulated annealing on $O_{det}$ and $O_{deg}$. We use a constant temperature, and a cooling schedule of $...$.
 
 \section{Classical Optimisation on Number of Generators of the Fundamental Group}
 
