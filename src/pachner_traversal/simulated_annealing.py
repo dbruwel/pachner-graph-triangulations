@@ -2,7 +2,7 @@ import multiprocessing
 
 import numpy as np
 
-from .functions3d import iterate
+from .mcmc import iterate
 
 
 def sample_chain(

@@ -3,19 +3,7 @@ import random
 
 from regina import *  # type: ignore
 
-#######################################################
-# finding all isomorphism types of neighbours
-# in the Pachner graph
-#
-# iso:  isomorphism signature of current state
-#       (we must work with a canonical labelling
-#       for this to work)
-# f:    f-vector of current state
-# a:    1 = going up, 2 = going down
-#######################################################
 
-
-### Compute neighbouring triangulations
 def neighbours(iso, f, a):
     "This function produces a dictionary of all `a`-neighbours (with isomorphism signatures as keys) of triangulation `iso` with f-vector `f`. This function uses non-standard isomorphism signatures and hence requires `regina` version 7.3 or newer."
 
@@ -50,18 +38,6 @@ def neighbours(iso, f, a):
         return nbrs
 
 
-### Choose move from proposal
-
-
-###############################################################################
-# This chooses the next move (proposal and acceptance)
-#
-# iso:   isomorphism signature of current state
-#        (we must work with a canonical labelling
-#        for this to work)
-# f:     f-vector of current state
-# gamma: parameter for acceptance distribution
-###############################################################################
 def choosemove(iso, f, gamma):
     "This function takes a state triangulation given by isomorphism signature `iso` with f-vector `f` and paramter `gamma`. It computes a proposal, enumerates neighbours of `iso` and decides wether to perform the proposed move."
     x = random.random()
@@ -106,22 +82,6 @@ def choosemove(iso, f, gamma):
     return None
 
 
-### Main function
-
-
-###############################################################################
-# Iterate our method
-#
-# iso:      isomorphism signature of current state
-#           (we must work with a canonical labelling
-#           for this to work)
-# f:        f-vector of current state
-# steps:    number of steps
-# gamma:    parameter for acceptance distribution
-# interval: sample every "interval" steps
-# offset:   discard first "offset" samples
-# name:     filename
-###############################################################################
 def randomise(iso, f, steps, gamma, interval, offset, name):
     "This is the main function taking in see triangulation `iso` with f-vector `f`. It performs a random walk in the Pachner graph of length `steps` with parameter `gamma`. Parameter `verbose` decides print behaviour, `name` is the filename for the output file."
     # initialise number of steps
