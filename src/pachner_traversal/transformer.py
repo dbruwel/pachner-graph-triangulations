@@ -27,8 +27,7 @@ class MinimalTrainState(train_state.TrainState):
     weight_decay: float = 0.01
 
 
-def new_gelu(x):
-    """A JAX implementation of the specific GELU activation from the PyTorch code."""
+def gelu(x):
     return (
         0.5
         * x
@@ -37,8 +36,6 @@ def new_gelu(x):
 
 
 class CausalSelfAttention(nn.Module):
-    """A vanilla multi-head masked self-attention layer, JAX/Flax version."""
-
     d_model: int  # n_embd
     num_heads: int  # n_head
     dropout_rate: float = 0.1
@@ -46,10 +43,9 @@ class CausalSelfAttention(nn.Module):
     @nn.compact
     def __call__(self, x, training: bool = False):
         B, T, C = (
-            x.shape 
+            x.shape
         )  # Batch size, sequence length, embedding dimensionality (d_model)
 
-        # Ensure d_model is divisible by num_heads
         assert C % self.num_heads == 0
         head_size = C // self.num_heads
 
@@ -72,8 +68,6 @@ class CausalSelfAttention(nn.Module):
 
 
 class Block(nn.Module):
-    """An unassuming Transformer block, JAX/Flax version."""
-
     d_model: int
     num_heads: int
     dropout_rate: float = 0.1
@@ -93,20 +87,17 @@ class Block(nn.Module):
         return x
 
     def mlp(self, x):
-        """The MLP sub-layer."""
         d_ff = 4 * self.d_model
         c_fc = nn.Dense(features=d_ff, name="c_fc")
         c_proj = nn.Dense(features=self.d_model, name="c_proj")
 
         x = c_fc(x)
-        x = new_gelu(x)
+        x = gelu(x)
         x = c_proj(x)
         return x
 
 
 class Transformer(nn.Module):
-    """Transformer Language Model, exactly as seen in GPT-2, JAX/Flax version."""
-
     vocab_size: int
     d_model: int  # n_embd
     block_size: int  # max sequence length
@@ -117,13 +108,12 @@ class Transformer(nn.Module):
     @nn.compact
     def __call__(
         self, idx, training: bool = False
-    ):  # training flag is unused but good practice
+    ):
         B, T = idx.shape
         assert (
             T <= self.block_size
         ), f"Cannot forward sequence of length {T}, block size is only {self.block_size}"
 
-        # --- Input & Embeddings ---
         # Token embedding
         wte = nn.Embed(
             num_embeddings=self.vocab_size, features=self.d_model, name="wte"
@@ -150,7 +140,6 @@ class Transformer(nn.Module):
         # --- Final Layers ---
         x = nn.LayerNorm(name="ln_f")(x)
 
-        # Language model head
         logits = nn.Dense(features=self.vocab_size, use_bias=False, name="lm_head")(x)
 
         return logits
@@ -160,8 +149,6 @@ class Transformer(nn.Module):
 def train_step(
     state: MinimalTrainState, batch_input: jnp.ndarray, batch_labels: jnp.ndarray
 ):
-    """Performs a single training step using Optax."""
-    # Split the dropout key for this step
     dropout_key, new_dropout_key = jax.random.split(state.dropout_key)
 
     def loss_fn(params):
@@ -171,26 +158,18 @@ def train_step(
             training=True,
             rngs={"dropout": dropout_key},
         )
-        # Using optax's cross-entropy function is also a clean option
+
         loss = optax.softmax_cross_entropy_with_integer_labels(
             logits=logits, labels=batch_labels
         ).mean()
         return loss
 
-    # Calculate gradients
     grad_fn = jax.value_and_grad(loss_fn)
     loss, grads = grad_fn(state.params)
 
-    # >>> THIS IS THE KEY CHANGE <<<
-    # Apply gradients to update the model parameters and optimizer state.
-    # This single line replaces all your manual AdamW calculations.
     new_state = state.apply_gradients(grads=grads)
-
-    # Update the dropout key in the new state
     new_state = new_state.replace(dropout_key=new_dropout_key)
 
-    # Note: JAX's jit will compile this function, so returning loss and grads
-    # for logging is efficient.
     return new_state, loss
 
 

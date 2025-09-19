@@ -10,7 +10,12 @@ The aim of this project is to investigate triangulations of manifolds, with a fo
 
 This repository is not intended as a Python package but serves to showcase the work conducted. However, it is structured so that it can be easily forked and modified for those interested in exploring these techniques in other directions.
 
-The outcomes of this research are documented in a PDF available in this repository under the `thesis` section.
+
+### Thesis
+The outcomes of this research are documented in a PDF available in this repository under the `thesis` section, which also includes the raw `.tex`.
+
+There is a github action setup so that when this is changed, a new PDF is generated and added to the repository.
+
 
 ## Installation
 This project has been written with Sage. Not all of the scripts require Sage, and many can be run in a standard Python environment. However, for working with the triangulations as actual manifold objects, Sage is required. Sage is installable via conda, and requires either Linux or macOS (if you have Windows you will have to use WSL). The installation for Sage is as follows:
@@ -24,6 +29,3 @@ If you want to run the notebooks, you additionally need to:
 6. Add Sage as a kernel with `python -m ipykernel install --user --name sage-env --display-name "Sage Python"`
 
 Once Sage is set up, this repository can be cloned and installed via `pip install -e .`
-
-## Thesis
-The raw tex files for the thesis are located in `\thesis`. There is a github action setup so that when this is changed, a new PDF is generated and added to the repository.
