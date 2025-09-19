@@ -8,9 +8,14 @@ import matplotlib.pyplot as plt
 import numpy as np
 import optax
 import pandas as pd
-from data_io import Dataset, Encoder
-from reinforcement import train_step as reinforce_train_step
-from transformer import MinimalTrainState, Transformer, generate_samples, train_step
+from pachner_traversal.data_io import Dataset, Encoder
+from pachner_traversal.reinforcement import train_step as reinforce_train_step
+from pachner_traversal.transformer import (
+    MinimalTrainState,
+    Transformer,
+    generate_samples,
+    train_step,
+)
 
 
 def train_model(file_path, save_path, num_test_samps=1_000):

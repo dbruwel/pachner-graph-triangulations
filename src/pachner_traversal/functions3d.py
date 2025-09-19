@@ -1,5 +1,5 @@
 import time, math, random
-from regina import *
+from regina import *  # type: ignore
 
 #######################################################
 # finding all isomorphism types of neighbours
@@ -23,7 +23,7 @@ def neighbours(iso, f, a):
     if a == 1:
         for t in range(f[2]):
             # create copy of tri in standard iso sig labelling
-            target = Triangulation3.fromIsoSig(iso)
+            target = Triangulation3.fromIsoSig(iso)  # type: ignore
             # test if move is possible and if so, perform it
             if target.pachner(target.triangle(t), True, False):
                 target.pachner(target.triangle(t), False, True)
@@ -37,7 +37,7 @@ def neighbours(iso, f, a):
     if a == 2:
         for e in range(f[1]):
             # create copy of tri in standard iso sig labelling
-            target = Triangulation3.fromIsoSig(iso)
+            target = Triangulation3.fromIsoSig(iso)  # type: ignore
             # test if move is possible and if so, perform it
             if target.pachner(target.edge(e), True, False):
                 target.pachner(target.edge(e), False, True)
@@ -145,7 +145,7 @@ def randomise(iso, f, steps, gamma, interval, offset, name):
 
 def iterate(iso, gamma, steps=1):
     # initialise number of steps
-    t = Triangulation3.fromIsoSig(iso)
+    t = Triangulation3.fromIsoSig(iso)  # type: ignore
     f = t.fVector()
     samp = 0
 
@@ -159,7 +159,7 @@ def mcmc3d(
 ):
     "Collects 'samples' samples of triangulations by performing a random walk in the Pachner graph starting from 'iso' with parameter `gamma`. offset' is the number of triangulations to be burnt (discarded initially). 'interval' is the number of triangulations between successive samples. Parameter `verbose` decides print behaviour, `printToFile` is the filename for the output file in the folder outputs/."
     # initialise number of steps
-    t = Triangulation3.fromIsoSig(iso)
+    t = Triangulation3.fromIsoSig(iso)  # type: ignore
     f = t.fVector()
     samp = 0
 

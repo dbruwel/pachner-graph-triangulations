@@ -1,6 +1,6 @@
 # Navigating the Pachner Graph: Algorithms for Searching and Sampling Triangulations
 
-This repository contains a script that is an almost identical copy of a file from the repository `https://github.com/jspreer/MCMCForTriangulations`. Access to this script has been granted by its owner - Jonathan Spreer. The script is included at `src/pachner_graph_triangulations/...`.
+This repository contains a script that is an almost identical copy of a file from the repository `https://github.com/jspreer/MCMCForTriangulations`. Access to this script has been granted by its owner - Jonathan Spreer. The script is included at `src/pachner_graph_triangulations/functions3d.py`.
 
 ## Installation
 This project has been written with Sage. Not all of the scripts require Sage, and many can be run in a standard Python environment. However, for working with the triangulations as actual manifold objects, Sage is required. Sage is installable via conda, and requires either Linux or macOS (if you have Windows you will have to use WSL). The installation for Sage is as follows:
@@ -14,3 +14,6 @@ If you want to run the notebooks, you additionally need to:
 6. Add Sage as a kernel with `python -m ipykernel install --user --name sage-env --display-name "Sage Python"`
 
 Once Sage is set up, this repository can be cloned and installed via `pip install -e .`
+
+## Thesis
+The raw tex files for the thesis are located in `\thesis`. There is a github action setup so that when this is changed, a new PDF is generated and added to the repository.

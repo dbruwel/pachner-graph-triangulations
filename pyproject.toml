@@ -1,5 +1,5 @@
 [project]
-name = "pachner_graph_triangulations"
+name = "pachner_traversal"
 version = "0.1.0"
 description = "Honours project: Navigating the Pachner Graph: Algorithms for Searching and Sampling Triangulations"
 authors = [
