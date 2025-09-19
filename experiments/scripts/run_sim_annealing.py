@@ -26,29 +26,20 @@ if __name__ == "__main__":
     isos_lists = res["isos_lists"]
     betas_lists = res["betas_lists"]
     acceptances_lists = res["acceptances_lists"]
-    final_scores_dict = res["final_scores"]
-    final_pns_dict = res["final_pns"]
-    final_counts_unknotted_dict = res["final_counts_unknotted"]
+    scores = res["final_scores"]
+    pns = res["final_pns"]
+    unknotted = res["final_counts_unknotted"]
 
-    print("\n--- Results ---")
-    for i, isos in enumerate(isos_lists):
-        if isos:
-            print(f"Chain {i+1} ran for {len(isos)} iterations.")
-        else:
-            print(f"Chain {i+1} did not run successfully.")
+    scores_df = pd.DataFrame.from_dict(scores, orient="index", columns=["score"])
+    pn_df = pd.DataFrame.from_dict(pns, orient="index", columns=["pn"])
+    unknot_df = pd.DataFrame.from_dict(unknotted, orient="index", columns=["unknotted"])
+    isos_df = pd.DataFrame(isos_lists).T
+    betas_df = pd.DataFrame(betas_lists).T
+    acceptances_df = pd.DataFrame(acceptances_lists).T
 
-    print(f"\nFinal shared scores dictionary has {len(final_scores_dict)} entries.")
-    print(f"Final shared pns dictionary has {len(final_pns_dict)} entries.")
-
-    pd.DataFrame.from_dict(final_scores_dict, orient="index", columns=["score"]).to_csv(
-        f"{path}/scores.csv"
-    )
-    pd.DataFrame.from_dict(final_pns_dict, orient="index", columns=["pn"]).to_csv(
-        f"{path}/pns.csv"
-    )
-    pd.DataFrame.from_dict(
-        final_counts_unknotted_dict, orient="index", columns=["count_unknotted"]
-    ).to_csv(f"{path}/counts_unknotted.csv")
-    pd.DataFrame(isos_lists).T.to_csv(f"{path}/isos.csv", index=False)
-    pd.DataFrame(betas_lists).T.to_csv(f"{path}/betas.csv", index=False)
-    pd.DataFrame(acceptances_lists).T.to_csv(f"{path}/acceptances.csv", index=False)
+    scores_df.to_csv(f"{path}/scores.csv")
+    pn_df.to_csv(f"{path}/pns.csv")
+    unknot_df.to_csv(f"{path}/counts_unknotted.csv")
+    isos_df.to_csv(f"{path}/isos.csv", index=False)
+    betas_df.to_csv(f"{path}/betas.csv", index=False)
+    acceptances_df.to_csv(f"{path}/acceptances.csv", index=False)
