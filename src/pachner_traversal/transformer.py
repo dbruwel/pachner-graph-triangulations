@@ -1,14 +1,9 @@
-from functools import partial
-
 import flax
 import flax.linen as nn
 import jax
 import jax.numpy as jnp
-import jax.tree_util as tree_util
-import matplotlib.pyplot as plt
 import optax
 from flax import struct
-from flax.training import train_state
 from flax.linen.initializers import normal
 from flax.training import train_state
 
@@ -106,9 +101,7 @@ class Transformer(nn.Module):
     dropout_rate: float = 0.1
 
     @nn.compact
-    def __call__(
-        self, idx, training: bool = False
-    ):
+    def __call__(self, idx, training: bool = False):
         B, T = idx.shape
         assert (
             T <= self.block_size

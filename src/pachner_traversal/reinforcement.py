@@ -3,7 +3,7 @@ from functools import partial
 import jax
 import jax.numpy as jnp
 import numpy as np
-from transformer import generate_samples
+from .transformer import generate_samples
 
 
 def get_scores(samples, dataset, encoder):

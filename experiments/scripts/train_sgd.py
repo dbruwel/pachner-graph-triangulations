@@ -1,21 +1,34 @@
-import os
+import pathlib
 import pickle
+from functools import partial
 
 import flax
 import jax
 import jax.numpy as jnp
-import matplotlib.pyplot as plt
-import numpy as np
 import optax
 import pandas as pd
+
 from pachner_traversal.data_io import Dataset, Encoder
-from pachner_traversal.reinforcement import train_step as reinforce_train_step
-from pachner_traversal.transformer import (
-    MinimalTrainState,
-    Transformer,
-    generate_samples,
-    train_step,
+from pachner_traversal.transformer import MinimalTrainState, Transformer, train_step
+from pachner_traversal.utils import results_path
+
+data_path = (
+    pathlib.Path(__file__).parent.parent.parent / "data" / "input_data" / "processed"
 )
+save_path = results_path("sgd_models")
+
+
+@partial(jax.jit, static_argnames=["vocab_size"])
+def get_test_loss(state, test_batch_input, test_batch_label, vocab_size):
+    test_logits = state.apply_fn(
+        {"params": state.params},
+        test_batch_input,
+        training=False,
+    )
+
+    test_one_hot_labels = jax.nn.one_hot(test_batch_label, num_classes=vocab_size)
+    test_loss = optax.softmax_cross_entropy(test_logits, test_one_hot_labels).mean()
+    return test_loss
 
 
 def train_model(file_path, save_path, num_test_samps=1_000):
@@ -73,29 +86,19 @@ def train_model(file_path, save_path, num_test_samps=1_000):
     for step in range(num_train_steps):
         batch_input, batch_label = encoder.encode(dataset.samp_batch(batch_size))
         state, loss = train_step(state, batch_input, batch_label)
-        losses[step] = loss
+        losses[step] = float(loss)
 
         if (step + 1) % 100 == 0:
-            print(f"Step {step + 1:3d}/{num_train_steps}, Loss: {loss:.4f}")
-
-            test_logits = state.apply_fn(
-                {"params": state.params},
-                test_batch_input,
-                training=False,
+            print(f"Step {step + 1:3d}/{num_train_steps}, Loss: {float(loss):.4f}")
+            test_loss = get_test_loss(
+                state, test_batch_input, test_batch_label, vocab_size
             )
+            test_losses[step] = float(test_loss)
 
-            test_one_hot_labels = jax.nn.one_hot(
-                test_batch_label, num_classes=vocab_size
-            )
-            test_loss = optax.softmax_cross_entropy(
-                test_logits, test_one_hot_labels
-            ).mean()
-            test_losses[step] = test_loss
+    print("\n Training finished.")
 
-    print("\n✅ Training finished.")
-
-    (pd.Series(losses).astype(float)).to_csv(save_path + "_train_losses.csv")
-    (pd.Series(test_losses).astype(float)).to_csv(save_path + "_test_losses.csv")
+    pd.Series(losses).to_csv(save_path + "_train_losses.csv")
+    pd.Series(test_losses).to_csv(save_path + "_test_losses.csv")
 
     with open(save_path + ".pkl", "wb") as file:
         pickle.dump(state.params, file)
@@ -103,10 +106,10 @@ def train_model(file_path, save_path, num_test_samps=1_000):
 
 if __name__ == "__main__":
     train_model(
-        "train_data/all_5tet.hdf5",
-        "saves/all_run/12block_8head_5tet",
+        data_path / "all_5tet.hdf5",
+        save_path / "12block_8head_5tet",
         num_test_samps=700,
     )
-    train_model("train_data/all_6tet.hdf5", "saves/all_run/12block_8head_6tet")
-    train_model("train_data/all_7tet.hdf5", "saves/all_run/12block_8head_7tet")
-    train_model("train_data/all_8tet.hdf5", "saves/all_run/12block_8head_8tet")
+    train_model(data_path / "all_6tet.hdf5", save_path / "12block_8head_6tet")
+    train_model(data_path / "all_7tet.hdf5", save_path / "12block_8head_7tet")
+    train_model(data_path / "all_8tet.hdf5", save_path / "12block_8head_8tet")

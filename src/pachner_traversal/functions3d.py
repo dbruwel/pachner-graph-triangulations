@@ -1,4 +1,6 @@
-import time, math, random
+import math
+import random
+
 from regina import *  # type: ignore
 
 #######################################################
@@ -12,9 +14,8 @@ from regina import *  # type: ignore
 # a:    1 = going up, 2 = going down
 #######################################################
 
+
 ### Compute neighbouring triangulations
-
-
 def neighbours(iso, f, a):
     "This function produces a dictionary of all `a`-neighbours (with isomorphism signatures as keys) of triangulation `iso` with f-vector `f`. This function uses non-standard isomorphism signatures and hence requires `regina` version 7.3 or newer."
 

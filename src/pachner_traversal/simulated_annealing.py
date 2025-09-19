@@ -1,10 +1,7 @@
 import multiprocessing
-import os
-import shutil
-from datetime import datetime
 
 import numpy as np
-import pandas as pd
+
 from .functions3d import iterate
 
 
@@ -136,11 +133,11 @@ def run_chains(
         betas_lists = [result[1] for result in results]
         acceptances_lists = [result[2] for result in results]
 
-    return (
-        isos_lists,
-        betas_lists,
-        acceptances_lists,
-        final_scores,
-        final_pns,
-        final_counts_unknotted,
-    )
+    return {
+        "isos_lists": isos_lists,
+        "betas_lists": betas_lists,
+        "acceptances_lists": acceptances_lists,
+        "final_scores": final_scores,
+        "final_pns": final_pns,
+        "final_counts_unknotted": final_counts_unknotted,
+    }

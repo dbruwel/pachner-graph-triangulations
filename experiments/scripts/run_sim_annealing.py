@@ -1,54 +1,41 @@
 import pandas as pd
-import os
-from datetime import datetime
-from multiprocessing import Manager, Process
-from pachner_traversal.simulated_annealing import run_chains
-from pachner_traversal.potential_functions import edge_degree_variance_potential
-import shutil
 
+import pachner_traversal.potential_functions as potentials
+from pachner_traversal.simulated_annealing import run_chains
+from pachner_traversal.utils import results_path
 
 if __name__ == "__main__":
-    src = os.path.abspath(__file__)
-    path = "results/" + datetime.now().strftime("%Y%m%d_%H%M")
-    os.makedirs(path, exist_ok=True)
-    shutil.copy(src, os.path.join(path, os.path.basename(src)))
+    path = results_path("sim_annealing")
 
-    betas_to_run = [1] * 6
-    seed = "cMcabbgqs"
-    gamma_ = 0.2
-    itts = 100_000
-    steps = 1
-    lambda_ = 1e-4
-    alpha = 1e-4
-    target_acceptance = 0.2
+    potential = potentials.Potential(
+        potentials.DeterminantAlexanderPolynomial, max_size=30
+    ).calc_potential
 
-    (
-        isos_lists,
-        betas_lists,
-        acceptances_lists,
-        final_scores_dict,
-        final_pns_dict,
-        final_counts_unknotted_dict,
-    ) = run_chains(
-        betas_to_run,
-        seed,
-        gamma_,
-        itts,
-        steps,
-        lambda_,
-        alpha,
-        target_acceptance,
-        edge_degree_variance_potential,
+    res = run_chains(
+        betas=[1] * 6,
+        seed="cMcabbgqs",
+        gamma_=0.2,
+        itts=10_000,
+        steps=1,
+        lambda_=1e-4,
+        alpha=1e-4,
+        target_acceptance=0.2,
+        potential=potential,
     )
+
+    isos_lists = res["isos_lists"]
+    betas_lists = res["betas_lists"]
+    acceptances_lists = res["acceptances_lists"]
+    final_scores_dict = res["final_scores"]
+    final_pns_dict = res["final_pns"]
+    final_counts_unknotted_dict = res["final_counts_unknotted"]
 
     print("\n--- Results ---")
     for i, isos in enumerate(isos_lists):
         if isos:
-            print(
-                f"Chain {i+1} (beta={betas_to_run[i]}) ran for {len(isos)} iterations."
-            )
+            print(f"Chain {i+1} ran for {len(isos)} iterations.")
         else:
-            print(f"Chain {i+1} (beta={betas_to_run[i]}) did not run successfully.")
+            print(f"Chain {i+1} did not run successfully.")
 
     print(f"\nFinal shared scores dictionary has {len(final_scores_dict)} entries.")
     print(f"Final shared pns dictionary has {len(final_pns_dict)} entries.")
