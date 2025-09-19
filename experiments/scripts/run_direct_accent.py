@@ -8,7 +8,7 @@ if __name__ == "__main__":
     path = results_path("direct_ascent")
 
     potential = potentials.Potential(
-        potentials.AverageEdgeDegree, max_size=30
+        potentials.AverageEdgeDegree, max_size=None
     ).calc_potential
 
     res = run_accent(

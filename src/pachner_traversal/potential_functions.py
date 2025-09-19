@@ -104,7 +104,7 @@ class Potential:
         edges = regina.Triangulation3.fromIsoSig(iso).countEdges()
         all_knoted = True
 
-        if edges > self.max_size:
+        if (not self.max_size is None) and (edges > self.max_size):
             return -np.inf, 0, 0, False
 
         for i in range(edges):
@@ -141,9 +141,18 @@ class Potential:
 if __name__ == "__main__":
     iso = "cMcabbgqs"
 
-    print('NormAlexanderPolynomial', Potential(NormAlexanderPolynomial).calc_potential(iso)[0])
-    print('DegreeAlexanderPolynomial', Potential(DegreeAlexanderPolynomial).calc_potential(iso)[0])
-    print('DeterminantAlexanderPolynomial', Potential(DeterminantAlexanderPolynomial).calc_potential(iso)[0])
-    print('AverageEdgeDegree', Potential(AverageEdgeDegree).calc_potential(iso)[0])
-    print('VarianceEdgeDegree', Potential(VarianceEdgeDegree).calc_potential(iso)[0])
-    print('NumGenerators', Potential(NumGenerators).calc_potential(iso)[0])
+    print(
+        "NormAlexanderPolynomial",
+        Potential(NormAlexanderPolynomial).calc_potential(iso)[0],
+    )
+    print(
+        "DegreeAlexanderPolynomial",
+        Potential(DegreeAlexanderPolynomial).calc_potential(iso)[0],
+    )
+    print(
+        "DeterminantAlexanderPolynomial",
+        Potential(DeterminantAlexanderPolynomial).calc_potential(iso)[0],
+    )
+    print("AverageEdgeDegree", Potential(AverageEdgeDegree).calc_potential(iso)[0])
+    print("VarianceEdgeDegree", Potential(VarianceEdgeDegree).calc_potential(iso)[0])
+    print("NumGenerators", Potential(NumGenerators).calc_potential(iso)[0])
