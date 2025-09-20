@@ -1,8 +1,11 @@
+import logging
 import multiprocessing
 
 import numpy as np
 
 from .mcmc import iterate
+
+logger = logging.getLogger(__name__)
 
 
 def sample_chain(
@@ -34,7 +37,7 @@ def sample_chain(
     for itt in range(itts):
         if itt % 10_000 == 0:
             if chain_id == 0:
-                print(f"Chain {chain_id}: iteration {itt:,.0f}/{itts:,.0f}")
+                logger.info(f"Chain {chain_id}: iteration {itt:,.0f}/{itts:,.0f}")
         current_iso = isos[-1]
 
         with multiprocessing.Lock() as lock:
@@ -57,12 +60,16 @@ def sample_chain(
                     counts_unknotted[proposed_iso] = count_unknotted
 
                     if all_knoted:
-                        print(f"{proposed_iso}: All knotted, solution found. Exiting.")
+                        logger.critical(
+                            f"{proposed_iso}: All knotted, solution found. Exiting."
+                        )
                         isos.append(proposed_iso)
                         break
                 except Exception as e:
-                    # print(f"Error processing iso {proposed_iso} in score computation. Skipping.")
-                    # print(f"Exception: {e}")
+                    logger.error(
+                        f"Error processing iso {proposed_iso} in score computation. Skipping."
+                    )
+                    logger.error(f"Exception: {e}")
                     continue
 
         if proposed_score > current_score:
@@ -83,8 +90,10 @@ def sample_chain(
                     moving_average = (1 - alpha) * moving_average + alpha * 0.0
                     acceptances.append(0)
             except Exception as e:
-                # print(f"Error in acceptance probability calculation for iso {proposed_iso}. Skipping.")
-                # print(f"Exception: {e}")
+                logger.error(
+                    f"Error in acceptance probability calculation for iso {proposed_iso}. Skipping."
+                )
+                logger.error(f"Exception: {e}")
                 isos.append(current_iso)
                 moving_average = (1 - alpha) * moving_average + alpha * 0.0
                 acceptances.append(0)

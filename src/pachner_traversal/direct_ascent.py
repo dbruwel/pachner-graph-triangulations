@@ -1,3 +1,5 @@
+import functools
+import logging
 import multiprocessing
 
 import numpy as np
@@ -5,12 +7,15 @@ import regina  # type: ignore
 
 from .mcmc import neighbours
 
+logger = logging.getLogger(__name__)
+
 
 def calc_softmax(x, beta):
     e_x = np.exp(beta * (x - np.max(x)))
     return e_x / e_x.sum()
 
 
+@functools.lru_cache(maxsize=1)
 def take_step(iso, potential, beta):
     f_vector = regina.Triangulation3.fromIsoSig(iso).fVector()
     nbrs = neighbours(iso, f_vector, a=1)
@@ -44,6 +49,7 @@ def run_single_accent(base_iso, potential, beta, height=20):
     all_knoteds = []
 
     for _ in range(height):
+        logger.debug(f"Current iso: {iso}")
         iso, score, avg_score, p_knotted, count_unknotted, all_knoted = take_step(
             iso, potential, beta
         )
@@ -58,6 +64,7 @@ def run_single_accent(base_iso, potential, beta, height=20):
 
 
 def run_accent(base_isos, potential, beta, height=20):
+    logger.info(f"Running {len(base_isos)} chains of height {height}.")
     with multiprocessing.Pool() as pool:
         args = [
             (base_iso, potential, beta, height)

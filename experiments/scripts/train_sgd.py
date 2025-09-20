@@ -1,3 +1,4 @@
+import logging
 import pathlib
 import pickle
 from functools import partial
@@ -9,8 +10,11 @@ import optax
 import pandas as pd
 
 from pachner_traversal.data_io import Dataset, Encoder
-from pachner_traversal.transformer import MinimalTrainState, Transformer, train_step
+from pachner_traversal.transformer import (MinimalTrainState, Transformer,
+                                           train_step)
 from pachner_traversal.utils import results_path
+
+logger = logging.getLogger(__name__)
 
 data_path = (
     pathlib.Path(__file__).parent.parent.parent / "data" / "input_data" / "processed"
@@ -62,7 +66,7 @@ def train_model(file_path, save_path, num_test_samps=1_000):
 
     params = model.init({"params": params_key}, sample_batch, training=True)["params"]
 
-    print(
+    logger.info(
         f"Model initialized. Parameter count: {sum(x.size for x in jax.tree_util.tree_leaves(params))}"
     )
 
@@ -82,20 +86,20 @@ def train_model(file_path, save_path, num_test_samps=1_000):
     losses = {}
     test_losses = {}
 
-    print("\n--- Starting Training ---")
+    logger.info("\n--- Starting Training ---")
     for step in range(num_train_steps):
         batch_input, batch_label = encoder.encode(dataset.samp_batch(batch_size))
         state, loss = train_step(state, batch_input, batch_label)
         losses[step] = float(loss)
 
         if (step + 1) % 100 == 0:
-            print(f"Step {step + 1:3d}/{num_train_steps}, Loss: {float(loss):.4f}")
+            logger.info(f"Step {step + 1:3d}/{num_train_steps}, Loss: {float(loss):.4f}")
             test_loss = get_test_loss(
                 state, test_batch_input, test_batch_label, vocab_size
             )
             test_losses[step] = float(test_loss)
 
-    print("\n Training finished.")
+    logger.info("\n Training finished.")
 
     pd.Series(losses).to_csv(save_path + "_train_losses.csv")
     pd.Series(test_losses).to_csv(save_path + "_test_losses.csv")

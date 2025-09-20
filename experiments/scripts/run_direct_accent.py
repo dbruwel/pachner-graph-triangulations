@@ -1,8 +1,12 @@
+import logging
+
 import pandas as pd
 
 import pachner_traversal.potential_functions as potentials
 from pachner_traversal.direct_ascent import run_accent
 from pachner_traversal.utils import results_path
+
+logging.basicConfig(level=logging.INFO)
 
 if __name__ == "__main__":
     path = results_path("direct_ascent")
