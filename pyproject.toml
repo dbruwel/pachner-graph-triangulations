@@ -12,3 +12,9 @@ dependencies = []
 [build-system]
 requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.package-data]
+"pachner_traversal" = ["stylelib/*.mplstyle"]

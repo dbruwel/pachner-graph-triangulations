@@ -1,0 +1,20 @@
+# Use LaTeX for all text
+# text.usetex: True
+
+# Adjust fonts for LaTeX
+# font.family: serif
+# font.serif: Computer Modern Roman
+
+# Customize axes
+axes.spines.top: False
+axes.spines.right: False
+axes.labelsize: 12
+axes.titlesize: 14
+
+# Customize lines
+lines.linewidth: 1.5
+lines.markersize: 5
+
+# Customize ticks
+xtick.labelsize: 10
+ytick.labelsize: 10

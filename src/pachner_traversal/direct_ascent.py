@@ -39,7 +39,7 @@ def take_step(iso, potential, beta):
     return next_sample, score, avg_score, p_knotted, count_unknotted, all_knoted
 
 
-def run_single_accent(base_iso, potential, beta, height=20):
+def run_single_accent(chain_id, base_iso, potential, beta, height=20):
     iso = base_iso
     isos = []
     scores = []
@@ -47,6 +47,8 @@ def run_single_accent(base_iso, potential, beta, height=20):
     p_knotteds = []
     count_unknotteds = []
     all_knoteds = []
+
+    logger.info(f"Running chain {chain_id}, starting at {base_iso}.")
 
     for _ in range(height):
         logger.debug(f"Current iso: {iso}")
@@ -60,15 +62,15 @@ def run_single_accent(base_iso, potential, beta, height=20):
         count_unknotteds.append(count_unknotted)
         all_knoteds.append(all_knoted)
 
-    return isos, scores, avg_scores, p_knotteds, count_unknotteds, all_knoteds
+    return isos, scores, avg_scores, p_knotteds, count_unknotteds, all_knoteds, beta
 
 
-def run_accent(base_isos, potential, beta, height=20):
+def run_accent(base_isos, potential, betas, height=20):
     logger.info(f"Running {len(base_isos)} chains of height {height}.")
     with multiprocessing.Pool() as pool:
         args = [
-            (base_iso, potential, beta, height)
-            for chain_id, base_iso in enumerate(base_isos)
+            (chain_id, base_iso, potential, beta, height)
+            for chain_id, (base_iso, beta) in enumerate(zip(base_isos, betas))
         ]
 
         results = pool.starmap(run_single_accent, args)

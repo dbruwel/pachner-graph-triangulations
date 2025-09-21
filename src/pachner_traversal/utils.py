@@ -2,11 +2,20 @@ import os
 import pathlib
 from datetime import datetime
 
+import matplotlib.pyplot as plt
+
+data_path = pathlib.Path(__file__).parent.parent.parent / "data"
+
 
 def results_path(res_name):
-    src = os.path.abspath(__file__)
-    res_path = pathlib.Path(src).parent.parent.parent / "data" / "results" / res_name
+    res_path = data_path / "results" / res_name
 
     path = res_path / datetime.now().strftime("%Y%m%d_%H%M")
     path.mkdir(parents=True, exist_ok=True)
     return path
+
+
+def set_style():
+    style_path = pathlib.Path(__file__).parent / "stylelib" / "journal.mplstyle"
+
+    plt.style.use(style_path)

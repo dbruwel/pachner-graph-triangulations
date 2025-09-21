@@ -115,8 +115,6 @@ class Dataset:
             return [line.decode("utf-8") for line in lines]
 
     def setup_train_test(self):
-        assert self.num_test_samps < 0.2 * len(self)
-
         self.test_idx = np.random.choice(
             len(self), size=self.num_test_samps, replace=False
         )
@@ -127,9 +125,9 @@ class Dataset:
         self.idx_map = np.vectorize(lambda x: idx_map_dict.get(x, x))
         self.test_data = self.read_lines(self.test_idx)
 
-    def samp_batch_idx(self, batch_size: int = 32):
+    def samp_batch_idx(self, batch_size: int = 32, replace: bool = True):
         train_idx = np.random.choice(
-            len(self) - self.num_test_samps, size=batch_size, replace=True
+            len(self) - self.num_test_samps, size=batch_size, replace=replace
         )
         remap_idx = np.intersect1d(train_idx, self.test_idx)
         if len(remap_idx) > 0:
@@ -141,11 +139,14 @@ class Dataset:
 
         return batch_idx
 
-    def samp_batch(self, batch_size: int = 32):
-        batch_idx = self.samp_batch_idx(batch_size)
+    def samp_batch(self, batch_size: int = 32, replace: bool = True):
+        batch_idx = self.samp_batch_idx(batch_size, replace=replace)
         batch_data = self.read_lines(batch_idx)
 
         return batch_data
+
+    def read_all_data(self):
+        return self.read_lines(np.arange(len(self)))
 
 
 class Encoder:
