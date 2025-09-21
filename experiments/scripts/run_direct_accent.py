@@ -29,7 +29,7 @@ if __name__ == "__main__":
     # betas = [10] * len(base_isos)
 
     potential = potentials.Potential(
-        potentials.DegreeAlexanderPolynomial, max_size=None
+        potentials.VarianceEdgeDegree, max_size=None
     ).calc_potential
 
     res = run_accent(
@@ -52,7 +52,7 @@ if __name__ == "__main__":
         [isos_list[6] for isos_list in isos_lists], columns=["beta"]
     )
 
-    path = results_path(Path("direct_ascent") / "degree_alexander_polynomial")
+    path = results_path(Path("direct_ascent") / "variance_edge_degree")
 
     df_isos.to_csv(path / "isos.csv", index=False)
     df_scores.to_csv(path / "scores.csv", index=False)

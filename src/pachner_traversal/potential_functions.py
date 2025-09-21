@@ -1,9 +1,10 @@
 import numpy as np
 import regina  # type: ignore
 from snappy import Manifold
+from typing import Optional, Type
 
 
-def is_knotted(t):
+def is_knotted(t: regina.Triangulation3) -> bool:
     if t.homology(1).rank() > 1:  # Super fast, but bad
         return True
     elif len(t.fundamentalGroup().relations()) > 0:  # Slowed but better
@@ -93,7 +94,7 @@ class NumGenerators(Score):
 
 
 class Potential:
-    def __init__(self, potential, max_size=30):
+    def __init__(self, potential: Type[Score], max_size: Optional[int] = 30):
         self.max_size = max_size
         self.potential = potential
 
@@ -101,14 +102,14 @@ class Potential:
         scores = []
         knotted = []
 
-        edges = regina.Triangulation3.fromIsoSig(iso).countEdges()
+        edges = regina.engine.Triangulation3.fromIsoSig(iso).countEdges()
         all_knoted = True
 
         if (not self.max_size is None) and (edges > self.max_size):
             return -np.inf, 0, 0, False
 
         for i in range(edges):
-            tri = regina.Triangulation3.fromIsoSig(iso)
+            tri = regina.engine.Triangulation3.fromIsoSig(iso)
             edge = tri.edge(i)
             if not self.potential.pinch_first:
                 score = self.potential.potential(tri, edge)
@@ -125,7 +126,7 @@ class Potential:
                 knotted.append(0)
                 all_knoted = False
 
-            scores.append(score)
+            scores.append(score)  # type: ignore
 
         p_knotted = np.mean(knotted)
         count_unknotted = len(knotted) - np.sum(knotted)

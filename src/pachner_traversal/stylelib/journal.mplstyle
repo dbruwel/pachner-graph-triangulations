@@ -1,9 +1,5 @@
 # Use LaTeX for all text
-# text.usetex: True
-
-# Adjust fonts for LaTeX
-# font.family: serif
-# font.serif: Computer Modern Roman
+text.usetex: True
 
 # Customize axes
 axes.spines.top: False
@@ -12,9 +8,26 @@ axes.labelsize: 12
 axes.titlesize: 14
 
 # Customize lines
-lines.linewidth: 1.5
+lines.linewidth: 0.5
 lines.markersize: 5
 
 # Customize ticks
 xtick.labelsize: 10
 ytick.labelsize: 10
+
+# Other stylistic changes to match the image
+axes.spines.left: True
+axes.spines.bottom: True
+axes.axisbelow: True
+axes.grid: False
+grid.linestyle: --
+legend.fancybox: True
+legend.frameon: True
+legend.shadow: False
+legend.fontsize: 10
+savefig.dpi: 300
+
+xtick.direction: inout
+ytick.direction: inout
+xtick.major.width: 0.3
+ytick.major.width: 0.3

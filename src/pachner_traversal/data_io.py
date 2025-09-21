@@ -1,3 +1,4 @@
+import pathlib
 import h5py
 import numpy as np
 
@@ -41,7 +42,7 @@ def convert_to_hdf5(input_text_file, output_hdf5_file):
 class Dataset:
     def __init__(
         self,
-        hdf5_file: str,
+        hdf5_file: pathlib.Path,
         num_test_samps: int = 1_000,
     ):
         self.hdf5_file = hdf5_file

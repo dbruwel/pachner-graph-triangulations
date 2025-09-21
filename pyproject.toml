@@ -7,7 +7,7 @@ authors = [
 ]
 requires-python = ">=3.11"
 license = { file = "LICENSE" }
-dependencies = []
+dependencies = ["pandas (>=2.3.2,<3.0.0)", "regina (>=7.0)", "snappy (>=3.2,<4.0)", "h5py (>=3.14.0,<4.0.0)"]
 
 [build-system]
 requires = ["setuptools>=61.0"]
@@ -18,3 +18,8 @@ package-dir = {"" = "src"}
 
 [tool.setuptools.package-data]
 "pachner_traversal" = ["stylelib/*.mplstyle"]
+
+[dependency-groups]
+dev = [
+    "ipykernel (>=6.30.1,<7.0.0)"
+]
