@@ -1,10 +1,10 @@
 import math
 import random
 
-from regina import *  # type: ignore
+from regina.engine import Triangulation3
 
 
-def neighbours(iso, f, a):
+def neighbours(iso: str, f: list[int], a: int) -> dict:
     "This function produces a dictionary of all `a`-neighbours (with isomorphism signatures as keys) of triangulation `iso` with f-vector `f`. This function uses non-standard isomorphism signatures and hence requires `regina` version 7.3 or newer."
 
     nbrs = {}
@@ -12,7 +12,7 @@ def neighbours(iso, f, a):
     if a == 1:
         for t in range(f[2]):
             # create copy of tri in standard iso sig labelling
-            target = Triangulation3.fromIsoSig(iso)  # type: ignore
+            target = Triangulation3.fromIsoSig(iso)
             # test if move is possible and if so, perform it
             if target.pachner(target.triangle(t), True, False):
                 target.pachner(target.triangle(t), False, True)
@@ -26,7 +26,7 @@ def neighbours(iso, f, a):
     if a == 2:
         for e in range(f[1]):
             # create copy of tri in standard iso sig labelling
-            target = Triangulation3.fromIsoSig(iso)  # type: ignore
+            target = Triangulation3.fromIsoSig(iso)
             # test if move is possible and if so, perform it
             if target.pachner(target.edge(e), True, False):
                 target.pachner(target.edge(e), False, True)
@@ -37,8 +37,11 @@ def neighbours(iso, f, a):
                     nbrs[tiso] = e
         return nbrs
 
+    else:
+        return {}
 
-def choosemove(iso, f, gamma):
+
+def choosemove(iso: str, f: list[int], gamma: float) -> tuple[str, list[int]]:
     "This function takes a state triangulation given by isomorphism signature `iso` with f-vector `f` and paramter `gamma`. It computes a proposal, enumerates neighbours of `iso` and decides wether to perform the proposed move."
     x = random.random()
     if x < math.exp((-1) * gamma * f[3]):
@@ -79,10 +82,18 @@ def choosemove(iso, f, gamma):
                 f[2] - 2,
                 f[3] - 1,
             ]
-    return None
+    return "", []
 
 
-def randomise(iso, f, steps, gamma, interval, offset, name):
+def randomise(
+    iso: str,
+    f: list[int],
+    steps: int,
+    gamma: float,
+    interval: float,
+    offset: float,
+    name: str,
+) -> bool:
     "This is the main function taking in see triangulation `iso` with f-vector `f`. It performs a random walk in the Pachner graph of length `steps` with parameter `gamma`. Parameter `verbose` decides print behaviour, `name` is the filename for the output file."
     # initialise number of steps
     st = 0
@@ -104,9 +115,9 @@ def randomise(iso, f, steps, gamma, interval, offset, name):
     return True
 
 
-def iterate(iso, gamma, steps=1):
+def iterate(iso: str, gamma: float, steps: int = 1) -> str:
     # initialise number of steps
-    t = Triangulation3.fromIsoSig(iso)  # type: ignore
+    t = Triangulation3.fromIsoSig(iso)
     f = t.fVector()
     samp = 0
 
@@ -120,21 +131,20 @@ def mcmc3d(
 ):
     "Collects 'samples' samples of triangulations by performing a random walk in the Pachner graph starting from 'iso' with parameter `gamma`. offset' is the number of triangulations to be burnt (discarded initially). 'interval' is the number of triangulations between successive samples. Parameter `verbose` decides print behaviour, `printToFile` is the filename for the output file in the folder outputs/."
     # initialise number of steps
-    t = Triangulation3.fromIsoSig(iso)  # type: ignore
+    t = Triangulation3.fromIsoSig(iso)
     f = t.fVector()
     samp = 0
 
     # output
-    if printToFile != False:
-        name = (
-            "outputs/mcmc3d_"
-            + str(printToFile)
-            + "_gamma_"
-            + str(gamma)
-            + "_samples_"
-            + str(samples)
-            + ".txt"
-        )
+    name = (
+        "outputs/mcmc3d_"
+        + str(printToFile)
+        + "_gamma_"
+        + str(gamma)
+        + "_samples_"
+        + str(samples)
+        + ".txt"
+    )
 
     # burn
     if offset > 0:

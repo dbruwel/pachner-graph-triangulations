@@ -1,10 +1,11 @@
-import numpy as np
-import regina  # type: ignore
-from snappy import Manifold
 from typing import Optional, Type
 
+import numpy as np
+import regina
+from snappy import Manifold
 
-def is_knotted(t: regina.Triangulation3) -> bool:
+
+def is_knotted(t: regina.engine.Triangulation3) -> bool:
     if t.homology(1).rank() > 1:  # Super fast, but bad
         return True
     elif len(t.fundamentalGroup().relations()) > 0:  # Slowed but better
@@ -21,7 +22,9 @@ class Score:
     agg_func = None
 
     @staticmethod
-    def potential(tri, edge):
+    def potential(
+        tri: regina.engine.Triangulation3, edge: regina.engine.Face3_1
+    ) -> float:
         raise NotImplementedError
 
 
@@ -30,7 +33,9 @@ class NormAlexanderPolynomial(Score):
     base_score = 1
 
     @staticmethod
-    def potential(tri, edge):
+    def potential(
+        tri: regina.engine.Triangulation3, edge: regina.engine.Face3_1
+    ) -> float:
         m = Manifold(tri)
         coeffs = m.alexander_polynomial().coefficients()
         score = np.dot(coeffs, coeffs)
@@ -42,7 +47,9 @@ class DegreeAlexanderPolynomial(Score):
     base_score = 0
 
     @staticmethod
-    def potential(tri, edge):
+    def potential(
+        tri: regina.engine.Triangulation3, edge: regina.engine.Face3_1
+    ) -> float:
         m = Manifold(tri)
         alex_poly = m.alexander_polynomial()
         score = alex_poly.degree() - alex_poly.valuation()
@@ -54,7 +61,9 @@ class DeterminantAlexanderPolynomial(Score):
     base_score = 1
 
     @staticmethod
-    def potential(tri, edge):
+    def potential(
+        tri: regina.engine.Triangulation3, edge: regina.engine.Face3_1
+    ) -> float:
         m = Manifold(tri)
         alex_poly = m.alexander_polynomial()
         score = np.abs(alex_poly(-1))
@@ -66,7 +75,9 @@ class AverageEdgeDegree(Score):
     base_score = None
 
     @staticmethod
-    def potential(tri, edge):
+    def potential(
+        tri: regina.engine.Triangulation3, edge: regina.engine.Face3_1
+    ) -> float:
         score = edge.degree()
         return score
 
@@ -77,7 +88,9 @@ class VarianceEdgeDegree(Score):
     agg_func = np.var
 
     @staticmethod
-    def potential(tri, edge):
+    def potential(
+        tri: regina.engine.Triangulation3, edge: regina.engine.Face3_1
+    ) -> float:
         score = edge.degree()
         return score
 
@@ -87,7 +100,9 @@ class NumGenerators(Score):
     base_score = 1
 
     @staticmethod
-    def potential(tri, edge):
+    def potential(
+        tri: regina.engine.Triangulation3, edge: regina.engine.Face3_1
+    ) -> float:
         fg = tri.fundamentalGroup()
         score = fg.countGenerators()
         return score
@@ -98,7 +113,9 @@ class Potential:
         self.max_size = max_size
         self.potential = potential
 
-    def calc_potential(self, iso):
+    def calc_potential(
+        self, iso: str
+    ) -> tuple[float | np.floating, float | np.floating, int, bool]:
         scores = []
         knotted = []
 
@@ -106,7 +123,7 @@ class Potential:
         all_knoted = True
 
         if (not self.max_size is None) and (edges > self.max_size):
-            return -np.inf, 0, 0, False
+            return -np.inf, 0.0, 0, False
 
         for i in range(edges):
             tri = regina.engine.Triangulation3.fromIsoSig(iso)

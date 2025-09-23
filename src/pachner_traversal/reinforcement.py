@@ -3,17 +3,19 @@ from functools import partial
 import jax
 import jax.numpy as jnp
 import numpy as np
+
 from .transformer import generate_samples
+from .data_io import Dataset, Encoder
 
 
-def get_scores(samples, dataset, encoder):
+def get_scores(samples: np.ndarray, dataset: Dataset, encoder: Encoder) -> np.ndarray:
     samps_str = encoder.decode(np.array(samples))
     score = np.array([int(samp in dataset) for samp in samps_str])
     return score
 
 
 @partial(jax.jit, static_argnames=["dataset", "encoder"])
-def jax_get_scores(samples, dataset, encoder):
+def jax_get_scores(samples: np.ndarray, dataset: Dataset, encoder: Encoder) -> jax.Array:
     def wrapped_get_scores(samples):
         return get_scores(samples, dataset, encoder)
 

@@ -1,20 +1,22 @@
-import flax
+from typing import Callable
+
 import flax.linen as nn
 import jax
 import jax.numpy as jnp
 import optax
 from flax import struct
+from flax.core.frozen_dict import FrozenDict
 from flax.linen.initializers import normal
 from flax.training import train_state
 
 
 class MinimalTrainState(train_state.TrainState):
-    params: flax.core.FrozenDict
-    apply_fn: callable = struct.field(pytree_node=False)
-    dropout_key: jax.random.PRNGKey
+    params: FrozenDict
+    apply_fn: Callable = struct.field(pytree_node=False)
+    dropout_key: jax.Array
     learning_rate: float = struct.field(pytree_node=False)
-    m_tm1: flax.core.FrozenDict = struct.field(pytree_node=True)
-    v_tm1: flax.core.FrozenDict = struct.field(pytree_node=True)
+    m_tm1: FrozenDict = struct.field(pytree_node=True)
+    v_tm1: FrozenDict = struct.field(pytree_node=True)
     beta_1: float = 0.9
     beta_2: float = 0.99
     eps: float = 1e-8
@@ -22,7 +24,7 @@ class MinimalTrainState(train_state.TrainState):
     weight_decay: float = 0.01
 
 
-def gelu(x):
+def gelu(x: jax.Array) -> jax.Array:
     return (
         0.5
         * x
@@ -36,7 +38,7 @@ class CausalSelfAttention(nn.Module):
     dropout_rate: float = 0.1
 
     @nn.compact
-    def __call__(self, x, training: bool = False):
+    def __call__(self, x: jax.Array, training: bool = False) -> jax.Array:
         B, T, C = (
             x.shape
         )  # Batch size, sequence length, embedding dimensionality (d_model)
@@ -68,7 +70,7 @@ class Block(nn.Module):
     dropout_rate: float = 0.1
 
     @nn.compact
-    def __call__(self, x, training: bool = False):
+    def __call__(self, x: jax.Array, training: bool = False) -> jax.Array:
         attn_output = CausalSelfAttention(
             d_model=self.d_model, num_heads=self.num_heads, name="attn"
         )(nn.LayerNorm(name="ln_1")(x), training=training)
@@ -81,7 +83,7 @@ class Block(nn.Module):
 
         return x
 
-    def mlp(self, x):
+    def mlp(self, x: jax.Array) -> jax.Array:
         d_ff = 4 * self.d_model
         c_fc = nn.Dense(features=d_ff, name="c_fc")
         c_proj = nn.Dense(features=self.d_model, name="c_proj")
@@ -101,7 +103,7 @@ class Transformer(nn.Module):
     dropout_rate: float = 0.1
 
     @nn.compact
-    def __call__(self, idx, training: bool = False):
+    def __call__(self, idx: jax.Array, training: bool = False) -> jax.Array:
         B, T = idx.shape
         assert (
             T <= self.block_size
@@ -140,8 +142,8 @@ class Transformer(nn.Module):
 
 @jax.jit
 def train_step(
-    state: MinimalTrainState, batch_input: jnp.ndarray, batch_labels: jnp.ndarray
-):
+    state: MinimalTrainState, batch_input: jax.Array, batch_labels: jax.Array
+) -> tuple[MinimalTrainState, jax.Array]:
     dropout_key, new_dropout_key = jax.random.split(state.dropout_key)
 
     def loss_fn(params):
@@ -166,7 +168,13 @@ def train_step(
     return new_state, loss
 
 
-def generate_samples(state, samps_to_gen, seq_len, subkey, bos_id):
+def generate_samples(
+    state: MinimalTrainState,
+    samps_to_gen: int,
+    seq_len: int,
+    subkey: jax.Array,
+    bos_id: int,
+) -> jax.Array:
     initial_samples = jnp.zeros((samps_to_gen, seq_len), dtype=jnp.int32)
     initial_samples = initial_samples.at[:, 0].set(bos_id)
 

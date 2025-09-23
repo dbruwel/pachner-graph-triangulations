@@ -3,7 +3,7 @@ import logging
 import multiprocessing
 
 import numpy as np
-import regina  # type: ignore
+import regina
 
 from .mcmc import neighbours
 
@@ -17,7 +17,7 @@ def calc_softmax(x, beta):
 
 @functools.lru_cache(maxsize=1)
 def take_step(iso, potential, beta):
-    f_vector = regina.Triangulation3.fromIsoSig(iso).fVector()
+    f_vector = regina.engine.Triangulation3.fromIsoSig(iso).fVector()
     nbrs = neighbours(iso, f_vector, a=1)
     nbrs = list(nbrs.keys())
     if len(nbrs) == 0:

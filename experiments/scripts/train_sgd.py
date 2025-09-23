@@ -8,10 +8,10 @@ import jax
 import jax.numpy as jnp
 import optax
 import pandas as pd
+from flax.core import freeze
 
 from pachner_traversal.data_io import Dataset, Encoder
-from pachner_traversal.transformer import (MinimalTrainState, Transformer,
-                                           train_step)
+from pachner_traversal.transformer import MinimalTrainState, Transformer, train_step
 from pachner_traversal.utils import results_path
 
 logger = logging.getLogger(__name__)
@@ -23,7 +23,12 @@ save_path = results_path("sgd_models")
 
 
 @partial(jax.jit, static_argnames=["vocab_size"])
-def get_test_loss(state, test_batch_input, test_batch_label, vocab_size):
+def get_test_loss(
+    state: MinimalTrainState,
+    test_batch_input: jax.Array,
+    test_batch_label: jax.Array,
+    vocab_size: int,
+) -> jax.Array:
     test_logits = state.apply_fn(
         {"params": state.params},
         test_batch_input,
@@ -35,7 +40,9 @@ def get_test_loss(state, test_batch_input, test_batch_label, vocab_size):
     return test_loss
 
 
-def train_model(file_path, save_path, num_test_samps=1_000):
+def train_model(
+    file_path: pathlib.Path, save_path: pathlib.Path, num_test_samps: int = 1_000
+) -> None:
     batch_size = 32
 
     dataset = Dataset(file_path, num_test_samps)
@@ -75,8 +82,8 @@ def train_model(file_path, save_path, num_test_samps=1_000):
         apply_fn=model.apply,
         dropout_key=dropout_key,
         learning_rate=learning_rate,
-        m_tm1=flax.core.freeze(jax.tree_util.tree_map(jnp.zeros_like, params)),
-        v_tm1=flax.core.freeze(jax.tree_util.tree_map(jnp.zeros_like, params)),
+        m_tm1=freeze(jax.tree_util.tree_map(jnp.zeros_like, params)),
+        v_tm1=freeze(jax.tree_util.tree_map(jnp.zeros_like, params)),
         t=0,
         tx=optax.adamw(learning_rate=learning_rate, weight_decay=0.01),
     )
@@ -93,7 +100,9 @@ def train_model(file_path, save_path, num_test_samps=1_000):
         losses[step] = float(loss)
 
         if (step + 1) % 100 == 0:
-            logger.info(f"Step {step + 1:3d}/{num_train_steps}, Loss: {float(loss):.4f}")
+            logger.info(
+                f"Step {step + 1:3d}/{num_train_steps}, Loss: {float(loss):.4f}"
+            )
             test_loss = get_test_loss(
                 state, test_batch_input, test_batch_label, vocab_size
             )
@@ -101,10 +110,10 @@ def train_model(file_path, save_path, num_test_samps=1_000):
 
     logger.info("\n Training finished.")
 
-    pd.Series(losses).to_csv(save_path + "_train_losses.csv")
-    pd.Series(test_losses).to_csv(save_path + "_test_losses.csv")
+    pd.Series(losses).to_csv(save_path / "train_losses.csv")
+    pd.Series(test_losses).to_csv(save_path / "test_losses.csv")
 
-    with open(save_path + ".pkl", "wb") as file:
+    with open(save_path / "params.pkl", "wb") as file:
         pickle.dump(state.params, file)
 
 

@@ -1,7 +1,10 @@
 import logging
 import multiprocessing
+from collections.abc import Callable
+from typing import Optional, Any
 
 import numpy as np
+import regina
 
 from .mcmc import iterate
 
@@ -9,19 +12,21 @@ logger = logging.getLogger(__name__)
 
 
 def sample_chain(
-    beta,
-    scores,
-    pns,
-    counts_unknotted,
-    potential,
-    seed="cMcabbgqs",
-    gamma_=1 / 5,
-    itts=1_000,
-    steps=1,
-    chain_id=None,
-    lambda_=1 / 5,
-    alpha=1 / 5,
-    target_acceptance=0.2,
+    beta: float,
+    scores: dict[str, float | np.floating],
+    pns: dict[str, float | np.floating],
+    counts_unknotted: dict[str, int],
+    potential: Callable[
+        [str], tuple[float | np.floating, float | np.floating, int, bool]
+    ],
+    seed: str = "cMcabbgqs",
+    gamma_: float = 1 / 5,
+    itts: int = 1_000,
+    steps: int = 1,
+    chain_id: Optional[int] = None,
+    lambda_: float = 1 / 5,
+    alpha: float = 1 / 5,
+    target_acceptance: float = 0.2,
 ):
     isos = [seed]
     seed_score, seed_pn, seed_count_unknotted, _ = potential(seed)
@@ -105,8 +110,18 @@ def sample_chain(
 
 
 def run_chains(
-    betas, seed, gamma_, itts, steps, lambda_, alpha, target_acceptance, potential
-):
+    betas: list[float | np.floating],
+    potential: Callable[
+        [str], tuple[float | np.floating, float | np.floating, int, bool]
+    ],
+    seed: str = "cMcabbgqs",
+    gamma_: float = 1 / 5,
+    itts: int = 1_000,
+    steps: int = 1,
+    lambda_: float = 1.0,
+    alpha: float = 1 / 5,
+    target_acceptance: float = 0.2,
+) -> dict[str, Any]:
     with multiprocessing.Manager() as manager:
         scores = manager.dict()
         pns = manager.dict()

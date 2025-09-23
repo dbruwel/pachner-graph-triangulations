@@ -1,4 +1,5 @@
 import pathlib
+
 import h5py
 import numpy as np
 
@@ -65,8 +66,8 @@ class Dataset:
 
             for i in range(0, len(self), chunk_size):
                 end_index = min(i + chunk_size, len(self))
-                chunk = dset[i:end_index]
-                for s in chunk:
+                chunk = dset[i:end_index]  # type: ignore
+                for s in chunk:  # type: ignore
                     if s.decode("utf-8") == item:
                         return True
         return False
@@ -79,8 +80,8 @@ class Dataset:
 
             for i in range(0, len(self), chunk_size):
                 end_index = min(i + chunk_size, len(self))
-                chunk = dset[i:end_index]
-                for s in chunk:
+                chunk = dset[i:end_index]  # type: ignore
+                for s in chunk:  # type: ignore
                     chars.update(s.decode("utf-8"))
 
         chars = sorted(list(chars))
@@ -91,13 +92,13 @@ class Dataset:
         max_len = 0
         with h5py.File(self.hdf5_file, "r") as hf:
             dset = hf["isos"]
-            total_strings = dset.shape[0]
+            total_strings = dset.shape[0]  # type: ignore
             chunk_size = 10_000
 
             for i in range(0, total_strings, chunk_size):
                 end_index = min(i + chunk_size, total_strings)
-                chunk = dset[i:end_index]
-                for s in chunk:
+                chunk = dset[i:end_index]  # type: ignore
+                for s in chunk:  # type: ignore
                     max_len = max(max_len, len(s.decode("utf-8")))
 
         return max_len
@@ -105,15 +106,15 @@ class Dataset:
     def get_data_size(self):
         with h5py.File(self.hdf5_file, "r") as hf:
             dset = hf["isos"]
-            data_size = dset.shape[0]
+            data_size = dset.shape[0]  # type: ignore
 
         return data_size
 
     def read_lines(self, indices):
         with h5py.File(self.hdf5_file, "r") as hf:
             dset = hf["isos"]
-            lines = dset[indices]
-            return [line.decode("utf-8") for line in lines]
+            lines = dset[indices]  # type: ignore
+            return [line.decode("utf-8") for line in lines]  # type: ignore
 
     def setup_train_test(self):
         self.test_idx = np.random.choice(

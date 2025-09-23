@@ -13,6 +13,7 @@ if __name__ == "__main__":
 
     res = run_chains(
         betas=[1] * 6,
+        potential=potential,
         seed="cMcabbgqs",
         gamma_=0.2,
         itts=10_000,
@@ -20,7 +21,6 @@ if __name__ == "__main__":
         lambda_=1e-4,
         alpha=1e-4,
         target_acceptance=0.2,
-        potential=potential,
     )
 
     isos_lists = res["isos_lists"]
