@@ -157,7 +157,8 @@ class Potential:
 
 
 if __name__ == "__main__":
-    iso = "cMcabbgqs"
+    # iso = "cMcabbgqs"
+    iso = "pLLLLPMvQAQbcgihjjhnklmmoooarewvdafxfcwfxax"
 
     print(
         "NormAlexanderPolynomial",

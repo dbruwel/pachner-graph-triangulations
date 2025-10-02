@@ -40,7 +40,7 @@ def sample_chain(
     acceptances = [1]
 
     for itt in range(itts):
-        if itt % 10_000 == 0:
+        if itt % 1_000 == 0:
             if chain_id == 0:
                 logger.info(f"Chain {chain_id}: iteration {itt:,.0f}/{itts:,.0f}")
         current_iso = isos[-1]
@@ -50,61 +50,63 @@ def sample_chain(
 
         proposed_iso = iterate(current_iso, gamma_, steps=steps)
         if proposed_iso == current_iso:
-            continue
+            isos.append(proposed_iso)
+            moving_average = (1 - alpha) * moving_average + alpha * 0.0
+            acceptances.append(0)
+        else:
+            with multiprocessing.Lock() as lock:
+                if proposed_iso in scores:
+                    proposed_score = scores[proposed_iso]
+                else:
+                    try:
+                        proposed_score, proposed_pn, count_unknotted, all_knoted = (
+                            potential(proposed_iso)
+                        )
+                        scores[proposed_iso] = proposed_score
+                        pns[proposed_iso] = proposed_pn
+                        counts_unknotted[proposed_iso] = count_unknotted
 
-        with multiprocessing.Lock() as lock:
-            if proposed_iso in scores:
-                proposed_score = scores[proposed_iso]
+                        if all_knoted:
+                            logger.critical(
+                                f"{proposed_iso}: All knotted, solution found. Exiting."
+                            )
+                            isos.append(proposed_iso)
+                            break
+                    except Exception as e:
+                        logger.error(
+                            f"Error processing iso {proposed_iso} in score computation. Skipping."
+                        )
+                        logger.error(f"Exception: {e}")
+                        continue
+
+            if proposed_score > current_score:
+                isos.append(proposed_iso)
+                moving_average = (1 - alpha) * moving_average + alpha * 1.0
+                acceptances.append(1)
             else:
                 try:
-                    proposed_score, proposed_pn, count_unknotted, all_knoted = (
-                        potential(proposed_iso)
-                    )
-                    scores[proposed_iso] = proposed_score
-                    pns[proposed_iso] = proposed_pn
-                    counts_unknotted[proposed_iso] = count_unknotted
+                    p = np.exp(-beta * (current_score - proposed_score))
+                    acc_alpha = np.random.random()
 
-                    if all_knoted:
-                        logger.critical(
-                            f"{proposed_iso}: All knotted, solution found. Exiting."
-                        )
+                    if p > acc_alpha:
                         isos.append(proposed_iso)
-                        break
+                        moving_average = (1 - alpha) * moving_average + alpha * 1.0
+                        acceptances.append(1)
+                    else:
+                        isos.append(current_iso)
+                        moving_average = (1 - alpha) * moving_average + alpha * 0.0
+                        acceptances.append(0)
                 except Exception as e:
                     logger.error(
-                        f"Error processing iso {proposed_iso} in score computation. Skipping."
+                        f"Error in acceptance probability calculation for iso {proposed_iso}. Skipping."
                     )
                     logger.error(f"Exception: {e}")
-                    continue
-
-        if proposed_score > current_score:
-            isos.append(proposed_iso)
-            moving_average = (1 - alpha) * moving_average + alpha * 1.0
-            acceptances.append(1)
-        else:
-            try:
-                p = np.exp(-beta * (current_score - proposed_score))
-                alpha = np.random.random()
-
-                if p > alpha:
-                    isos.append(proposed_iso)
-                    moving_average = (1 - alpha) * moving_average + alpha * 1.0
-                    acceptances.append(1)
-                else:
                     isos.append(current_iso)
                     moving_average = (1 - alpha) * moving_average + alpha * 0.0
                     acceptances.append(0)
-            except Exception as e:
-                logger.error(
-                    f"Error in acceptance probability calculation for iso {proposed_iso}. Skipping."
-                )
-                logger.error(f"Exception: {e}")
-                isos.append(current_iso)
-                moving_average = (1 - alpha) * moving_average + alpha * 0.0
-                acceptances.append(0)
 
-        beta = beta * np.exp(alpha * (moving_average - target_acceptance))
-        betas.append(beta)
+            beta = beta * np.exp(alpha * (moving_average - target_acceptance))
+            betas.append(beta)
 
     return isos, betas, acceptances
 
