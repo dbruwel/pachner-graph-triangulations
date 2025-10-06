@@ -4,6 +4,9 @@
 % \linespread{1.5}
 \usepackage{algorithm}
 \usepackage{algpseudocode}
+\usepackage{enumitem}
+\usepackage{caption}
+\usepackage{subcaption}
 % \includeonly{chapt1}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -575,22 +578,89 @@ The transformer may not generate sequences which represent our target manifold, 
 Once the transformer is generating samples with a relatively high chance of being valid isomorphism signatures, if we have a specific objective function $O:\Delta\to\R$ which we seek to maximise, we can use this score function in the standard reinforcement learning algorithms described in \ref{...}.
 
 \chapter{Numerical Experiments}
-\section{Classical Optimisation on the Alexander Polynomial}
-We consider single vertex triangulations of $S^3$, call the set of all of these $\mathcal{T}_1(S^3)$. For any $\Delta\in\mathcal{T}_1(S^3)$, we can consider an edge $e_\alpha$, because the triangulation has only one vertex, $e_\alpha$ forms a loop. This loop can be knotted in $S^3$. Call the associated knot for $e_\alpha$ $K_\alpha$. The Alexander polynomial $\Delta_{K_\alpha}(t)$ has coefficient vector $\vec{a}=[a_0,a_1,...,a_n]$. It is known that ``more complex'' Alexander polynomials lead to ``more complex'' knots. One example of this is that $2g(K)\geq \deg(\Delta_K(t))$, another is that the determinant $|\Delta_K(-1)|$ related to the knot colouring. This inspires two objective functions on $\mathcal{T}_1(S^3)$ that we may be interested in optimising. Firstly we have $O_{deg}:\mathcal{T}_1(S^3)\to\R$ found by taking the average degree of the Alexander polynomial across all edges. Another is $O_{det}:\mathcal{T}_1(S^3)\to\R$ computed by taking the average determinant of the Alexander polynomial for each edge. We seek to optimise these objectives as they will be correlated with triangulations that have ``more complex'' knot structure.
+\section{Objective Functions}\label{sec:objective-functions}
+To test the effectiveness of our optimisation strategies on triangulations of manifolds, we consider 5 specific objective functions. These objective functions are all considered on single vertex triangulations of $S^3$, call the set of all of these $\mathcal{T}_1(S^3)$.
 
-\subsection{Markov Chain Monte Carlo}
-As a baseline, we use Markov Chain Monte Carlo to generate a sample of triangulations, this is used to examine how much better our search algorithms are compared to the ``average'' triangulation.
+\subsection{Alexander Polynomial}
+For any $T\in\mathcal{T}_1(S^3)$, we can consider an edge $e_\alpha$, because the triangulation has only one vertex, $e_\alpha$ forms a loop. This loop can be knotted in $S^3$. Call the associated knot for $e_\alpha$ $K_\alpha$. The Alexander polynomial $\Delta_{K_\alpha}(t)$ has coefficient vector $\vec{a}=[a_0,a_1,...,a_n]$. It is known that ``more complex'' Alexander polynomials lead to ``more complex'' knots. This notion suggests 3 objective functions of interest.
+
+\begin{enumerate}
+    \item $\mathcal{O}_{deg}:T\mapsto\sum_{e_\alpha} \deg(\Delta_{K_\alpha}(t))$ where because the Alexander polynomial is invariant under multiplication by $\pm t$ we use the difference between the highest and lowest power of $t$.
+    \item $\mathcal{O}_{det}:T\mapsto\sum_{e_\alpha} |\Delta_{K_\alpha}(-1)|$.
+    \item $\mathcal{O}_{norm}:T\mapsto\sum_{e_\alpha} \|\vec{a}\|^2$ where $\vec{a}$ is the coefficient vector of the Alexander polynomial associated with the knot formed by the edge $e_\alpha$ in $S^3$
+\end{enumerate}
+The first of these objective functions, $\mathcal{O}_{deg}$ is motivated by the fact that $2g(K)\geq \deg(\Delta_K(t))$. The second objective function, $\mathcal{O}_{det}$ is motivated by the connection between the determinant $|\Delta_K(-1)|$ and the knot colouring. The third objective function, $\mathcal{O}_{norm}$ is a standard objective function on vectors.
+
+\subsection{Fundamental Group of $T/ e_\alpha$}
+As discussed, for $T\in\mathcal{T}_1(S^3)$, any edge $e_\alpha$ can form a knot. Typically in knot theory we are interested in the study of the knot complement $S^3\backslash K$, however there is a connection between this and the resultant manifold after pinching $e_\alpha$, that is forming $M_\alpha=T/e_\alpha$. As such, there is interest in studying the fundamental group $\pi_1(M_\alpha)$. This inspires our fourth objective function
+\begin{enumerate}[resume]
+    \item $\mathcal{O}_{gen}:T\mapsto\sum_{e_\alpha} \#_{gen}(\pi_1(M_\alpha))$ where $\#_{gen}$ is the number of generators of the presentation of the fundamental group.
+\end{enumerate}
+While we would ideally like to use the reduced presentation of the fundamental group, this is hard* to calculate, so we use the standard presentation returned by ..., as a heuristic, and then perform the full computationally expensive reduction once the results are found.
+
+\subsection{Edge Degree Variance}
+The prior four objective functions are all inspired by the knot structure of our triangulations. While this is of particular interest, we also would like to consider the complexity of the triangulation itself. This inspires us to consider the degree of the edges in our manifold, where the degree of an edge is the number of tetrahedra that share this edge.
+\begin{enumerate}[resume]
+    \item $\mathcal{O}_{var}:T\mapsto \operatorname{Var}_{e_\alpha}(\deg(e_\alpha))$ where we have taken the variance.
+\end{enumerate}
+The choice of variance here instead of the average follows from the fact that the average degree becomes independent of the triangulation structure and instead depends on the topology which is constant for a sphere.
+
+\section{Markov Chain Monte Carlo}
+To establish a baseline for our objective functions, we will run generic Markov Chain Monte Carlo to determine the distribution of our objective function across the Pachner Graph. The MCMC algorithm described by Jonathan samples uniformly around triangulations of a particular number of tetrahedra. We, somewhat arbitrary, choose to examine the Pachner graph around triangulations of 30-tetrahedra. This choice is informed by other results in computational topology that have found interesting triangulations of size less than 30 tetrahedra, and because 30 tetrahedra is intractable to enumerate exhaustively. For each objective function we perform 8 chains of $10,000$ iterations with a step size of $1$.
+
+The distribution for the score for each objective function outlined in section~\ref{sec:objective-functions} is displayed in figure~\ref{fig:mcmc-score-dist}
+
+\begin{figure}[htb]
+    \centering
+    \begin{subfigure}[b]{0.3\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{thesis/usy_mb1_cmyk_stacked_logo.png}
+        \caption{$\mathcal{O}_{deg}$}
+        \label{fig:mcmc-score-dist-deg}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.3\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{thesis/usy_mb1_cmyk_stacked_logo.png}
+        \caption{$\mathcal{O}_{det}$}
+        \label{fig:mcmc-score-dist-det}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.3\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{thesis/usy_mb1_cmyk_stacked_logo.png}
+        \caption{$\mathcal{O}_{norm}$}
+        \label{fig:mcmc-score-dist-norm}
+    \end{subfigure}
+
+    \begin{subfigure}[b]{0.3\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{thesis/usy_mb1_cmyk_stacked_logo.png}
+        \caption{$\mathcal{O}_{gen}$}
+        \label{fig:mcmc-score-dist-gen}
+    \end{subfigure}
+    \begin{subfigure}[b]{0.3\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{thesis/usy_mb1_cmyk_stacked_logo.png}
+        \caption{$\mathcal{O}_{var}$}
+        \label{fig:mcmc-score-dist-var}
+    \end{subfigure}
+    
+    \caption{Distribution of the score for each objective function under MCMC samples at $\gamma=1/5$}
+    \label{fig:mcmc-score-dist}
+\end{figure}
 
 \subsection{Direct Ascent}
-We use the direct accent algorithm as described in section~\ref{...}, starting with the census of all $\Delta\in\mathcal{T}_1(S^3)$ that are formed with 5-tetrahedra. There are ... of these, for each one we perform direct accent for 20 steps to get a triangulation with 25 tetrahedra. This is done with both objective functions for a range of different temperatures.
+We perform direct accent starting from the seed triangulation of .... This seed triangulation has ... tetrahedra, we performed this direct accent multiple times at different temperatures, and compared the maximum achieved score at each level, an example of this is in figure.... In all cases we found that a lower temperature lead to better results, this suggests that the graph is connected enough that greedy ascent is sufficient (that is, the neighbour with the greatest score is accepted at each step). We perform greedy ascent for each objective function for ... steps, the chains are presented in figure .... We see that for .... the ascent profile is rather deterministic, suggesting ... However, for ... we observe a more complex objective function geometry.
 
 \subsection{Simulated Annealing}
-We perform simulated annealing on $O_{det}$ and $O_{deg}$. We use a constant temperature, and a cooling schedule of $...$.
+We perform simulated annealing as described in .... This is done for $10,000$ iterations with a target acceptance rate of $20\%$, this acceptance rate was chosen heuristically based on a number of different smaller experiments. The simulated annealing took ... to run. Initial results showed a ``runaway'' in the size of the triangulations, so the potential was modified to become $-\infty$ if the number of tetrahedra exceeded $30$, thereby being a more fair comparison to the direct accent. The chains for each objective function are plotted in ...
 
-\section{Classical Optimisation on Number of Generators of the Fundamental Group}
+\subsection{Comparison of Classical Optimisation}
+The best result from each optimisation technique is compiled in table ..., this table also includes the number of standard deviations away from the mean as estimated by the MCMC samples. We observe that ... achieves the best score, suggesting .... For the MCMC samples, we perform a ... test for normality and fine a ..., under this assumption of normality, we can estimate the percentile of each maximum obtained by each method, and estimate the expected number of samples required to obtain such a score if random sampling was done. While this normality assumption is weak, and it is likely invalid to extrapolate the distribution so far from the MCMC samples, it provides an estimate of the increased efficiency of the search algorithms.
 
 \section{Baseline Transformer Efficiency on Isomorphism Signatures}
-We are interested in how the efficiency (percentage of valid samples) scales as the number of tetrahedra increases. It is understood that as the number of tetrahedra increases, the percentage of valid triangulations compare to the percentage of writeable isomorphism signatures tends to zero. This means that any naive generation strategy becomes vanishingly unlikely to generate a valid isomorphism signature as the number of tetrahedra grows. We are therefore interested for a transformer of a fixed size, to see what the efficiency is for generating triangulations as the number of triangulations gets larger.
+
 
 
 \chapter{Discussion and Future Work}
