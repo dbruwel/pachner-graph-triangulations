@@ -606,40 +606,58 @@ The prior four objective functions are all inspired by the knot structure of our
 The choice of variance here instead of the average follows from the fact that the average degree becomes independent of the triangulation structure and instead depends on the topology which is constant for a sphere.
 
 \section{Markov Chain Monte Carlo}
-To establish a baseline for our objective functions, we will run generic Markov Chain Monte Carlo to determine the distribution of our objective function across the Pachner Graph. The MCMC algorithm described by Jonathan samples uniformly around triangulations of a particular number of tetrahedra. We, somewhat arbitrary, choose to examine the Pachner graph around triangulations of 30-tetrahedra. This choice is informed by other results in computational topology that have found interesting triangulations of size less than 30 tetrahedra, and because 30 tetrahedra is intractable to enumerate exhaustively. For each objective function we perform 8 chains of $10,000$ iterations with a step size of $1$.
+To establish a baseline for our objective functions, generic Markov Chain Monte Carlo was run to determine the distribution of our objective function across the Pachner Graph. The MCMC algorithm described by Jonathan samples uniformly around triangulations of a particular number of tetrahedra. We, somewhat arbitrary, choose to examine the Pachner graph around triangulations of 30-tetrahedra. This choice is informed by other results in computational topology that have found interesting triangulations of size less than 30 tetrahedra, and because 30 tetrahedra is intractable to enumerate exhaustively. For each objective function we performed $7$ chains of $10,000$ iterations with a step size of $100$. We confirmed convergence with the Gelman-Rubin statistic with a threshold of $1.01$, this threshold is in accordance with modern recommendations. The convergence statistics are in table~\ref{tab:mcmc-convergence}
 
-The distribution for the score for each objective function outlined in section~\ref{sec:objective-functions} is displayed in figure~\ref{fig:mcmc-score-dist}
+\begin{table}[htb]
+    \centering
+    \begin{tabular}{c|c|c}
+        Metric & $\hat{R}$ & ESS \\
+        \hline
+        $\mathcal{O}_{norm}$ & 1.003 & 69,540 \\
+        $\mathcal{O}_{deg}$ & 1.004 & 69,500 \\
+        $\mathcal{O}_{det}$ & 1.005 & 69,319 \\
+        $\mathcal{O}_{var}$ & 1.006 & 69,131 \\
+        $\mathcal{O}_{gen}$ & 1.009 & 68,769
+    \end{tabular}
+    \caption{Convergence statistics of MCMC Runs}
+    \label{tab:mcmc-convergence}
+\end{table}
+
+The distribution for the score for each objective function outlined in section~\ref{sec:objective-functions} is displayed in figure~\ref{fig:mcmc-score-dist}.
+
+Much of the data appears to have a power law distribution, to confirm this we compute $x_\min$ according to Clauset, Shalizi, and Newman, fit the power with MLE and plot on a log-log histogram. This is seen in figure~\ref{fig:mcmc-score-dist-log}
 
 \begin{figure}[htb]
     \centering
-    \begin{subfigure}[b]{0.3\textwidth}
+    \begin{subfigure}[b]{0.45\textwidth}
         \centering
         \includegraphics[width=\textwidth]{thesis/figures/agg_score_alex_deg_hist.png}
         \caption{$\mathcal{O}_{deg}$}
         \label{fig:mcmc-score-dist-deg}
     \end{subfigure}
     \hfill
-    \begin{subfigure}[b]{0.3\textwidth}
+    \begin{subfigure}[b]{0.45\textwidth}
         \centering
         \includegraphics[width=\textwidth]{thesis/figures/agg_score_alex_det_hist.png}
         \caption{$\mathcal{O}_{det}$}
         \label{fig:mcmc-score-dist-det}
     \end{subfigure}
-    \hfill
-    \begin{subfigure}[b]{0.3\textwidth}
+
+    \begin{subfigure}[b]{0.45\textwidth}
         \centering
         \includegraphics[width=\textwidth]{thesis/figures/agg_score_alex_norm_hist.png}
         \caption{$\mathcal{O}_{norm}$}
         \label{fig:mcmc-score-dist-norm}
     \end{subfigure}
-
-    \begin{subfigure}[b]{0.3\textwidth}
+    \hfill
+    \begin{subfigure}[b]{0.45\textwidth}
         \centering
         \includegraphics[width=\textwidth]{thesis/figures/agg_score_num_gen_hist.png}
         \caption{$\mathcal{O}_{gen}$}
         \label{fig:mcmc-score-dist-gen}
     \end{subfigure}
-    \begin{subfigure}[b]{0.3\textwidth}
+    
+    \begin{subfigure}[b]{0.45\textwidth}
         \centering
         \includegraphics[width=\textwidth]{thesis/figures/agg_score_edge_var_hist.png}
         \caption{$\mathcal{O}_{var}$}
@@ -648,6 +666,47 @@ The distribution for the score for each objective function outlined in section~\
     
     \caption{Distribution of the score for each objective function under MCMC samples at $\gamma=1/10$}
     \label{fig:mcmc-score-dist}
+\end{figure}
+
+\begin{figure}[htb]
+    \centering
+    \begin{subfigure}[b]{0.45\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{thesis/figures/agg_score_alex_deg_log_distribution.pdf}
+        \caption{$\mathcal{O}_{deg}$}
+        \label{fig:mcmc-score-dist-log-deg}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.45\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{thesis/figures/agg_score_alex_det_log_distribution.pdf}
+        \caption{$\mathcal{O}_{det}$}
+        \label{fig:mcmc-score-dist-log-det}
+    \end{subfigure}
+
+    \begin{subfigure}[b]{0.45\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{thesis/figures/agg_score_alex_norm_log_distribution.pdf}
+        \caption{$\mathcal{O}_{norm}$}
+        \label{fig:mcmc-score-dist-log-norm}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.45\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{thesis/figures/agg_score_num_gen_log_distribution.pdf}
+        \caption{$\mathcal{O}_{gen}$}
+        \label{fig:mcmc-score-dist-log-gen}
+    \end{subfigure}
+    
+    \begin{subfigure}[b]{0.45\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{thesis/figures/agg_score_edge_var_log_distribution.pdf}
+        \caption{$\mathcal{O}_{var}$}
+        \label{fig:mcmc-score-dist-log-var}
+    \end{subfigure}
+    
+    \caption{Log-log histogram of the score for each objective function under MCMC samples at $\gamma=1/10$. The red line indicates the fitted power law distribution, fitted for $x>x_\min$}
+    \label{fig:mcmc-score-dist-log}
 \end{figure}
 
 \subsection{Direct Ascent}
