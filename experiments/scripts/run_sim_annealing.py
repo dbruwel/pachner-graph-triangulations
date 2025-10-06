@@ -22,7 +22,7 @@ def run_sim_annealing(
         betas=[1] * 6,
         potential=potential,
         seed="cMcabbgqs",
-        gamma_=0.2,
+        gamma_=1 / 10,
         itts=10_000,
         steps=10,
         lambda_=1e-4,
@@ -57,46 +57,52 @@ if __name__ == "__main__":
 
     logger = logging.getLogger(__name__)
 
-    logger.info("Degree of Alexander polynomial potential")
+    logger.info("Percentage knotted potential")
     run_sim_annealing(
-        Path("sim_annealing") / "degree_alexander_polynomial",
-        potentials.Potential(
-            potentials.DegreeAlexanderPolynomial, max_size=30
-        ).calc_potential,
+        Path("sim_annealing") / "percentage_knotted",
+        potentials.Potential(potentials.KnottedFrac, max_size=30).calc_potential,
     )
 
-    logger.info("")
-    logger.info("")
-    logger.info("Determinant of Alexander polynomial potential")
-    run_sim_annealing(
-        Path("sim_annealing") / "determinant_alexander_polynomial",
-        potentials.Potential(
-            potentials.DeterminantAlexanderPolynomial, max_size=30
-        ).calc_potential,
-    )
+    # logger.info("Degree of Alexander polynomial potential")
+    # run_sim_annealing(
+    #     Path("sim_annealing") / "degree_alexander_polynomial",
+    #     potentials.Potential(
+    #         potentials.DegreeAlexanderPolynomial, max_size=30
+    #     ).calc_potential,
+    # )
 
-    logger.info("")
-    logger.info("")
-    logger.info("Norm of Alexander polynomial potential")
-    run_sim_annealing(
-        Path("sim_annealing") / "norm_alexander_polynomial",
-        potentials.Potential(
-            potentials.NormAlexanderPolynomial, max_size=30
-        ).calc_potential,
-    )
+    # logger.info("")
+    # logger.info("")
+    # logger.info("Determinant of Alexander polynomial potential")
+    # run_sim_annealing(
+    #     Path("sim_annealing") / "determinant_alexander_polynomial",
+    #     potentials.Potential(
+    #         potentials.DeterminantAlexanderPolynomial, max_size=30
+    #     ).calc_potential,
+    # )
 
-    logger.info("")
-    logger.info("")
-    logger.info("Number of generators potential")
-    run_sim_annealing(
-        Path("sim_annealing") / "number_of_generators",
-        potentials.Potential(potentials.NumGenerators, max_size=30).calc_potential,
-    )
+    # logger.info("")
+    # logger.info("")
+    # logger.info("Norm of Alexander polynomial potential")
+    # run_sim_annealing(
+    #     Path("sim_annealing") / "norm_alexander_polynomial",
+    #     potentials.Potential(
+    #         potentials.NormAlexanderPolynomial, max_size=30
+    #     ).calc_potential,
+    # )
 
-    logger.info("")
-    logger.info("")
-    logger.info("Variance of edge degree potential")
-    run_sim_annealing(
-        Path("sim_annealing") / "variance_edge_degree",
-        potentials.Potential(potentials.VarianceEdgeDegree, max_size=30).calc_potential,
-    )
+    # logger.info("")
+    # logger.info("")
+    # logger.info("Number of generators potential")
+    # run_sim_annealing(
+    #     Path("sim_annealing") / "number_of_generators",
+    #     potentials.Potential(potentials.NumGenerators, max_size=30).calc_potential,
+    # )
+
+    # logger.info("")
+    # logger.info("")
+    # logger.info("Variance of edge degree potential")
+    # run_sim_annealing(
+    #     Path("sim_annealing") / "variance_edge_degree",
+    #     potentials.Potential(potentials.VarianceEdgeDegree, max_size=30).calc_potential,
+    # )

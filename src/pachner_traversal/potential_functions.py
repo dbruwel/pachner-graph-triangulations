@@ -6,20 +6,14 @@ from snappy import Manifold
 
 
 def is_knotted(t: regina.engine.Triangulation3) -> bool:
-    if t.homology(1).rank() > 1:  # Super fast, but bad
-        return True
-    elif len(t.fundamentalGroup().relations()) > 0:  # Slowed but better
-        return True
-    elif not t.isSolidTorus():  # Super slow but perfect
-        return True
-    else:
-        return False
+    return not t.isSolidTorus()
 
 
 class Score:
     pinch_first = True
     base_score = 0
     agg_func = None
+    print_name = "score"
 
     @staticmethod
     def potential(
@@ -31,6 +25,7 @@ class Score:
 class NormAlexanderPolynomial(Score):
     pinch_first = True
     base_score = 1
+    print_name = "norm_alex_poly"
 
     @staticmethod
     def potential(
@@ -45,6 +40,7 @@ class NormAlexanderPolynomial(Score):
 class DegreeAlexanderPolynomial(Score):
     pinch_first = True
     base_score = 0
+    print_name = "deg_alex_poly"
 
     @staticmethod
     def potential(
@@ -59,6 +55,7 @@ class DegreeAlexanderPolynomial(Score):
 class DeterminantAlexanderPolynomial(Score):
     pinch_first = True
     base_score = 1
+    print_name = "det_alex_poly"
 
     @staticmethod
     def potential(
@@ -73,6 +70,7 @@ class DeterminantAlexanderPolynomial(Score):
 class AverageEdgeDegree(Score):
     pinch_first = False
     base_score = None
+    print_name = "avg_edge_deg"
 
     @staticmethod
     def potential(
@@ -86,6 +84,7 @@ class VarianceEdgeDegree(Score):
     pinch_first = False
     base_score = None
     agg_func = np.var
+    print_name = "var_edge_deg"
 
     @staticmethod
     def potential(
@@ -98,6 +97,7 @@ class VarianceEdgeDegree(Score):
 class NumGenerators(Score):
     pinch_first = True
     base_score = 1
+    print_name = "num_gens"
 
     @staticmethod
     def potential(
@@ -106,6 +106,17 @@ class NumGenerators(Score):
         fg = tri.fundamentalGroup()
         score = fg.countGenerators()
         return score
+
+class KnottedFrac(Score):
+    pinch_first = True
+    base_score = 0
+    print_name = "knotted_frac"
+
+    @staticmethod
+    def potential(
+        tri: regina.engine.Triangulation3, edge: regina.engine.Face3_1
+    ) -> float:
+        return 1
 
 
 class Potential:
@@ -154,6 +165,75 @@ class Potential:
             agg_score = np.mean(scores)
 
         return agg_score, p_knotted, count_unknotted, all_knoted
+
+
+def calc_composite_potential(iso):
+    scores_alex_norm = []
+    scores_alex_deg = []
+    scores_alex_det = []
+    scores_edge_var = []
+    scores_num_gen = []
+
+    knotted = []
+
+    edges = regina.engine.Triangulation3.fromIsoSig(iso).countEdges()
+    all_knoted = True
+
+    for i in range(edges):
+        tri = regina.engine.Triangulation3.fromIsoSig(iso)
+        edge = tri.edge(i)
+        score_edge_var = VarianceEdgeDegree.potential(tri, edge)
+
+        tri.pinchEdge(edge)
+        try:
+            if is_knotted(tri):
+                m = Manifold(tri)
+                alex_poly = m.alexander_polynomial()
+                coeffs = alex_poly.coefficients()
+
+                score_alex_norm = np.dot(coeffs, coeffs)
+                score_alex_deg = alex_poly.degree() - alex_poly.valuation()
+                score_alex_det = np.abs(alex_poly(-1))
+                score_num_gen = NumGenerators.potential(tri, edge)
+                knotted.append(1)
+            else:
+                score_alex_norm = NormAlexanderPolynomial.base_score
+                score_alex_deg = DegreeAlexanderPolynomial.base_score
+                score_alex_det = DeterminantAlexanderPolynomial.base_score
+                score_num_gen = NumGenerators.base_score
+                knotted.append(0)
+                all_knoted = False
+        except Exception as e:
+            import pdb
+
+            pdb.set_trace()
+            raise RuntimeError()
+
+        scores_alex_norm.append(score_alex_norm)
+        scores_alex_deg.append(score_alex_deg)
+        scores_alex_det.append(score_alex_det)
+        scores_edge_var.append(score_edge_var)
+        scores_num_gen.append(score_num_gen)
+
+    agg_score_alex_norm = np.mean(scores_alex_norm)
+    agg_score_alex_deg = np.mean(scores_alex_deg)
+    agg_score_alex_det = np.mean(scores_alex_det)
+    agg_score_edge_var = np.var(scores_edge_var)
+    agg_score_num_gen = np.mean(scores_num_gen)
+
+    p_knotted = np.mean(knotted)
+    count_unknotted = len(knotted) - np.sum(knotted)
+
+    return (
+        agg_score_alex_norm,
+        agg_score_alex_deg,
+        agg_score_alex_det,
+        agg_score_edge_var,
+        agg_score_num_gen,
+        p_knotted,
+        count_unknotted,
+        all_knoted,
+    )
 
 
 if __name__ == "__main__":

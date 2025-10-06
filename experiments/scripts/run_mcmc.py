@@ -1,67 +1,37 @@
 import logging
 import multiprocessing
-from collections.abc import Callable
+import time
+from datetime import datetime
 from pathlib import Path
-from typing import Any, Optional
 
 import numpy as np
 import pandas as pd
 
-import pachner_traversal.potential_functions as potentials
 from pachner_traversal.mcmc import iterate
+from pachner_traversal.potential_functions import calc_composite_potential
 from pachner_traversal.utils import results_path
 
 logger = logging.getLogger(__name__)
-logging.basicConfig(level=logging.INFO)
 
 
 def sample_chain(
-    scores: dict[str, float | np.floating],
-    pns: dict[str, float | np.floating],
-    counts_unknotted: dict[str, int],
-    potential: Callable[
-        [str], tuple[float | np.floating, float | np.floating, int, bool]
-    ],
-    seed: str = "cMcabbgqs",
-    gamma_: float = 1 / 5,
-    itts: int = 1_000,
-    steps: int = 1,
-    chain_id: Optional[int] = None,
+    seed: str,
+    gamma_: float,
+    itts: int,
+    steps: int,
+    chain_id: int,
 ):
     isos = [seed]
-    seed_score, seed_pn, seed_count_unknotted, _ = potential(seed)
-
-    scores[seed] = seed_score
-    pns[seed] = seed_pn
-    counts_unknotted[seed] = seed_count_unknotted
 
     for itt in range(itts):
-        if itt % 10_000 == 0:
+        if (itt % 1_000 == 0) or (itt < 100 and itt % 10 == 0):
             if chain_id == 0:
-                logger.info(f"Chain {chain_id}: iteration {itt:,.0f}/{itts:,.0f}")
+                logger.info(
+                    f"Chain {chain_id}: iteration {itt:,.0f}/{itts:,.0f} at {datetime.now().strftime('%H:%M:%S')}"
+                )
         current_iso = isos[-1]
 
         proposed_iso = iterate(current_iso, gamma_, steps=steps)
-
-        with multiprocessing.Lock() as lock:
-            if proposed_iso in scores:
-                proposed_score = scores[proposed_iso]
-            else:
-                try:
-                    proposed_score, proposed_pn, count_unknotted, _ = potential(
-                        proposed_iso
-                    )
-                    scores[proposed_iso] = proposed_score
-                    pns[proposed_iso] = proposed_pn
-                    counts_unknotted[proposed_iso] = count_unknotted
-
-                except Exception as e:
-                    logger.error(
-                        f"Error processing iso {proposed_iso} in score computation. Skipping."
-                    )
-                    logger.error(f"Exception: {e}")
-                    continue
-
         isos.append(proposed_iso)
 
     return isos
@@ -69,108 +39,129 @@ def sample_chain(
 
 def run_chains(
     num_chains: int,
-    potential: Callable[
-        [str], tuple[float | np.floating, float | np.floating, int, bool]
-    ],
-    seed: str = "cMcabbgqs",
-    gamma_: float = 1 / 5,
-    itts: int = 1_000,
-    steps: int = 1,
-) -> dict[str, Any]:
-    logger.info(f"Running {num_chains} chains with {itts} iterations each.")
+    seed: str,
+    gamma_: float,
+    itts: int,
+    steps: int,
+) -> list[list[str]]:
+    logger.info(f"Running {num_chains:,.0f} chains with {itts:,.0f} iterations each.")
 
-    with multiprocessing.Manager() as manager:
-        scores = manager.dict()
-        pns = manager.dict()
-        counts_unknotted = manager.dict()
+    with multiprocessing.Pool(processes=num_chains) as pool:
+        args = [
+            (
+                seed,
+                gamma_,
+                itts,
+                steps,
+                chain_id,
+            )
+            for chain_id in range(num_chains)
+        ]
 
-        with multiprocessing.Pool(processes=num_chains) as pool:
-            args = [
-                (
-                    scores,
-                    pns,
-                    counts_unknotted,
-                    potential,
-                    seed,
-                    gamma_,
-                    itts,
-                    steps,
-                    chain_id,
-                )
-                for chain_id in range(num_chains)
-            ]
+        isos_lists = pool.starmap(sample_chain, args)
 
-            isos_lists = pool.starmap(sample_chain, args)
-
-        final_scores = dict(scores)
-        final_pns = dict(pns)
-        final_num_unk = dict(counts_unknotted)
-
-    return {
-        "isos_lists": isos_lists,
-        "final_scores": final_scores,
-        "final_pns": final_pns,
-        "final_num_unk": final_num_unk,
-    }
+    return isos_lists
 
 
 def run_mcmc(
     res_path: Path,
-    potential: Callable[
-        [str], tuple[float | np.floating[Any], float | np.floating[Any], int, bool]
-    ],
-) -> None:
-    path = results_path(res_path)
-
+    num_chains: int,
+    gamma_: float,
+    itts: int,
+    steps: int,
+) -> tuple[pd.DataFrame, Path]:
     results = run_chains(
-        num_chains=7,
-        potential=potential,
+        num_chains=num_chains,
         seed="cMcabbgqs",
-        itts=10_000,
-        steps=1,
+        gamma_=gamma_,
+        itts=itts,
+        steps=steps,
     )
 
-    isos_lists_df = pd.DataFrame(results["isos_lists"]).T
-    final_scores_df = pd.Series(results["final_scores"]).rename("score")
-    final_pns_df = pd.Series(results["final_pns"]).rename("p_n")
-    final_final_num_unk_df = pd.Series(results["final_num_unk"]).rename("num_unk")
+    path = results_path(res_path)
 
+    isos_lists_df = pd.DataFrame(results).T
     isos_lists_df.to_csv(path / "isos_lists.csv", index=False)
-    final_scores_df.to_csv(path / "final_scores.csv", index=True)
-    final_pns_df.to_csv(path / "final_pns.csv", index=True)
-    final_final_num_unk_df.to_csv(path / "final_num_unk.csv", index=True)
+    return isos_lists_df, path
+
+
+def get_score(
+    save_path: Path, isos_list_df: pd.DataFrame, restart: bool = True
+) -> pd.DataFrame | None:
+    unique_isos = np.unique(isos_list_df.values.flatten())
+    logger.info(
+        f"Calculating composite potential for {len(unique_isos):,} unique isomorphisms."
+    )
+    if restart:
+        logger.info(
+            "Restarting calculation. Will overwrite existing scores if file is present."
+        )
+    else:
+        try:
+            existing_scores = pd.read_csv(
+                save_path / "composite_scores.csv", index_col="iso"
+            )
+            unique_isos = np.setdiff1d(unique_isos, existing_scores.index)
+            logger.info(
+                f"Found {len(existing_scores)} existing scores. Remaining: {len(unique_isos)}"
+            )
+        except FileNotFoundError:
+            logger.info("No existing scores found. Calculating all scores.")
+
+    for start in range(0, len(unique_isos), 100):
+        end = min(start + 100, len(unique_isos))
+
+        logger.info(f"Calculating composite potential for isos {start:,} to {end:,}")
+
+        data = {iso: calc_composite_potential(iso) for iso in unique_isos[start:end]}
+        scores = pd.DataFrame.from_dict(
+            data,
+            orient="index",
+            columns=[
+                "agg_score_alex_norm",
+                "agg_score_alex_deg",
+                "agg_score_alex_det",
+                "agg_score_edge_var",
+                "agg_score_num_gen",
+                "p_knotted",
+                "count_unknotted",
+                "all_knoted",
+            ],
+        )
+        if start == 0 and restart:
+            scores.to_csv(save_path / f"composite_scores.csv", index_label="iso")
+        else:
+            scores.to_csv(save_path / f"composite_scores.csv", mode="a", header=False)
 
 
 if __name__ == "__main__":
-    run_mcmc(
-        Path("mcmc") / "degree_alexander_polynomial",
-        potentials.Potential(
-            potentials.DegreeAlexanderPolynomial, max_size=None
-        ).calc_potential,
-    )
+    logging.basicConfig(level=logging.INFO)
 
-    run_mcmc(
-        Path("mcmc") / "determinant_alexander_polynomial",
-        potentials.Potential(
-            potentials.DeterminantAlexanderPolynomial, max_size=None
-        ).calc_potential,
-    )
+    # save_path = Path("mcmc") / "generic_samples"
 
-    run_mcmc(
-        Path("mcmc") / "norm_alexander_polynomial",
-        potentials.Potential(
-            potentials.NormAlexanderPolynomial, max_size=None
-        ).calc_potential,
-    )
+    # isos_lists_df, path = run_mcmc(
+    #     save_path,
+    #     num_chains=7,
+    #     gamma_=1 / 10,
+    #     itts=10_000,
+    #     steps=100,
+    # )
+    # logger.info(f"Saved MCMC samples to {path}")
 
-    run_mcmc(
-        Path("mcmc") / "number_of_generators",
-        potentials.Potential(potentials.NumGenerators, max_size=None).calc_potential,
+    path = (
+        Path("~")
+        / "main"
+        / "honours"
+        / "pachner_graph_triangulations"
+        / "data"
+        / "results"
+        / "mcmc"
+        / "generic_samples"
+        / "20251004_1845"
     )
+    isos_lists_df = pd.read_csv(path / "isos_lists.csv")
 
-    run_mcmc(
-        Path("mcmc") / "variance_edge_degree",
-        potentials.Potential(
-            potentials.VarianceEdgeDegree, max_size=None
-        ).calc_potential,
-    )
+    start_time = time.time()
+    get_score(path, isos_lists_df, restart=False)
+    end_time = time.time()
+    logger.info(f"Time taken: {end_time - start_time:.2f} seconds")
