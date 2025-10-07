@@ -1,0 +1,271 @@
+\documentclass[aspectratio=169]{beamer}
+
+% --- Preamble Settings ---
+
+% Theme and Color
+% 'Boadilla' is a clean, minimal theme.
+\usetheme{Boadilla}
+% You might want a slightly darker colour for maths
+\usecolortheme{whale}
+
+
+% Packages for Math and Text
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage{amsthm} % For theorem environments if you don't use beamer's built-in ones
+\usepackage{graphicx} % For images
+\usepackage{hyperref} % For links
+\usepackage{subcaption}
+\usepackage[backend=biber,style=authoryear]{biblatex}
+
+\addbibresource{presentation/ref.bib} % link to .bib file
+
+% --- USYD Specific Information ---
+\title[Pure Maths Honours]{Navigating the Pachner Graph}
+\subtitle{Algorithms for Searching and Sampling Triangulations}
+\author{Daniel Bruwel}
+\institute[USYD]{
+    School of Mathematics and Statistics\\
+    Faculty of Science\\
+    The University of Sydney
+}
+\date{October 16, 2025}
+\logo{\includegraphics[height=1cm]{presentation/usy_mb1_cmyk_stacked_logo.png}}
+
+% --- Custom Environments (for Maths) ---
+% \newtheorem{theorem}{Theorem}
+% \newtheorem{lemma}[theorem]{Lemma}
+% \newtheorem{definition}{Definition}
+\newtheorem{proposition}[theorem]{Proposition}
+% \newtheorem{corollary}[theorem]{Corollary}
+\theoremstyle{remark}
+\newtheorem{remark}{Remark}
+
+% --- Start Document ---
+\begin{document}
+
+% -------------------------
+% 1. Title Page
+% -------------------------
+\begin{frame}
+    \titlepage
+\end{frame}
+
+% -------------------------
+% 2. Table of Contents
+% -------------------------
+\begin{frame}{Outline}
+    \tableofcontents
+\end{frame}
+
+% -------------------------
+% 3. Background
+% -------------------------
+\section{Background}
+\begin{frame}{Manifold}
+    \begin{itemize}
+        \item Locally looks like $\mathbb{R}^n$
+        \item Different points can be distinguished
+        \item The space is not unmanageably large
+    \end{itemize}
+\end{frame}
+\begin{frame}{Manifold}
+    \begin{Definition}[Locally Euclidean]
+        A topological space $(X, \tau)$ is called ``locally Euclidean'' if there exists an integer $n>0$ such that every point has a neighbourhood that is homeomorphic to $\mathbb{R}^n$.
+    \end{Definition}
+    \begin{Definition}[Manifold]
+        A topological space $(M, \tau)$ is called a ``manifold'' if it is Hausdorff, second countable, and locally Euclidean.
+    \end{Definition}
+\end{frame}
+\begin{frame}{Manifold}
+    \begin{figure}
+        \centering
+        \includegraphics[width=0.8\linewidth]{presentation/figures/example_manifolds.png}
+        \caption{Examples of manifolds from \cite{deng_2020}}
+        \label{fig:example-manifolds}
+    \end{figure}
+\end{frame}
+
+\begin{frame}{Triangulation}
+    \begin{Definition}[Triangulation]
+        A triangulation of a manifold $M$ is a homeomorphism between a simplicial complex $|A|\to M$
+    \end{Definition}
+\end{frame}
+\begin{frame}{Triangulation}
+    \begin{figure}
+        \centering
+        \includegraphics[width=0.5\linewidth]{presentation/figures/example_triangulation.png}
+        \caption{Example triangulation of $T^2$ from \cite{ag2gaeh_2014}}
+        \label{fig:example-triangulation}
+    \end{figure}
+\end{frame}
+\begin{frame}{Triangulation}
+    We do not require that the simplices all have unique vertices.
+\end{frame}
+
+\begin{frame}{$S^3$}
+We can understand $S^3$ as $\mathbb{R}^3$ with a point at infinity.
+    \begin{figure}
+        \centering
+        \includegraphics[width=0.3\linewidth]{presentation/figures/s1_as_r1.png}
+        \caption{Representation of $S^1\cong \mathbb{R}^1\cup\{\infty\}$ from \cite{davis_2007}}
+        \label{fig:s1-as-r1}
+    \end{figure}
+\end{frame}
+
+\begin{frame}{Knots}
+    \begin{itemize}
+        \item Take an infinitely long piece of string and knot it
+        \item Because the string is infinite, consider it as being inside $S^3$
+        \item The string extends out to the point at infinity in both directions so forms a copy of $S^1$
+        \item Two knots are the same if we can move the string around to get them, without passing the string through itself.
+    \end{itemize}
+\end{frame}
+\begin{frame}{Knots}
+    \begin{Definition}[Knot]
+        A knot $K$ is an embedding of $S^1$ in $S^3$. 
+    \end{Definition}
+    \begin{Definition}[Knot Equivalence]
+        Two knots are equivalent if they can be connected via ambient isotopy. 
+    \end{Definition}
+\end{frame}
+\begin{frame}{Knots}
+    \begin{figure}
+        \centering
+        \begin{minipage}{0.8\textwidth}
+        \begin{subfigure}[b]{0.45\linewidth}
+        \includegraphics[width=\textwidth]{presentation/figures/unknot.png}
+        \caption{The Unknot form \cite{belk_2009}}
+        \label{fig:unkot}
+        \end{subfigure}
+        \hfill
+        \begin{subfigure}[b]{0.45\linewidth}
+        \includegraphics[width=\textwidth]{presentation/figures/trefoil.png}
+        \caption{The Trefoil knot form \cite{belk_2010}}
+        \label{fig:trefoil}
+        \end{subfigure}
+        \end{minipage}
+    \end{figure}
+\end{frame}
+
+\begin{frame}{Triangulation-knot connection}
+    \begin{itemize}
+        \item Start with a 1-vertex ($v$) triangulation of $S^3$
+        \item Consider the edges starting and ending at $v$, they are $S^1$
+        \item The edges correspond to knots. 
+    \end{itemize}
+\end{frame}
+\begin{frame}{Triangulation-knot connection}
+    \begin{Theorem}[\cite{haken_1961}]
+        Every knot in $S^3$ can be realised as an edge in a triangulation of $S^3$
+    \end{Theorem}
+    \begin{proof}
+        \textbf{Idea:} Take $S^3\backslash \nu(K)$ where $\nu$ is a tubular neighbourhood. This space can be triangulated, Fill in the tubular neighbourhood with a solid torus, the knot now exists as a series of edges. Collapse the triangulation to one vertex. 
+    \end{proof}
+\end{frame}
+
+\begin{frame}{Pachner Moves / Graph}
+    \begin{figure}
+        \centering
+        \includegraphics[width=0.5\linewidth]{presentation/figures/2_2_pachner_move.PNG}
+        \caption{(2-2) Pachner move for a triangulation of a 2-manifold.}
+        \label{fig:placeholder}
+    \end{figure}
+\end{frame}
+\begin{frame}{Pachner Moves / Graph}
+    \begin{figure}
+        \centering
+        \includegraphics[width=0.5\linewidth]{presentation/figures/2_3_pachner_move.png}
+        \caption{(2-3) Pachner move for a triangulation of a 3-manifold from \cite{bene_2015}}
+        \label{fig:placeholder}
+    \end{figure}
+\end{frame}
+
+% -------------------------
+% 4. Problem
+% -------------------------
+\section{Problem}
+\begin{frame}{Problem Idea}
+    Find triangulations that have many complex knots in them.
+\end{frame}
+
+\begin{frame}{Objective Function}
+    \begin{itemize}
+        \item Need to define complexity of a knot. The polynomial $\Delta_K(t)$ is a good candidate.
+        \item Use $\deg(\Delta_K(t))$ as a numeric measure of complexity.
+        \item Compute for all edges and average to get objective function.
+    \end{itemize}
+\end{frame}
+\begin{frame}{Objective Function}
+    \begin{Definition}[Alexander Polynomial]
+        The Alexander Polynomial $\Delta_K(t)$ is the generator of the first elementary ideal of the action of the deck transformations on the first homology of the infinite cyclic cover of the knot complement.
+    \end{Definition}
+    $\Delta_K(t)$ is a knot invariant. 
+    
+    E.g. for the unknot $\Delta_K(t)=1$, for the trefoil $\Delta_K(t)=t^2-t+1$
+\end{frame}
+\begin{frame}{Objective Function}
+    \begin{align}
+        \mathcal{O}&:T_1(S^3)\to\mathbb{R} \\
+        &: T\mapsto \frac{1}{|E(T)|}\sum_{e\in E(T)} \deg{(\Delta_e(t))}
+    \end{align}
+    Viewing each edge $e\in E(T)$ as a knot in $S^3$.
+\end{frame}
+
+\begin{frame}{Problem Formulation}
+    \centering
+    Our goal is to find triangulations where $\mathcal{O}$ is large.
+\end{frame}
+
+% -------------------------
+% 5. Methods and Results
+% -------------------------
+\section{Methods and Results}
+\subsection{Classical}
+\begin{frame}{MCMC}
+
+\end{frame}
+
+\begin{frame}{Greedy Search}
+
+\end{frame}
+
+\begin{frame}{Simulated Annealing}
+
+\end{frame}
+
+\subsection{Machine Learning}
+\begin{frame}{Gradient Descent}
+
+\end{frame}
+
+\section{Conclusion and Future Work}
+\begin{frame}{Summary and Conclusion}
+    
+\end{frame}
+
+\begin{frame}{Future Work}
+    
+\end{frame}
+
+% -------------------------
+% 6. Bibliography/Acknowledgements
+% -------------------------
+\section{References and Acknowledgements}
+
+\begin{frame}[allowframebreaks]{References}
+    \printbibliography
+\end{frame}
+
+\begin{frame}{Acknowledgements}
+    \begin{center}
+        \textbf{Thank You!}
+
+        \vspace{1cm}
+        
+        \textbf{Questions?}
+    \end{center}
+\end{frame}
+
+\end{document}
