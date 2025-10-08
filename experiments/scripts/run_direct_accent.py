@@ -18,14 +18,14 @@ def run_direct_accent(
         [str], tuple[float | np.floating[Any], float | np.floating[Any], int, bool]
     ],
 ) -> None:
-    base_isos = ["cMcabbgqs"] * 5
-    betas = [10] * 5
+    base_isos = ["cMcabbgqs"] * 100
+    betas = [np.sqrt(0.1)] * 20 + [0.1] * 20 + [1] * 20 + [np.sqrt(10)] * 20 + [10] * 20
 
     res = run_accent(
         base_isos=base_isos,
         potential=potential,
         betas=betas,
-        height=30,
+        height=28,
     )
 
     isos_lists = res
@@ -60,28 +60,28 @@ if __name__ == "__main__":
         ).calc_potential,
     )
 
-    run_direct_accent(
-        Path("direct_ascent") / "determinant_alexander_polynomial",
-        potentials.Potential(
-            potentials.DeterminantAlexanderPolynomial, max_size=None
-        ).calc_potential,
-    )
+    # run_direct_accent(
+    #     Path("direct_ascent") / "determinant_alexander_polynomial",
+    #     potentials.Potential(
+    #         potentials.DeterminantAlexanderPolynomial, max_size=None
+    #     ).calc_potential,
+    # )
 
-    run_direct_accent(
-        Path("direct_ascent") / "norm_alexander_polynomial",
-        potentials.Potential(
-            potentials.NormAlexanderPolynomial, max_size=None
-        ).calc_potential,
-    )
+    # run_direct_accent(
+    #     Path("direct_ascent") / "norm_alexander_polynomial",
+    #     potentials.Potential(
+    #         potentials.NormAlexanderPolynomial, max_size=None
+    #     ).calc_potential,
+    # )
 
-    run_direct_accent(
-        Path("direct_ascent") / "number_of_generators",
-        potentials.Potential(potentials.NumGenerators, max_size=None).calc_potential,
-    )
+    # run_direct_accent(
+    #     Path("direct_ascent") / "number_of_generators",
+    #     potentials.Potential(potentials.NumGenerators, max_size=None).calc_potential,
+    # )
 
-    run_direct_accent(
-        Path("direct_ascent") / "variance_edge_degree",
-        potentials.Potential(
-            potentials.VarianceEdgeDegree, max_size=None
-        ).calc_potential,
-    )
+    # run_direct_accent(
+    #     Path("direct_ascent") / "variance_edge_degree",
+    #     potentials.Potential(
+    #         potentials.VarianceEdgeDegree, max_size=None
+    #     ).calc_potential,
+    # )
