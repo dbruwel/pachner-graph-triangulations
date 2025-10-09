@@ -25,8 +25,11 @@ def take_step(iso, potential, beta):
         return iso, p0[0], p0[0], p0[1], p0[2], p0[3]
     stats = np.array([potential(n) for n in nbrs])
     scores = [stat[0] for stat in stats]
-    probs = calc_softmax(scores, beta)
-    next_sample_idx = np.random.choice(np.arange(len(nbrs)), p=probs)
+    if beta == np.inf:
+        next_sample_idx = np.argmax(scores)
+    else:
+        probs = calc_softmax(scores, beta)
+        next_sample_idx = np.random.choice(np.arange(len(nbrs)), p=probs)
 
     next_sample = nbrs[next_sample_idx]
     score = scores[next_sample_idx]

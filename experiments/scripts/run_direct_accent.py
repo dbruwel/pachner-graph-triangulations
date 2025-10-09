@@ -18,8 +18,8 @@ def run_direct_accent(
         [str], tuple[float | np.floating[Any], float | np.floating[Any], int, bool]
     ],
 ) -> None:
-    base_isos = ["cMcabbgqs"] * 100
-    betas = [np.sqrt(0.1)] * 20 + [0.1] * 20 + [1] * 20 + [np.sqrt(10)] * 20 + [10] * 20
+    base_isos = ["cMcabbgqs"]
+    betas = [np.inf]
 
     res = run_accent(
         base_isos=base_isos,
@@ -53,19 +53,19 @@ def run_direct_accent(
 
 
 if __name__ == "__main__":
-    run_direct_accent(
-        Path("direct_ascent") / "degree_alexander_polynomial",
-        potentials.Potential(
-            potentials.DegreeAlexanderPolynomial, max_size=None
-        ).calc_potential,
-    )
-
     # run_direct_accent(
-    #     Path("direct_ascent") / "determinant_alexander_polynomial",
+    #     Path("direct_ascent") / "degree_alexander_polynomial",
     #     potentials.Potential(
-    #         potentials.DeterminantAlexanderPolynomial, max_size=None
+    #         potentials.DegreeAlexanderPolynomial, max_size=None
     #     ).calc_potential,
     # )
+
+    run_direct_accent(
+        Path("direct_ascent") / "determinant_alexander_polynomial",
+        potentials.Potential(
+            potentials.DeterminantAlexanderPolynomial, max_size=None
+        ).calc_potential,
+    )
 
     # run_direct_accent(
     #     Path("direct_ascent") / "norm_alexander_polynomial",
