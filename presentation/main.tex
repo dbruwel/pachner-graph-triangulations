@@ -246,25 +246,41 @@ We can understand $S^3$ as $\mathbb{R}^3$ with a point at infinity.
         \label{fig:mcmc-log-histogram}
     \end{figure}
 \end{frame}
+\begin{frame}{Gelman Rubin Statistic}
+    \begin{itemize}
+        \item \textbf{Problem:} How do we know if the random sampling is representative of the entire space?
+        \item \textbf{Idea:} Sample multiple ``chains'' in different areas of the graph, and compare their statistical properties.
+    \end{itemize}
+\end{frame}
+\begin{frame}{Gelman Rubin Statistic}
+    \begin{Definition}[Gelman Rubin Statistic]
+        For $j$ MCMC chains of length $n$ $(x_1^{(j)}, x_2^{(j)},...,x_n^{(j)})$, the Gelamn Rubin Statistic is
+        \begin{equation}
+            \hat{R}=\frac{\hat{V}}{W}
+        \end{equation}
+        Where $W$ is the average variance of each chain, and $\hat{V}$ is an estimate of the total varaince.
+    \end{Definition}
+    If proper mixing is achieved then $\hat{R}\approx 1$, we typically pick a threshold of $\hat{R}<1.01$.
+\end{frame}
 
-\begin{frame}{Greedy Search}
-    \begin{itemize}
-        \item \textbf{Idea:} Start at some small triangulation, look at all the neighbours above and pick the best one. Repeat.
-    \end{itemize}
-\end{frame}
-\begin{frame}{Greedy Search}
+% \begin{frame}{Greedy Search}
+%     \begin{itemize}
+%         \item \textbf{Idea:} Start at some small triangulation, look at all the neighbours above and pick the best one. Repeat.
+%     \end{itemize}
+% \end{frame}
+% \begin{frame}{Greedy Search}
     
-\end{frame}
-\begin{frame}{Greedy Search}
+% \end{frame}
+% \begin{frame}{Greedy Search}
     
-\end{frame}
-\begin{frame}{Greedy Search}
-    \begin{itemize}
-        \item \textbf{Idea:} Start at some small triangulation, look at all the neighbours above and pick the best one. Repeat.
-        \item \textbf{Problem:} Number of neighbours is large, can get stuck in local minima.
-        \item \textbf{Solution:} Use simulated annealing. 
-    \end{itemize}
-\end{frame}
+% \end{frame}
+% \begin{frame}{Greedy Search}
+%     \begin{itemize}
+%         \item \textbf{Idea:} Start at some small triangulation, look at all the neighbours above and pick the best one. Repeat.
+%         \item \textbf{Problem:} Number of neighbours is large, can get stuck in local minima.
+%         \item \textbf{Solution:} Use simulated annealing. 
+%     \end{itemize}
+% \end{frame}
 
 \begin{frame}{Simulated Annealing}
     \begin{itemize}
@@ -291,14 +307,31 @@ We can understand $S^3$ as $\mathbb{R}^3$ with a point at infinity.
 \begin{itemize}
     \item \textbf{Idea:} Propose a single neighbour at random with MCMC, accept it if its score is better, if the score is worse accept with some probability that depends on how much worse it is.
     \item \textbf{Problem:} Each move is local and random, the strategy doesn't fundamentally uncover any suture in the space.
-    \item \textbf{Solution:} Vector Embedding
+    \item \textbf{Solution:} Machine Learning.
 \end{itemize}
     
 \end{frame}
 
 \subsection{Machine Learning}
-\begin{frame}{Gradient Descent}
-
+\begin{frame}{Autoregressive Models}
+    \begin{itemize}
+        \item Each triangulation can be efficiently represented as a string called an isomorphism signature.
+        \item We can train a model to take in a partially complete isomorphism signature, and predict the next letter.
+        \item Performing this repeatedly allows us to generate the entire string.
+    \end{itemize}  
+\end{frame}
+\begin{frame}{Transformer Architecture}
+    \begin{itemize}
+        \item Represent each character as a vector $v_i$.
+        \item Form attention $\langle v_i, v_j\rangle_M$  for all pairs.
+        \item Form a new output vector as an average of each vector, weighted by attention.
+        \item Apply a standard neural network.
+        \item Repeat and perform a final projection to calculate the probability of the next letter in the sequence.
+    \end{itemize}
+    This allows us to sample from the space of strings, with probability trained to only sample isomorphism signatures.
+\end{frame}
+\begin{frame}{Generation Efficiency.}
+    
 \end{frame}
 
 \section{Conclusion and Future Work}
@@ -307,7 +340,12 @@ We can understand $S^3$ as $\mathbb{R}^3$ with a point at infinity.
 \end{frame}
 
 \begin{frame}{Future Work}
-    
+    \begin{itemize}
+        \item Explore the triangulations generated and if they are of any interest.
+        \item Explore other objective functions that are more specific for a specific goal.
+        \item Perform reinforcement learning on the transformer to increase efficiency and to perform optimisation.
+        \item Explore non-sequential generation models such as diffusion models.
+    \end{itemize}
 \end{frame}
 
 % -------------------------
