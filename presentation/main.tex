@@ -193,7 +193,7 @@ We can understand $S^3$ as $\mathbb{R}^3$ with a point at infinity.
 \begin{frame}{Objective Function}
     \begin{itemize}
         \item Need to define complexity of a knot. The polynomial $\Delta_K(t)$ is a good candidate.
-        \item Use $\deg(\Delta_K(t))$ as a numeric measure of complexity.
+        \item Use $|\det(\Delta_K(t))|$ as a numeric measure of complexity.
         \item Compute for all edges and average to get objective function.
     \end{itemize}
 \end{frame}
@@ -208,7 +208,7 @@ We can understand $S^3$ as $\mathbb{R}^3$ with a point at infinity.
 \begin{frame}{Objective Function}
     \begin{align}
         \mathcal{O}&:T_1(S^3)\to\mathbb{R} \\
-        &: T\mapsto \frac{1}{|E(T)|}\sum_{e\in E(T)} \deg{(\Delta_e(t))}
+        &: T\mapsto \frac{1}{|E(T)|}\sum_{e\in E(T)} |\det{(\Delta_e(t))}|
     \end{align}
     Viewing each edge $e\in E(T)$ as a knot in $S^3$.
 \end{frame}
@@ -242,17 +242,53 @@ We can understand $S^3$ as $\mathbb{R}^3$ with a point at infinity.
     \begin{figure}
         \centering
         \includegraphics[width=0.5\linewidth]{presentation/figures/mcmc_log_histogram.pdf}
-        \caption{Log histogram of MCMC Samples for the score function with power law fit.}
+        \caption{Log histogram of MCMC Samples for the score function with power law fit of $\alpha\approx9.97$.}
         \label{fig:mcmc-log-histogram}
     \end{figure}
 \end{frame}
 
 \begin{frame}{Greedy Search}
-
+    \begin{itemize}
+        \item \textbf{Idea:} Start at some small triangulation, look at all the neighbours above and pick the best one. Repeat.
+    \end{itemize}
+\end{frame}
+\begin{frame}{Greedy Search}
+    
+\end{frame}
+\begin{frame}{Greedy Search}
+    
+\end{frame}
+\begin{frame}{Greedy Search}
+    \begin{itemize}
+        \item \textbf{Idea:} Start at some small triangulation, look at all the neighbours above and pick the best one. Repeat.
+        \item \textbf{Problem:} Number of neighbours is large, can get stuck in local minima.
+        \item \textbf{Solution:} Use simulated annealing. 
+    \end{itemize}
 \end{frame}
 
 \begin{frame}{Simulated Annealing}
+    \begin{itemize}
+        \item \textbf{Idea:} Propose a single neighbour at random with MCMC, accept it if its score is better, if the score is worse accept with some probability that depends on how much worse it is.
+    \end{itemize}
+\end{frame}
+\begin{frame}{Simulated Annealing}
+    \begin{figure}
+        \centering
+        \includegraphics[width=0.5\linewidth]{}
+        \caption{Caption}
+        \label{fig:placeholder}
+    \end{figure}
+\end{frame}
+\begin{frame}{Simulated Annealing}
 
+\end{frame}
+\begin{frame}{Simulated Annealing}
+\begin{itemize}
+    \item \textbf{Idea:} Propose a single neighbour at random with MCMC, accept it if its score is better, if the score is worse accept with some probability that depends on how much worse it is.
+    \item \textbf{Problem:} Each move is local and random, the strategy doesn't fundamentally uncover any suture in the space.
+    \item \textbf{Solution:} Vector Embedding
+\end{itemize}
+    
 \end{frame}
 
 \subsection{Machine Learning}
