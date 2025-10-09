@@ -9,7 +9,7 @@ import pachner_traversal.potential_functions as potentials
 from pachner_traversal.direct_ascent import run_accent
 from pachner_traversal.utils import results_path
 
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.DEBUG)
 
 
 def run_direct_accent(

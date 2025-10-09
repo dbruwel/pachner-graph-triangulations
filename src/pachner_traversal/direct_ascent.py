@@ -1,6 +1,7 @@
 import functools
 import logging
 import multiprocessing
+from multiprocessing import Pool
 
 import numpy as np
 import regina
@@ -15,31 +16,37 @@ def calc_softmax(x, beta):
     return e_x / e_x.sum()
 
 
+def worker_function(n, potential):
+    return potential(n)[0]
+
+
 @functools.lru_cache(maxsize=1)
 def take_step(iso, potential, beta):
     f_vector = regina.engine.Triangulation3.fromIsoSig(iso).fVector()
     nbrs = neighbours(iso, f_vector, a=1)
     nbrs = list(nbrs.keys())
+    logger.debug(f"Found {len(nbrs)} neighbours for {iso}.")
     if len(nbrs) == 0:
         p0 = potential(iso)
         return iso, p0[0], p0[0], p0[1], p0[2], p0[3]
-    stats = np.array([potential(n) for n in nbrs])
-    scores = [stat[0] for stat in stats]
+
+    with Pool(processes=7) as pool:
+        results_list = pool.starmap(worker_function, [(n, potential) for n in nbrs])
+    scores = np.array(results_list)
     if beta == np.inf:
+        logger.debug("Using greedy selection.")
         next_sample_idx = np.argmax(scores)
     else:
         probs = calc_softmax(scores, beta)
         next_sample_idx = np.random.choice(np.arange(len(nbrs)), p=probs)
 
     next_sample = nbrs[next_sample_idx]
+    with open("debug.txt", "a") as f:
+        f.write(f"{next_sample}\n")
     score = scores[next_sample_idx]
     avg_score = np.mean(scores)
 
-    p_knotted = stats[next_sample_idx][1]
-    count_unknotted = stats[next_sample_idx][2]
-    all_knoted = stats[next_sample_idx][3]
-
-    return next_sample, score, avg_score, p_knotted, count_unknotted, all_knoted
+    return next_sample, score, avg_score, None, None, None
 
 
 def run_single_accent(chain_id, base_iso, potential, beta, height=20):
@@ -53,8 +60,8 @@ def run_single_accent(chain_id, base_iso, potential, beta, height=20):
 
     logger.info(f"Running chain {chain_id}, starting at {base_iso}.")
 
-    for _ in range(height):
-        logger.debug(f"Current iso: {iso}")
+    for h in range(height):
+        logger.debug(f"Current iso: {iso} at height {h}.")
         iso, score, avg_score, p_knotted, count_unknotted, all_knoted = take_step(
             iso, potential, beta
         )
@@ -70,12 +77,19 @@ def run_single_accent(chain_id, base_iso, potential, beta, height=20):
 
 def run_accent(base_isos, potential, betas, height=20):
     logger.info(f"Running {len(base_isos)} chains of height {height}.")
-    with multiprocessing.Pool() as pool:
-        args = [
-            (chain_id, base_iso, potential, beta, height)
-            for chain_id, (base_iso, beta) in enumerate(zip(base_isos, betas))
-        ]
+    # with Pool() as pool:
+    #     args = [
+    #         (chain_id, base_iso, potential, beta, height)
+    #         for chain_id, (base_iso, beta) in enumerate(zip(base_isos, betas))
+    #     ]
 
-        results = pool.starmap(run_single_accent, args)
+    #     results = pool.starmap(run_single_accent, args)
+
+    args = [
+        (chain_id, base_iso, potential, beta, height)
+        for chain_id, (base_iso, beta) in enumerate(zip(base_isos, betas))
+    ]
+
+    results = [run_single_accent(*arg) for arg in args]
 
     return results
