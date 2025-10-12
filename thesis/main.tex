@@ -706,7 +706,7 @@ To establish a baseline for our objective functions, generic Markov Chain Monte 
 
 The distribution for the score for each objective function outlined in section~\ref{sec:objective-functions} is displayed in figure~\ref{fig:mcmc-score-dist}.
 
-All but $\mathcal{O}_{var}$ present power law distributed tails, to confirm this we compute $x_{\min}$ according to the procedure of Clauset, Shalizi, and Newman, and fit the distribution with MLE. A plot on a log-log histogram of the data, and the fitted distribution is seen in figure~\ref{fig:mcmc-score-dist-log}
+All but $\mathcal{O}_{var}$ present power law distributions or power law distributed tails. To confirm this we fit both a power law distribution across the entire data, and also compute $x_{\min}$ according to the procedure of Clauset, Shalizi, and Newman, and fit a power law distribution to the tails. Both these fits are done with MLE. A plot on a log-log histogram of the data, and the fitted distributions is seen in figure~\ref{fig:mcmc-score-dist-log}
 
 \begin{figure}[htb]
     \centering
