@@ -8,7 +8,7 @@ axes.labelsize: 12
 axes.titlesize: 14
 
 # Customize lines
-lines.linewidth: 0.5
+lines.linewidth: 1
 lines.markersize: 5
 
 # Customize ticks
@@ -21,8 +21,8 @@ axes.spines.bottom: True
 axes.axisbelow: True
 axes.grid: False
 grid.linestyle: --
-legend.fancybox: True
-legend.frameon: True
+legend.fancybox: False
+legend.frameon: False
 legend.shadow: False
 legend.fontsize: 10
 savefig.dpi: 300
