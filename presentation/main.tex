@@ -19,6 +19,25 @@
 \usepackage{subcaption}
 \usepackage[backend=biber,style=authoryear]{biblatex}
 
+\setbeamertemplate{footline}{%
+  \leavevmode%
+  \hbox{%
+  \begin{beamercolorbox}[wd=.333333\paperwidth,ht=2.25ex,dp=1ex,center]{author in head/foot}%
+    \usebeamerfont{author in head/foot}\insertshortauthor
+  \end{beamercolorbox}%
+  \begin{beamercolorbox}[wd=.333333\paperwidth,ht=2.25ex,dp=1ex,center]{title in head/foot}%
+    \usebeamerfont{title in head/foot}\insertshorttitle
+  \end{beamercolorbox}%
+  \begin{beamercolorbox}[wd=.333333\paperwidth,ht=2.25ex,dp=1ex,right]{date in head/foot}%
+    \usebeamerfont{date in head/foot}\insertshortdate{}\hspace*{2em}
+    % The key part: Only the current frame number is inserted
+    \insertframenumber{}\hspace*{2ex} 
+  \end{beamercolorbox}}%
+  \vskip0pt%
+}
+
+% \usepackage[margin=2.5cm]{geometry}
+
 \addbibresource{presentation/ref.bib} % link to .bib file
 
 % --- USYD Specific Information ---
@@ -55,29 +74,35 @@
 % -------------------------
 % 2. Table of Contents
 % -------------------------
-\begin{frame}{Outline}
-    \tableofcontents
-\end{frame}
+% \begin{frame}{Outline}
+%     \tableofcontents
+% \end{frame}
 
 % -------------------------
 % 3. Background
 % -------------------------
 \section{Background}
 \begin{frame}{Manifold}
+\centering
+\begin{minipage}[t]{0.8\textwidth}
     \begin{itemize}
         \item Locally looks like $\mathbb{R}^n$
+        \pause
         \item Different points can be distinguished
+        \pause
         \item The space is not unmanageably large
     \end{itemize}
+\end{minipage}
 \end{frame}
-\begin{frame}{Manifold}
-    \begin{Definition}[Locally Euclidean]
-        A topological space $(X, \tau)$ is called ``locally Euclidean'' if there exists an integer $n>0$ such that every point has a neighbourhood that is homeomorphic to $\mathbb{R}^n$.
-    \end{Definition}
-    \begin{Definition}[Manifold]
-        A topological space $(M, \tau)$ is called a ``manifold'' if it is Hausdorff, second countable, and locally Euclidean.
-    \end{Definition}
-\end{frame}
+% \begin{frame}{Manifold}
+%     \begin{Definition}[Locally Euclidean]
+%         A topological space $(X, \tau)$ is called ``locally Euclidean'' if there exists an integer $n>0$ such that every point has a neighbourhood that is homeomorphic to $\mathbb{R}^n$.
+%     \end{Definition}
+%     \pause
+%     \begin{Definition}[Manifold]
+%         A topological space $(M, \tau)$ is called a ``manifold'' if it is Hausdorff, second countable, and locally Euclidean.
+%     \end{Definition}
+% \end{frame}
 \begin{frame}{Manifold}
     \begin{figure}
         \centering
@@ -87,10 +112,33 @@
     \end{figure}
 \end{frame}
 
+\begin{frame}{$S^3$}
+We can understand $S^3$ as $\mathbb{R}^3$ with a point at infinity which can be thought of as a disk $D^3$ / 3-ball with boundary identified with the point at infinity.
+    \begin{figure}
+        \centering
+        \includegraphics[width=0.65\linewidth]{presentation/figures/s1_as_r1.png}
+        \caption{Representation of $S^1\cong \mathbb{R}^1\cup\{\infty\}$ from \cite{davis_2007}}
+        \label{fig:s1-as-r1}
+    \end{figure}
+\end{frame}
+
+\begin{frame}
+    \centering
+    {\Huge Triangulations}
+\end{frame}
 \begin{frame}{Triangulation}
+\centering
+\begin{minipage}[t]{0.8\textwidth}
+    \textbf{Idea:} Break down a manifold into a collection of triangles.
+\end{minipage}
+\end{frame}
+\begin{frame}{Triangulation}
+\centering
+\begin{minipage}[t]{0.8\textwidth}
     \begin{Definition}[Triangulation]
         A triangulation of a manifold $M$ is a homeomorphism between a simplicial complex $|A|\to M$
     \end{Definition}
+\end{minipage}
 \end{frame}
 \begin{frame}{Triangulation}
     \begin{figure}
@@ -101,34 +149,68 @@
     \end{figure}
 \end{frame}
 \begin{frame}{Triangulation}
-    We do not require that the simplices all have unique vertices.
+\centering
+\begin{minipage}[t]{0.8\textwidth}
+    \textbf{Note:} We do not require that the simplices all have unique vertices.
+\end{minipage}
 \end{frame}
 
-\begin{frame}{$S^3$}
-We can understand $S^3$ as $\mathbb{R}^3$ with a point at infinity.
+\begin{frame}
+    \centering
+    {\Huge Pachner Moves and the Pachner Graph}
+\end{frame}
+\begin{frame}{Pachner Moves / Graph}
     \begin{figure}
         \centering
-        \includegraphics[width=0.3\linewidth]{presentation/figures/s1_as_r1.png}
-        \caption{Representation of $S^1\cong \mathbb{R}^1\cup\{\infty\}$ from \cite{davis_2007}}
-        \label{fig:s1-as-r1}
+        \includegraphics[width=0.5\linewidth]{presentation/figures/2_2_pachner_move.PNG}
+        \caption{(2-2) Pachner move for a triangulation of a 2-manifold.}
+        \label{fig:placeholder}
     \end{figure}
 \end{frame}
-
-\begin{frame}{Knots}
+\begin{frame}{Pachner Moves / Graph}
+    \begin{figure}
+        \centering
+        \includegraphics[width=0.5\linewidth]{presentation/figures/2_3_pachner_move.png}
+        \caption{(2-3) Pachner move for a triangulation of a 3-manifold from \cite{bene_2015}}
+        \label{fig:placeholder}
+    \end{figure}
+\end{frame}
+\begin{frame}{Pachner Moves / Graph}
+\centering
+\begin{minipage}[t]{0.8\textwidth}
     \begin{itemize}
-        \item Take an infinitely long piece of string and knot it
-        \item Because the string is infinite, consider it as being inside $S^3$
-        \item The string extends out to the point at infinity in both directions so forms a copy of $S^1$
-        \item Two knots are the same if we can move the string around to get them, without passing the string through itself.
+        \item All single vertex triangulations of $S^3$ can be reached by $\mathbf{(2-3)}$ moves.
+        \pause
+        \item The collection of triangulations as nodes, with edges local moves is called the ``Pachner Graph''
     \end{itemize}
+\end{minipage}
+\end{frame}
+
+\begin{frame}
+    \centering
+    {\Huge Knots}
 \end{frame}
 \begin{frame}{Knots}
+\centering
+\begin{minipage}[t]{0.8\textwidth}
+    \begin{itemize}
+        \item Take a string and knot it in space, ``fusing the ends together.''
+        \pause
+        \item Two knots are the same if we can move the string around to get them, without passing the string through itself.
+    \end{itemize}
+\end{minipage}
+\end{frame}
+\begin{frame}{Knots}
+\centering
+\begin{minipage}[t]{0.8\textwidth}
     \begin{Definition}[Knot]
         A knot $K$ is an embedding of $S^1$ in $S^3$. 
     \end{Definition}
+    \pause
     \begin{Definition}[Knot Equivalence]
         Two knots are equivalent if they can be connected via ambient isotopy. 
     \end{Definition}
+\end{minipage}
 \end{frame}
 \begin{frame}{Knots}
     \begin{figure}
@@ -150,67 +232,76 @@ We can understand $S^3$ as $\mathbb{R}^3$ with a point at infinity.
 \end{frame}
 
 \begin{frame}{Triangulation-knot connection}
+\centering
+\begin{minipage}[t]{0.8\textwidth}
     \begin{itemize}
         \item Start with a 1-vertex ($v$) triangulation of $S^3$
+        \pause
         \item Consider the edges starting and ending at $v$, they are $S^1$
+        \pause
         \item The edges correspond to knots. 
+        \pause
+        \item All knots can be found in some single vertex triangulation of $S^3$
     \end{itemize}
+\end{minipage}
 \end{frame}
 \begin{frame}{Triangulation-knot connection}
-    \begin{Theorem}[\cite{haken_1961}]
-        Every knot in $S^3$ can be realised as an edge in a triangulation of $S^3$
-    \end{Theorem}
-    \begin{proof}
-        \textbf{Idea:} Take $S^3\backslash \nu(K)$ where $\nu$ is a tubular neighbourhood. This space can be triangulated, Fill in the tubular neighbourhood with a solid torus, the knot now exists as a series of edges. Collapse the triangulation to one vertex. 
-    \end{proof}
-\end{frame}
-
-\begin{frame}{Pachner Moves / Graph}
     \begin{figure}
         \centering
-        \includegraphics[width=0.5\linewidth]{presentation/figures/2_2_pachner_move.PNG}
-        \caption{(2-2) Pachner move for a triangulation of a 2-manifold.}
-        \label{fig:placeholder}
-    \end{figure}
-\end{frame}
-\begin{frame}{Pachner Moves / Graph}
-    \begin{figure}
-        \centering
-        \includegraphics[width=0.5\linewidth]{presentation/figures/2_3_pachner_move.png}
-        \caption{(2-3) Pachner move for a triangulation of a 3-manifold from \cite{bene_2015}}
-        \label{fig:placeholder}
+        \includegraphics[width=0.3\linewidth]{presentation/figures/knot_in_sphere.pdf}
+        \caption{Figure representing a knot in $S^3$ going from the fixed vertex (the boundary)}
+        \label{fig:knot-in-sphere}
     \end{figure}
 \end{frame}
 
 % -------------------------
 % 4. Problem
 % -------------------------
+\begin{frame}
+    \centering
+    {\Huge Problem}
+\end{frame}
 \section{Problem}
 \begin{frame}{Problem Idea}
+\centering
     Find triangulations that have many complex knots in them.
 \end{frame}
 
 \begin{frame}{Objective Function}
+\centering
+\begin{minipage}[t]{0.8\textwidth}
     \begin{itemize}
+        \item We need to define an objective function - a function $\mathcal{O}:T\to \mathbb{R}$ that measures how ``good'' something is.
+        \pause
         \item Need to define complexity of a knot. The polynomial $\Delta_K(t)$ is a good candidate.
-        \item Use $|\det(\Delta_K(t))|$ as a numeric measure of complexity.
+        \pause
+        \item Use $|\det(\Delta_K(t))|=|\Delta_K(-1)|$ as a numeric measure of complexity - related to colorability.
+        \pause
         \item Compute for all edges and average to get objective function.
     \end{itemize}
+\end{minipage}
 \end{frame}
 \begin{frame}{Objective Function}
+\centering
+\begin{minipage}[t]{0.8\textwidth}
     \begin{Definition}[Alexander Polynomial]
         The Alexander Polynomial $\Delta_K(t)$ is the generator of the first elementary ideal of the action of the deck transformations on the first homology of the infinite cyclic cover of the knot complement.
     \end{Definition}
+    \pause
     $\Delta_K(t)$ is a knot invariant. 
     
     E.g. for the unknot $\Delta_K(t)=1$, for the trefoil $\Delta_K(t)=t^2-t+1$
+\end{minipage}
 \end{frame}
 \begin{frame}{Objective Function}
+\centering
+\begin{minipage}[t]{0.8\textwidth}
     \begin{align}
         \mathcal{O}&:T_1(S^3)\to\mathbb{R} \\
         &: T\mapsto \frac{1}{|E(T)|}\sum_{e\in E(T)} |\det{(\Delta_e(t))}|
     \end{align}
     Viewing each edge $e\in E(T)$ as a knot in $S^3$.
+\end{minipage}
 \end{frame}
 
 \begin{frame}{Problem Formulation}
@@ -223,12 +314,21 @@ We can understand $S^3$ as $\mathbb{R}^3$ with a point at infinity.
 % -------------------------
 \section{Methods and Results}
 \subsection{Classical}
+\begin{frame}
+    \centering
+    {\Huge Markov Chain Monte Carlo}
+\end{frame}
 \begin{frame}{MCMC}
+\centering
+\begin{minipage}[t]{0.8\textwidth}
     \begin{itemize}
-        \item \textbf{Idea:} Take some triangulation, look at its neighbours, pick one at random.
+        \item \textbf{Idea:} Take some triangulation, look at its \textbf{graph} neighbours, pick one at random.
+        \pause
         \item \textbf{Problem:} For a triangulation of size $n$, there are far more neighbours of size $n+1$ than of size $n-1$, so the size will grow rapidly.
+        \pause
         \item \textbf{Solution:} As $n$ gets larger, make the probability of going up less than that of going down.
     \end{itemize}
+\end{minipage}
 \end{frame}
 \begin{frame}{MCMC}
     \begin{figure}
@@ -247,45 +347,49 @@ We can understand $S^3$ as $\mathbb{R}^3$ with a point at infinity.
     \end{figure}
 \end{frame}
 \begin{frame}{Gelman Rubin Statistic}
+\centering
+\begin{minipage}[t]{0.8\textwidth}
     \begin{itemize}
         \item \textbf{Problem:} How do we know if the random sampling is representative of the entire space?
+        \pause
         \item \textbf{Idea:} Sample multiple ``chains'' in different areas of the graph, and compare their statistical properties.
     \end{itemize}
+\end{minipage}
 \end{frame}
 \begin{frame}{Gelman Rubin Statistic}
+\centering
+\begin{minipage}[t]{0.8\textwidth}
     \begin{Definition}[Gelman Rubin Statistic]
         For $j$ MCMC chains of length $n$ $(x_1^{(j)}, x_2^{(j)},...,x_n^{(j)})$, the Gelamn Rubin Statistic is
         \begin{equation}
             \hat{R}=\frac{\hat{V}}{W}
         \end{equation}
-        Where $W$ is the average variance of each chain, and $\hat{V}$ is an estimate of the total varaince.
+        Where $W$ is the average variance of each chain, and $\hat{V}$ is an estimate of the total variance.
     \end{Definition}
     If proper mixing is achieved then $\hat{R}\approx 1$, we typically pick a threshold of $\hat{R}<1.01$.
+\end{minipage}
+\end{frame}
+\begin{frame}{Gelman Rubin Statistic}
+    \begin{figure}
+        \centering
+        \includegraphics[width=0.5\linewidth]{presentation/figures/distribution_comparison.pdf}
+        \caption{Comparison of the score distribution for two chains.}
+        \label{fig:distribution-comparison}
+    \end{figure}
+    We ran 7 chains, and achieved an $\hat{R}=1.005$
 \end{frame}
 
-% \begin{frame}{Greedy Search}
-%     \begin{itemize}
-%         \item \textbf{Idea:} Start at some small triangulation, look at all the neighbours above and pick the best one. Repeat.
-%     \end{itemize}
-% \end{frame}
-% \begin{frame}{Greedy Search}
-    
-% \end{frame}
-% \begin{frame}{Greedy Search}
-    
-% \end{frame}
-% \begin{frame}{Greedy Search}
-%     \begin{itemize}
-%         \item \textbf{Idea:} Start at some small triangulation, look at all the neighbours above and pick the best one. Repeat.
-%         \item \textbf{Problem:} Number of neighbours is large, can get stuck in local minima.
-%         \item \textbf{Solution:} Use simulated annealing. 
-%     \end{itemize}
-% \end{frame}
-
+\begin{frame}
+    \centering
+    {\Huge Simulated Annealing}
+\end{frame}
 \begin{frame}{Simulated Annealing}
+\centering
+\begin{minipage}[t]{0.8\textwidth}
     \begin{itemize}
         \item \textbf{Idea:} Propose a single neighbour at random with MCMC, accept it if its score is better, if the score is worse accept with some probability that depends on how much worse it is.
     \end{itemize}
+\end{minipage}
 \end{frame}
 \begin{frame}{Simulated Annealing}
     \begin{figure}
@@ -304,48 +408,73 @@ We can understand $S^3$ as $\mathbb{R}^3$ with a point at infinity.
     \end{figure}
 \end{frame}
 \begin{frame}{Simulated Annealing}
-\begin{itemize}
-    \item \textbf{Idea:} Propose a single neighbour at random with MCMC, accept it if its score is better, if the score is worse accept with some probability that depends on how much worse it is.
-    \item \textbf{Problem:} Each move is local and random, the strategy doesn't fundamentally uncover any suture in the space.
-    \item \textbf{Solution:} Machine Learning.
-\end{itemize}
-    
+\centering
+\begin{minipage}[t]{0.8\textwidth}
+    \begin{itemize}
+        \item \textbf{Problem:} Each move is local and random, the strategy doesn't fundamentally uncover any suture in the space.
+        \pause
+        \item \textbf{Solution:} Machine Learning.
+    \end{itemize}
+\end{minipage}
 \end{frame}
 
 \subsection{Machine Learning}
 \begin{frame}{Autoregressive Models}
+\centering
+\begin{minipage}[t]{0.8\textwidth}
     \begin{itemize}
-        \item Each triangulation can be efficiently represented as a string called an isomorphism signature.
-        \item We can train a model to take in a partially complete isomorphism signature, and predict the next letter.
+        \item Each triangulation can be efficiently represented as a string called an isomorphism signature. E.g. `cMcabbgqs'
+        \pause
+        \item We can train a model to take in a partially complete isomorphism signature, and predict the next letter. e.g. `c'$\to$`cM'$\to$`cMc'$\to...$
+        \pause
         \item Performing this repeatedly allows us to generate the entire string.
     \end{itemize}  
+\end{minipage}
 \end{frame}
-\begin{frame}{Transformer Architecture}
-    \begin{itemize}
-        \item Represent each character as a vector $v_i$.
-        \item Form attention $\langle v_i, v_j\rangle_M$  for all pairs.
-        \item Form a new output vector as an average of each vector, weighted by attention.
-        \item Apply a standard neural network.
-        \item Repeat and perform a final projection to calculate the probability of the next letter in the sequence.
-    \end{itemize}
-    This allows us to sample from the space of strings, with probability trained to only sample isomorphism signatures.
-\end{frame}
-\begin{frame}{Generation Efficiency.}
-    
-\end{frame}
+% \begin{frame}{Transformer Architecture}
+%     \begin{itemize}
+%         \item Represent each character as a vector $v_i$.
+%         \pause
+%         \item Form attention $\langle v_i, v_j\rangle_M$  for all pairs.
+%         \pause
+%         \item Form a new output vector as an average of each vector, weighted by attention.
+%         \pause
+%         \item Apply a standard neural network.
+%         \pause
+%         \item Repeat and perform a final projection to calculate the probability of the next letter in the sequence.
+%     \end{itemize}
+%     This allows us to sample from the space of strings, with probability trained to only sample isomorphism signatures.
+% \end{frame}
 
 \section{Conclusion and Future Work}
 \begin{frame}{Summary and Conclusion}
-    
+\centering
+\begin{minipage}[t]{0.8\textwidth}
+    \begin{itemize}
+        \item We have a connection between triangulations of manifolds and knots.
+        \pause
+        \item We are interested in exploring the space of triangulations and non-trivial properties.
+        \pause
+        \item We explore the space with MCMC uniform sampling and find a power law distribution.
+        \pause
+        \item We perform simulated annealing and find significantly better solutions.
+    \end{itemize}
+\end{minipage}
 \end{frame}
 
 \begin{frame}{Future Work}
+\centering
+\begin{minipage}[t]{0.8\textwidth}
     \begin{itemize}
         \item Explore the triangulations generated and if they are of any interest.
+        \pause
         \item Explore other objective functions that are more specific for a specific goal.
+        \pause
         \item Perform reinforcement learning on the transformer to increase efficiency and to perform optimisation.
+        \pause
         \item Explore non-sequential generation models such as diffusion models.
     \end{itemize}
+\end{minipage}
 \end{frame}
 
 % -------------------------

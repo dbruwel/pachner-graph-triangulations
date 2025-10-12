@@ -685,7 +685,7 @@ The prior four objective functions are all inspired by the knot structure of our
 The choice of variance here instead of the average follows from the fact that the average degree becomes independent of the triangulation structure and instead depends on the topology which is constant for a sphere.
 
 \section{Markov Chain Monte Carlo}\label{sec:mcmc}
-To establish a baseline for our objective functions, generic Markov Chain Monte Carlo was run to determine the distribution of our objective function across the Pachner Graph. The MCMC algorithm described by Jonathan samples uniformly around triangulations of a particular number of tetrahedra. We, somewhat arbitrary, choose to examine the Pachner graph around triangulations of 30-tetrahedra. This choice is informed by other results in computational topology that have found interesting triangulations of size less than 30 tetrahedra, and because 30 tetrahedra is intractable to enumerate exhaustively. For each objective function we performed $7$ chains of $10,000$ iterations with a step size of $100$. We confirmed convergence with the Gelman-Rubin statistic with a threshold of $1.01$, this threshold is in accordance with modern recommendations. The convergence statistics are in table~\ref{tab:mcmc-convergence}
+To establish a baseline for our objective functions, generic Markov Chain Monte Carlo was run to determine the distribution of our objective function across the Pachner Graph. The MCMC algorithm described by Jonathan samples uniformly around triangulations of a particular number of tetrahedra. We, somewhat arbitrary, choose to examine the Pachner graph around triangulations of 30-tetrahedra, which corresponds to $\gamma=1/10$. This choice is informed by other results in computational topology that have found interesting triangulations of size less than 30 tetrahedra, and because 30 tetrahedra is intractable to enumerate exhaustively. For each objective function we performed $7$ chains of $10,000$ iterations with a step size of $100$. We confirmed convergence with the Gelman-Rubin statistic with a threshold of $1.01$, this threshold is in accordance with modern recommendations. The convergence statistics are in table~\ref{tab:mcmc-convergence}. We extracted the triangulations with $30$ tetrahedra, there were $8,250$ such triangulations so an efficiency of $\approx 12\%$. The following analyses are performed on this subset of triangulations.
 
 \begin{table}[htb]
     \centering
@@ -712,35 +712,35 @@ All but $\mathcal{O}_{var}$ present power law distributed tails, to confirm this
     \centering
     \begin{subfigure}[b]{0.45\textwidth}
         \centering
-        \includegraphics[width=\textwidth]{thesis/figures/agg_score_alex_deg_hist.png}
+        \includegraphics[width=\textwidth]{thesis/figures/agg_score_alex_deg_hist.pdf}
         \caption{$\mathcal{O}_{deg}$}
         \label{fig:mcmc-score-dist-deg}
     \end{subfigure}
     \hfill
     \begin{subfigure}[b]{0.45\textwidth}
         \centering
-        \includegraphics[width=\textwidth]{thesis/figures/agg_score_alex_det_hist.png}
+        \includegraphics[width=\textwidth]{thesis/figures/agg_score_alex_det_hist.pdf}
         \caption{$\mathcal{O}_{det}$}
         \label{fig:mcmc-score-dist-det}
     \end{subfigure}
 
     \begin{subfigure}[b]{0.45\textwidth}
         \centering
-        \includegraphics[width=\textwidth]{thesis/figures/agg_score_alex_norm_hist.png}
+        \includegraphics[width=\textwidth]{thesis/figures/agg_score_alex_norm_hist.pdf}
         \caption{$\mathcal{O}_{norm}$}
         \label{fig:mcmc-score-dist-norm}
     \end{subfigure}
     \hfill
     \begin{subfigure}[b]{0.45\textwidth}
         \centering
-        \includegraphics[width=\textwidth]{thesis/figures/agg_score_num_gen_hist.png}
+        \includegraphics[width=\textwidth]{thesis/figures/agg_score_num_gen_hist.pdf}
         \caption{$\mathcal{O}_{gen}$}
         \label{fig:mcmc-score-dist-gen}
     \end{subfigure}
     
     \begin{subfigure}[b]{0.45\textwidth}
         \centering
-        \includegraphics[width=\textwidth]{thesis/figures/agg_score_edge_var_hist.png}
+        \includegraphics[width=\textwidth]{thesis/figures/agg_score_edge_var_hist.pdf}
         \caption{$\mathcal{O}_{var}$}
         \label{fig:mcmc-score-dist-var}
     \end{subfigure}
