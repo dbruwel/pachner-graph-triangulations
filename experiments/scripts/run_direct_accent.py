@@ -53,12 +53,12 @@ def run_direct_accent(
 
 
 if __name__ == "__main__":
-    run_direct_accent(
-        Path("direct_ascent") / "degree_alexander_polynomial",
-        potentials.Potential(
-            potentials.DegreeAlexanderPolynomial, max_size=None
-        ).calc_potential,
-    )
+    # run_direct_accent(
+    #     Path("direct_ascent") / "degree_alexander_polynomial",
+    #     potentials.Potential(
+    #         potentials.DegreeAlexanderPolynomial, max_size=None
+    #     ).calc_potential,
+    # )
 
     # run_direct_accent(
     #     Path("direct_ascent") / "determinant_alexander_polynomial",
@@ -85,3 +85,4 @@ if __name__ == "__main__":
     #         potentials.VarianceEdgeDegree, max_size=None
     #     ).calc_potential,
     # )
+    ...
