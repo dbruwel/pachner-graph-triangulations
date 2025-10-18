@@ -60,29 +60,28 @@ if __name__ == "__main__":
     #     ).calc_potential,
     # )
 
-    # run_direct_accent(
-    #     Path("direct_ascent") / "determinant_alexander_polynomial",
-    #     potentials.Potential(
-    #         potentials.DeterminantAlexanderPolynomial, max_size=None
-    #     ).calc_potential,
-    # )
+    run_direct_accent(
+        Path("direct_ascent") / "determinant_alexander_polynomial",
+        potentials.Potential(
+            potentials.DeterminantAlexanderPolynomial, max_size=None
+        ).calc_potential,
+    )
 
-    # run_direct_accent(
-    #     Path("direct_ascent") / "norm_alexander_polynomial",
-    #     potentials.Potential(
-    #         potentials.NormAlexanderPolynomial, max_size=None
-    #     ).calc_potential,
-    # )
+    run_direct_accent(
+        Path("direct_ascent") / "norm_alexander_polynomial",
+        potentials.Potential(
+            potentials.NormAlexanderPolynomial, max_size=None
+        ).calc_potential,
+    )
 
-    # run_direct_accent(
-    #     Path("direct_ascent") / "number_of_generators",
-    #     potentials.Potential(potentials.NumGenerators, max_size=None).calc_potential,
-    # )
+    run_direct_accent(
+        Path("direct_ascent") / "number_of_generators",
+        potentials.Potential(potentials.NumGenerators, max_size=None).calc_potential,
+    )
 
-    # run_direct_accent(
-    #     Path("direct_ascent") / "variance_edge_degree",
-    #     potentials.Potential(
-    #         potentials.VarianceEdgeDegree, max_size=None
-    #     ).calc_potential,
-    # )
-    ...
+    run_direct_accent(
+        Path("direct_ascent") / "variance_edge_degree",
+        potentials.Potential(
+            potentials.VarianceEdgeDegree, max_size=None
+        ).calc_potential,
+    )
