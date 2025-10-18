@@ -89,14 +89,17 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \chapter*{Introduction}
-describing the objective and contents of the essay 
-Big picture
+% Big picture
+The process of decomposing a space or surface into discrete units such as triangles and tetrahedra is a standard technique used in a range of disciplines to take the analytic problem of studying a space or surface, to a combinatorial problem that opens it up to a range of computational techniques. Some examples of where triangulations are used includes physics such as numeric relativity where spacetime is triangulated for simulations; engineering where fluid and solid dynamics use ``meshes'' (triangulation) to approximate wings or bridges so that each component can be studied easily; computer graphics where objects are rendered with triangulations; and data science where the data can be used to generate a triangulation that can then be explored to reveal more about the system. Triangulations also have many important purposes within maths itself, where they can be used to compute topological properties like homology groups and the Euler characteristic, differential geometry with fields such as Regge calculus and combinatorial Ricci flows, and graph theory where concepts from triangulations where used in proofs such as the proof of the four colouring theorem. The main challenge with triangulations of surfaces and spaces, is that they are not unique, and different triangulations of a surface are better for different tasks. For example, finding the triangulation with the least faces helps in algebraic topology, whereas in computer graphics the triangulation that best approximates the geometry of the original surface is preferred. As such, considerable effort has been put into trying to explore and understand the world of triangulations of a given surface and find techniques to generate ``good'' triangulations. Furthermore, it turns out that understanding at least the enumeration of this space - that is the number of triangulations of a space with $N$ triangles, is critical in the study of quantum gravity.
 
-narrowing focus
+% Narrowing focus
+While there are a range of different notions of what is meant by good, this report primarily explores topological and combinatorial properties of triangulations. The techniques can undoubtedly be extended to a range of different notions of goodness, but topological and combinatorial properties are fundamental to the triangulation itself, and do not depend on the specific geometry like the angles within or the size of specific triangles in the triangulation. This has the advantage of narrowing the focus of exploration to abstract triangulations which are discrete and countable, improving computational manageability and ensuring that the results are general and only dependent on the triangulation itself, not other erroneous geometric factors. As such, this report primarily focuses around exploring properties of the triangulations of a single vertex $3-$sphere that arise from the connection between such a triangulation, and a set of knots related to the edges within the triangulation. Looking for triangulations that relate to interesting and complex knots.
 
-statement of aims
+% Statement of aims
+The primary objective of this report is to implement, analyse, and compare a range of different computational techniques for searching the space of triangulations. We investigate classical search and sampling techniques, namely Markov Chain Monte Carlo, greedy search, and simulated annealing. While greedy search algorithms have been a central tool to the study of this problem, Markov Chain Monte Carlo is a relatively new technique (2023) and we introduce the application of simulated annealing to this problem for the first time. Additionally, we introduce the groundwork for a new approach that uses transformer-based models to explore the space, opening the door for reinforcement learning which is steadily developing a repertoire of success in a range of different problems.
 
-roadmap
+% Roadmap
+The report is structured as follows. Chapter 1 brings together the necessary preliminaries, including manifolds, some knot theory, and an overview of various statistical and machine learning techniques. Chapter 2 provides a detailed outline and discussion of the specific algorithms that we are implementing, including justifications for the choices we made. Chapter 3 presents a description and analysis of a series of numeric experiments run across 5 different search problems and compares them. Finally, chapter 4 concludes with a discussion of our findings and outlines the direction for future research. 
 \cite{altmann2025sampling}
 
 % reset the page numbering and change to arabic numbers
@@ -849,7 +852,11 @@ While the direct ascent approach does perform particularly well, it is computati
 \end{figure}
 
 \subsection{Simulated Annealing}
-We perform simulated annealing as described in section~\ref{sec:simulated-annealing}. This is done for $10,000$ iterations with a step size of $10$ and target acceptance rate of $20\%$, this acceptance rate was chosen heuristically based on a number of different small experiments. To ensure a fair comparison with direct ascent, the potential was set to $-\infty$ for triangulations with more than 30 tetrahedra. The chains for each objective function are plotted in figure~\ref{fig:simulated-annealing}. The achieved acceptance rates were typically above $10\%$ with acceptation to $\mathcal{O}_{var}$ which achieved a poor acceptance rate of $1.4\%$. The acceptance rates are included in figure~\ref{fig:simulated-annealing}.
+We perform simulated annealing as described in section~\ref{sec:simulated-annealing}. This is done for a target of $10,000$ iterations with a step size of $10$ and target acceptance rate of $20\%$, this acceptance rate was chosen heuristically based on a number of different small experiments. To ensure a fair comparison with direct ascent, the potential was set to $-\infty$ for triangulations with more than 30 tetrahedra. For $\mathcal{O}_{deg}$, the chain was stopped early at $3,307$ samples because the computational time required to score a single triangulation had become unfeasibly slow ($>1$min$/$sample).
+
+The chains for each objective function are plotted in figure~\ref{fig:simulated-annealing}. 
+
+The achieved acceptance rates were typically above $10\%$ with acceptation to $\mathcal{O}_{var}$ which achieved a poor acceptance rate of $1.4\%$. The acceptance rates are included in figure~\ref{fig:simulated-annealing}.
 
 \begin{figure}
     \centering
@@ -870,7 +877,7 @@ We perform simulated annealing as described in section~\ref{sec:simulated-anneal
     \begin{subfigure}[b]{0.45\textwidth}
         \centering
         \includegraphics[width=\textwidth]{thesis/figures/sim_annealing_norm.pdf}
-        \caption{$\mathcal{O}_{norm}$ acceptance rate: $47.4\%$}
+        \caption{$\mathcal{O}_{norm}$ acceptance rate: $18.44\%$}
         \label{fig:simulated-annealing-norm}
     \end{subfigure}
     \hfill
@@ -903,15 +910,49 @@ The best result from each optimisation technique is compiled in table~\ref{tab:c
         \hline
          & Score & Percentile & Score & Percentile \\
         \hline
-        $\mathcal{O}_{deg}$ &  &  &  & \\
-        $\mathcal{O}_{det}$ &  &  &  & \\
-        $\mathcal{O}_{norm}$ &  &  &  & \\
+        $\mathcal{O}_{deg}$ &  &  & 433.42 & \\
+        $\mathcal{O}_{det}$ &  &  & 13.84 & \\
+        $\mathcal{O}_{norm}$ &  &  & 152.26 & \\
         $\mathcal{O}_{gen}$ &  &  &  & \\
         $\mathcal{O}_{var}$ &  &  &  & \\
         \hline
     \end{tabular}
     \caption{Caption}
     \label{tab:classical-results}
+\end{table}
+
+\begin{table}[]
+    \centering
+    \begin{tabular}{|c|c|}
+        \hline
+         & Best Triangulation (IsoSig) \\
+        \hline
+        $\mathcal{O}_{deg}$ & EMzMzMzMzMvAAMzMzMzMPabcdefghijklmnqpqrstuvwxyzABCDDjxxxxxxxxxxxxxlfxfxxxxxxxxxxxxj \\
+        $\mathcal{O}_{det}$ &  \\
+        $\mathcal{O}_{norm}$ &  \\
+        $\mathcal{O}_{gen}$ &  \\
+        $\mathcal{O}_{var}$ &  \\
+        \hline
+    \end{tabular}
+    \caption{Best Triangulation Direct Ascent}
+    \label{tab:placeholder}
+\end{table}
+
+\begin{table}[]
+    \centering
+    \begin{tabular}{|c|c|}
+        \hline
+         & Best Triangulation (IsoSig) \\
+        \hline
+        $\mathcal{O}_{deg}$ & ELvLLzvMvzMQAMLMQzQMQbdgfjpmtosmvruqptvwuzyxBCzACBDDafgfjxaovwrdsifjouitrwblqjfhroj \\
+        $\mathcal{O}_{det}$ & ELLvMLAAzPwMzAPzvAMQQadeihhhljnplnqpturttxBBCADBAADDbabagjgxbadjbhohagkfauahoxrccjo \\
+        $\mathcal{O}_{norm}$ & EvLPzvvzLAvzLPPQQMQQQdcdgklqsvoAptytAzBxxzCwyBBDzADDonnapdeaacqowdbauqadasckkjabvhd \\
+        $\mathcal{O}_{gen}$ &  \\
+        $\mathcal{O}_{var}$ &  \\
+        \hline
+    \end{tabular}
+    \caption{Best Triangulation Simulated Annealing}
+    \label{tab:placeholder}
 \end{table}
 
 \section{Baseline Transformer Efficiency on Isomorphism Signatures}
