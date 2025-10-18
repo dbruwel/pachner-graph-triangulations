@@ -1,12 +1,21 @@
 \documentclass[aspectratio=169]{beamer}
 
 % --- Preamble Settings ---
+\definecolor{textgreen}{HTML}{013d1e}
+\definecolor{backgreen}{HTML}{e6f0eb}
 
-% Theme and Color
-% 'Boadilla' is a clean, minimal theme.
+
 \usetheme{Boadilla}
-% You might want a slightly darker colour for maths
-\usecolortheme{whale}
+\usecolortheme{spruce}
+\beamertemplatenavigationsymbolsempty
+\setbeamercolor{block title}{bg=backgreen, fg=textgreen}
+\setbeamercolor{block body}{bg=black!5, fg=black}
+\useoutertheme{default}
+\setbeamercolor{footlinecolor}{bg=white, fg=black}
+
+\setbeamertemplate{itemize item}[triangle]
+\setbeamercolor{itemize item}{fg=textgreen!50}
+\setbeamercolor{structure}{fg=textgreen}
 
 
 % Packages for Math and Text
@@ -22,15 +31,7 @@
 \setbeamertemplate{footline}{%
   \leavevmode%
   \hbox{%
-  \begin{beamercolorbox}[wd=.333333\paperwidth,ht=2.25ex,dp=1ex,center]{author in head/foot}%
-    \usebeamerfont{author in head/foot}\insertshortauthor
-  \end{beamercolorbox}%
-  \begin{beamercolorbox}[wd=.333333\paperwidth,ht=2.25ex,dp=1ex,center]{title in head/foot}%
-    \usebeamerfont{title in head/foot}\insertshorttitle
-  \end{beamercolorbox}%
-  \begin{beamercolorbox}[wd=.333333\paperwidth,ht=2.25ex,dp=1ex,right]{date in head/foot}%
-    \usebeamerfont{date in head/foot}\insertshortdate{}\hspace*{2em}
-    % The key part: Only the current frame number is inserted
+  \begin{beamercolorbox}[wd=\paperwidth,ht=2.25ex,dp=1ex,right]{date in head/foot}%
     \insertframenumber{}\hspace*{2ex} 
   \end{beamercolorbox}}%
   \vskip0pt%
@@ -45,12 +46,14 @@
 \subtitle{Algorithms for Searching and Sampling Triangulations}
 \author{Daniel Bruwel}
 \institute[USYD]{
+    \textbf{Supervisor}: Jonathan Spreer \\
+    \vspace{0.5cm}\\
     School of Mathematics and Statistics\\
     Faculty of Science\\
     The University of Sydney
 }
 \date{October 16, 2025}
-\logo{\includegraphics[height=1cm]{presentation/usy_mb1_cmyk_stacked_logo.png}}
+% \logo{\includegraphics[height=1cm]{presentation/usy_mb1_cmyk_stacked_logo.png}}
 
 % --- Custom Environments (for Maths) ---
 % \newtheorem{theorem}{Theorem}
@@ -482,11 +485,7 @@ We can understand $S^3$ as $\mathbb{R}^3$ with a point at infinity which can be 
 % -------------------------
 \section{References and Acknowledgements}
 
-\begin{frame}[allowframebreaks]{References}
-    \printbibliography
-\end{frame}
-
-\begin{frame}{Acknowledgements}
+\begin{frame}
     \begin{center}
         \textbf{Thank You!}
 
@@ -496,4 +495,7 @@ We can understand $S^3$ as $\mathbb{R}^3$ with a point at infinity which can be 
     \end{center}
 \end{frame}
 
+\begin{frame}[allowframebreaks]{References}
+    \printbibliography
+\end{frame}
 \end{document}
