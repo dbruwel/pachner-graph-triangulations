@@ -30,8 +30,8 @@ def take_step(iso, potential, beta):
         p0 = potential(iso)
         return iso, p0[0], p0[0], p0[1], p0[2], p0[3]
 
-    with Pool(processes=7) as pool:
-        results_list = pool.starmap(worker_function, [(n, potential) for n in nbrs])
+    # with Pool(processes=7) as pool:
+    results_list = [worker_function(n, potential) for n in nbrs]
     scores = np.array(results_list)
     if beta == np.inf:
         logger.debug("Using greedy selection.")
