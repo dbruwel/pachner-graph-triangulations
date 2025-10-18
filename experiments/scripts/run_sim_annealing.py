@@ -57,13 +57,13 @@ if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
     logger = logging.getLogger(__name__)
 
-    logger.info("Degree of Alexander polynomial potential")
-    run_sim_annealing(
-        Path("sim_annealing") / "degree_alexander_polynomial",
-        potentials.Potential(
-            potentials.DegreeAlexanderPolynomial, max_size=30
-        ).calc_potential,
-    )
+    # logger.info("Degree of Alexander polynomial potential")
+    # run_sim_annealing(
+    #     Path("sim_annealing") / "degree_alexander_polynomial",
+    #     potentials.Potential(
+    #         potentials.DegreeAlexanderPolynomial, max_size=30
+    #     ).calc_potential,
+    # )
 
     # logger.info("")
     # logger.info("")
@@ -75,18 +75,18 @@ if __name__ == "__main__":
     #     ).calc_potential,
     # )
 
-    logger.info("")
-    logger.info("")
-    logger.info("Norm of Alexander polynomial potential")
-    run_sim_annealing(
-        Path("sim_annealing") / "norm_alexander_polynomial",
-        potentials.Potential(
-            potentials.NormAlexanderPolynomial, max_size=30
-        ).calc_potential,
-    )
+    # logger.info("")
+    # logger.info("")
+    # logger.info("Norm of Alexander polynomial potential")
+    # run_sim_annealing(
+    #     Path("sim_annealing") / "norm_alexander_polynomial",
+    #     potentials.Potential(
+    #         potentials.NormAlexanderPolynomial, max_size=30
+    #     ).calc_potential,
+    # )
 
-    logger.info("")
-    logger.info("")
+    # logger.info("")
+    # logger.info("")
     logger.info("Number of generators potential")
     run_sim_annealing(
         Path("sim_annealing") / "number_of_generators",
