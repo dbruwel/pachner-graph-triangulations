@@ -4,6 +4,9 @@ import numpy as np
 import regina
 from snappy import Manifold
 
+import multiprocessing
+import math
+
 
 def is_knotted(t: regina.engine.Triangulation3) -> bool:
     return not t.isSolidTorus()
@@ -107,6 +110,7 @@ class NumGenerators(Score):
         score = fg.countGenerators()
         return score
 
+
 class KnottedFrac(Score):
     pinch_first = True
     base_score = 0
@@ -117,6 +121,37 @@ class KnottedFrac(Score):
         tri: regina.engine.Triangulation3, edge: regina.engine.Face3_1
     ) -> float:
         return 1
+
+
+def process_edge(args):
+    """"""
+    start_index, end_index, iso_sig, potential_obj = args
+
+    results = []
+
+    for edge_index in range(start_index, end_index):
+        # The core logic is the same as before
+        tri = regina.engine.Triangulation3.fromIsoSig(iso_sig)
+        edge = tri.edge(edge_index)
+        score = None
+        knotted_status = 0
+
+        if not potential_obj.pinch_first:
+            score = potential_obj.potential(tri, edge)
+
+        tri.pinchEdge(edge)
+
+        if is_knotted(tri):
+            if potential_obj.pinch_first:
+                score = potential_obj.potential(tri, edge)
+            knotted_status = 1
+        else:
+            if potential_obj.pinch_first:
+                score = potential_obj.base_score
+
+        results.append((score, knotted_status))
+
+    return results
 
 
 class Potential:
@@ -131,30 +166,36 @@ class Potential:
         knotted = []
 
         edges = regina.engine.Triangulation3.fromIsoSig(iso).countEdges()
-        all_knoted = True
+        tetrahedra = regina.engine.Triangulation3.fromIsoSig(iso).countTetrahedra()
 
-        if (not self.max_size is None) and (edges > self.max_size):
+        if (not self.max_size is None) and (tetrahedra > self.max_size):
             return -np.inf, 0.0, 0, False
 
-        for i in range(edges):
-            tri = regina.engine.Triangulation3.fromIsoSig(iso)
-            edge = tri.edge(i)
-            if not self.potential.pinch_first:
-                score = self.potential.potential(tri, edge)
+        num_processes = multiprocessing.cpu_count()
+        chunk_size = math.ceil(edges / num_processes)
 
-            tri.pinchEdge(edge)
+        tasks = []
+        for i in range(num_processes):
+            start = i * chunk_size
+            end = min((i + 1) * chunk_size, edges)
+            if start < end:
+                tasks.append((start, end, iso, self.potential))
 
-            if is_knotted(tri):
-                if self.potential.pinch_first:
-                    score = self.potential.potential(tri, edge)
-                knotted.append(1)
-            else:
-                if self.potential.pinch_first:
-                    score = self.potential.base_score
-                knotted.append(0)
-                all_knoted = False
+        all_results = []
+        with multiprocessing.Pool(processes=num_processes) as pool:
+            list_of_results_lists = pool.map(process_edge, tasks)
 
-            scores.append(score)  # type: ignore
+            for sublist in list_of_results_lists:
+                all_results.extend(sublist)
+
+        # results = [process_edge(task) for task in tasks]
+
+        if all_results:
+            scores, knotted = zip(*all_results)
+        else:
+            scores, knotted = [], []
+
+        all_knotted = all(k == 1 for k in knotted)
 
         p_knotted = np.mean(knotted)
         count_unknotted = len(knotted) - np.sum(knotted)
@@ -164,7 +205,7 @@ class Potential:
         else:
             agg_score = np.mean(scores)
 
-        return agg_score, p_knotted, count_unknotted, all_knoted
+        return agg_score, p_knotted, count_unknotted, all_knotted
 
 
 def calc_composite_potential(iso):

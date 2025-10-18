@@ -1,7 +1,7 @@
 import logging
-import multiprocessing
 from collections.abc import Callable
-from typing import Optional, Any
+from pathlib import Path
+from typing import Any, Optional
 
 import numpy as np
 import regina
@@ -27,6 +27,7 @@ def sample_chain(
     lambda_: float = 1 / 5,
     alpha: float = 1 / 5,
     target_acceptance: float = 0.2,
+    path: Path | None = None,
 ):
     isos = [seed]
     seed_score, seed_pn, seed_count_unknotted, _ = potential(seed)
@@ -45,8 +46,7 @@ def sample_chain(
                 logger.info(f"Chain {chain_id}: iteration {itt:,.0f}/{itts:,.0f}")
         current_iso = isos[-1]
 
-        with multiprocessing.Lock() as lock:
-            current_score = scores[current_iso]
+        current_score = scores[current_iso]
 
         proposed_iso = iterate(current_iso, gamma_, steps=steps)
         if proposed_iso == current_iso:
@@ -54,30 +54,29 @@ def sample_chain(
             moving_average = (1 - alpha) * moving_average + alpha * 0.0
             acceptances.append(0)
         else:
-            with multiprocessing.Lock() as lock:
-                if proposed_iso in scores:
-                    proposed_score = scores[proposed_iso]
-                else:
-                    try:
-                        proposed_score, proposed_pn, count_unknotted, all_knoted = (
-                            potential(proposed_iso)
-                        )
-                        scores[proposed_iso] = proposed_score
-                        pns[proposed_iso] = proposed_pn
-                        counts_unknotted[proposed_iso] = count_unknotted
+            if proposed_iso in scores:
+                proposed_score = scores[proposed_iso]
+            else:
+                try:
+                    proposed_score, proposed_pn, count_unknotted, all_knoted = (
+                        potential(proposed_iso)
+                    )
+                    scores[proposed_iso] = proposed_score
+                    pns[proposed_iso] = proposed_pn
+                    counts_unknotted[proposed_iso] = count_unknotted
 
-                        if all_knoted:
-                            logger.critical(
-                                f"{proposed_iso}: All knotted, solution found. Exiting."
-                            )
-                            isos.append(proposed_iso)
-                            break
-                    except Exception as e:
-                        logger.error(
-                            f"Error processing iso {proposed_iso} in score computation. Skipping."
+                    if all_knoted:
+                        logger.critical(
+                            f"{proposed_iso}: All knotted, solution found. Exiting."
                         )
-                        logger.error(f"Exception: {e}")
-                        continue
+                        isos.append(proposed_iso)
+                        break
+                except Exception as e:
+                    logger.error(
+                        f"Error processing iso {proposed_iso} in score computation. Skipping."
+                    )
+                    logger.error(f"Exception: {e}")
+                    continue
 
             if proposed_score > current_score:
                 isos.append(proposed_iso)
@@ -104,15 +103,22 @@ def sample_chain(
                     isos.append(current_iso)
                     moving_average = (1 - alpha) * moving_average + alpha * 0.0
                     acceptances.append(0)
-
-            beta = beta * np.exp(alpha * (moving_average - target_acceptance))
+            diff = moving_average - target_acceptance
+            beta = beta * np.exp(lambda_ * diff)
             betas.append(beta)
+
+        if not path is None:
+            if not (path / "progress.csv").exists():
+                with open(path / "progress.csv", "w") as f:
+                    f.write("iso,score\n")
+            with open(path / "progress.csv", "a") as f:
+                f.write(f"{isos[-1]},{scores[isos[-1]]}\n")
 
     return isos, betas, acceptances
 
 
 def run_chains(
-    betas: list[float | np.floating],
+    beta: float,
     potential: Callable[
         [str], tuple[float | np.floating, float | np.floating, int, bool]
     ],
@@ -123,41 +129,34 @@ def run_chains(
     lambda_: float = 1.0,
     alpha: float = 1 / 5,
     target_acceptance: float = 0.2,
+    path: Path | None = None,
 ) -> dict[str, Any]:
-    with multiprocessing.Manager() as manager:
-        scores = manager.dict()
-        pns = manager.dict()
-        counts_unknotted = manager.dict()
+    """"""
 
-        with multiprocessing.Pool(processes=len(betas)) as pool:
-            args = [
-                (
-                    beta,
-                    scores,
-                    pns,
-                    counts_unknotted,
-                    potential,
-                    seed,
-                    gamma_,
-                    itts,
-                    steps,
-                    chain_id,
-                    lambda_,
-                    alpha,
-                    target_acceptance,
-                )
-                for chain_id, beta in enumerate(betas)
-            ]
+    scores = {}
+    pns = {}
+    counts_unknotted = {}
 
-            results = pool.starmap(sample_chain, args)
+    isos_lists, betas_lists, acceptances_lists = sample_chain(
+        beta,
+        scores,
+        pns,
+        counts_unknotted,
+        potential,
+        seed,
+        gamma_,
+        itts,
+        steps,
+        1,
+        lambda_,
+        alpha,
+        target_acceptance,
+        path=path,
+    )
 
-        final_scores = dict(scores)
-        final_pns = dict(pns)
-        final_counts_unknotted = dict(counts_unknotted)
-
-        isos_lists = [result[0] for result in results]
-        betas_lists = [result[1] for result in results]
-        acceptances_lists = [result[2] for result in results]
+    final_scores = dict(scores)
+    final_pns = dict(pns)
+    final_counts_unknotted = dict(counts_unknotted)
 
     return {
         "isos_lists": isos_lists,

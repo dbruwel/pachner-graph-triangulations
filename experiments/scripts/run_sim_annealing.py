@@ -19,15 +19,16 @@ def run_sim_annealing(
     path = results_path(res_path)
 
     res = run_chains(
-        betas=[1] * 6,
+        beta=1.0,
         potential=potential,
         seed="cMcabbgqs",
         gamma_=1 / 10,
         itts=10_000,
         steps=10,
-        lambda_=1e-4,
-        alpha=1e-4,
+        lambda_=1e-1,
+        alpha=1e-2,
         target_acceptance=0.2,
+        path=path,
     )
 
     isos_lists = res["isos_lists"]
@@ -40,9 +41,9 @@ def run_sim_annealing(
     scores_df = pd.DataFrame.from_dict(scores, orient="index", columns=["score"])
     pn_df = pd.DataFrame.from_dict(pns, orient="index", columns=["pn"])
     unknot_df = pd.DataFrame.from_dict(unknotted, orient="index", columns=["unknotted"])
-    isos_df = pd.DataFrame(isos_lists).T
-    betas_df = pd.DataFrame(betas_lists).T
-    acceptances_df = pd.DataFrame(acceptances_lists).T
+    isos_df = pd.DataFrame(isos_lists)
+    betas_df = pd.DataFrame(betas_lists)
+    acceptances_df = pd.DataFrame(acceptances_lists)
 
     scores_df.to_csv(f"{path}/scores.csv")
     pn_df.to_csv(f"{path}/pns.csv")
@@ -54,14 +55,7 @@ def run_sim_annealing(
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
-
     logger = logging.getLogger(__name__)
-
-    logger.info("Percentage knotted potential")
-    run_sim_annealing(
-        Path("sim_annealing") / "percentage_knotted",
-        potentials.Potential(potentials.KnottedFrac, max_size=30).calc_potential,
-    )
 
     # logger.info("Degree of Alexander polynomial potential")
     # run_sim_annealing(
@@ -73,13 +67,13 @@ if __name__ == "__main__":
 
     # logger.info("")
     # logger.info("")
-    # logger.info("Determinant of Alexander polynomial potential")
-    # run_sim_annealing(
-    #     Path("sim_annealing") / "determinant_alexander_polynomial",
-    #     potentials.Potential(
-    #         potentials.DeterminantAlexanderPolynomial, max_size=30
-    #     ).calc_potential,
-    # )
+    logger.info("Determinant of Alexander polynomial potential")
+    run_sim_annealing(
+        Path("sim_annealing") / "determinant_alexander_polynomial",
+        potentials.Potential(
+            potentials.DeterminantAlexanderPolynomial, max_size=30
+        ).calc_potential,
+    )
 
     # logger.info("")
     # logger.info("")
