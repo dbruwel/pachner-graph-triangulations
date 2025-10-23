@@ -1,4 +1,4 @@
-name: Build LaTeX PDF (with Artifacts)
+name: Build LaTeX PDF
 
 on:
   push:
