@@ -59,7 +59,7 @@
 
 
 % roman page numbers for the initial pages
-\pagenumbering{roman}
+% \pagenumbering{roman}
 
 % uncomment this to change the date on the title page
 %\renewcommand{\Today}{October ????}
@@ -104,7 +104,7 @@ The report is structured as follows. Chapter 1 brings together the necessary pre
 \cite{altmann2025sampling}
 
 % reset the page numbering and change to arabic numbers
-\newpage\setcounter{page}{1}\pagenumbering{arabic}
+% \newpage\setcounter{page}{1}\pagenumbering{arabic}
 
 \chapter{Preliminaries}
 \section{Mathematical Preliminaries}
@@ -705,14 +705,14 @@ The choice of variance here instead of the average follows from the fact that th
 \section{Markov Chain Monte Carlo}\label{sec:mcmc}
 To establish a baseline for our objective functions, generic Markov Chain Monte Carlo was run to determine the distribution of our objective function across the Pachner Graph. The MCMC algorithm described by Jonathan samples uniformly around triangulations of a particular number of tetrahedra. We, somewhat arbitrary, choose to examine the Pachner graph around triangulations of 30-tetrahedra, which corresponds to $\gamma=1/10$. This choice is informed by other results in computational topology that have found interesting triangulations of size less than 30 tetrahedra, and because 30 tetrahedra is intractable to enumerate exhaustively. Samples with $7$ chains of $10,000$ iterations with a step size of $100$ where performed, for each sample all objective functions were calculated (as opposed to running distinct sampling processes for each objective function). This has the benefit of not only saving computational time, but giving us a uniform sample of the space where we can asses the correlation of each objective function. We confirmed convergence with the Gelman-Rubin statistic with a threshold of $1.01$, this threshold is in accordance with modern recommendations. The convergence statistics are in table~\ref{tab:mcmc-convergence}. For interest, figure~\ref{fig:obj-correlation} shows the correlation between each objective functions across the entire set of MCMC samples. It is important to note that this correlation tells us the correlation for ``an average'' sample, and the correlation between the functions could dramatically change in very specific parts of the distribution - in particular near the respective maxima of each variable.
 
+We extracted the triangulations with $30$ tetrahedra, there were $8,250$ such triangulations so an efficiency of $\approx 12\%$. The following analyses are performed on this subset of triangulations.
+
 \begin{figure}
     \centering
     \includegraphics[width=0.5\linewidth]{thesis/figures/obj_correlation.pdf}
     \caption{Correlation plot for each objective function.}
     \label{fig:obj-correlation}
 \end{figure}
-
-We extracted the triangulations with $30$ tetrahedra, there were $8,250$ such triangulations so an efficiency of $\approx 12\%$. The following analyses are performed on this subset of triangulations.
 
 \begin{table}[htb]
     \centering
@@ -733,7 +733,9 @@ We extracted the triangulations with $30$ tetrahedra, there were $8,250$ such tr
 
 The distribution for the score for each objective function outlined in section~\ref{sec:objective-functions} is displayed in figure~\ref{fig:mcmc-score-dist}.
 
-All but $\mathcal{O}_{var}$ present power law distributions or power law distributed tails. To confirm this we fit both a power law distribution across the entire data, and also compute $x_{\min}$ according to the procedure of Clauset, Shalizi, and Newman, and fit a power law distribution to the tails. Both these fits are done with MLE. A plot on a log-log histogram of the data, and the fitted distributions is seen in figure~\ref{fig:mcmc-score-dist-log}
+All but $\mathcal{O}_{var}$ present power law distributions or power law distributed tails. To confirm this we fit both a power law distribution across the entire data, and also compute $x_{\min}$ according to the procedure of Clauset, Shalizi, and Newman, and fit a power law distribution to the tails. Both these fits are done with MLE. A plot on a log-log histogram of the data, and the fitted distributions is seen in figure~\ref{fig:mcmc-score-dist-log}. 
+
+The $\mathcal{O}_{var}$ appears to have some positively skewed distribution, considering that it is the distribution of the variance, a chi squared distribution would be expected. However, fitting one to the data lead to poor results and a log normal distribution was used instead. This is weakly justified, asside from a strong in sample fit as seen in figure~\ref{fig:mcmc-var-score-dist-log} that is plotted in log-log space to confirm tail behaviour.
 
 \begin{figure}[H]
     \centering
@@ -808,6 +810,13 @@ All but $\mathcal{O}_{var}$ present power law distributions or power law distrib
     
     \caption{Log-log histogram of the score for each objective function under MCMC samples at $\gamma=1/10$. The red line indicates the fitted power law distribution over the entire dataset, the orange line the fitted power law distribution for $x>x_{\min}$}
     \label{fig:mcmc-score-dist-log}
+\end{figure}
+
+\begin{figure}
+    \centering
+    \includegraphics[width=0.5\linewidth]{thesis/figures/agg_score_edge_var_log_distribution.pdf}
+    \caption{Log-log histogram of $\mathcal{O}_{var}$ with fitted log normal distribution.}
+    \label{fig:mcmc-var-score-dist-log}
 \end{figure}
 
 \section{Classical Optimisation}
@@ -920,14 +929,14 @@ The best result from each optimisation technique is compiled in table~\ref{tab:c
         \hline
          & Score & Bulk Percentile & Tail Percentile & Score & Bulk Percentile & Tail Percentile \\
         \hline
-        $\mathcal{O}_{deg}$ & 152.26 &  &  & 433.42 &  & \\
-        $\mathcal{O}_{det}$ & 27.19 &  &  & 13.84 &  & \\
-        $\mathcal{O}_{norm}$ & 29.06 &  &  & 152.26 &  & \\
-        $\mathcal{O}_{gen}$ & 1.94 &  &  & 2.65 &  & \\
-        $\mathcal{O}_{var}$ & 412.54 &  &  & 522.93 &  & \\
+        $\mathcal{O}_{deg}$ & $152.26$ & $7.19\cdot 10^{-05}$ & $1.21\cdot 10^{-05}$ & $433.42$ & $2.12\cdot 10^{-05}$ & $2.66\cdot 10^{-06}$ \\
+        $\mathcal{O}_{det}$ & $27.19$ & $1.38\cdot 10^{-13}$ & $2.62\cdot 10^{-13}$ & $13.84$ & $5.86\cdot 10^{-11}$ & $1.61\cdot 10^{-10}$ \\
+        $\mathcal{O}_{norm}$ & $29.06$ & $7.16\cdot 10^{-12}$ & $3.29\cdot 10^{-06}$ & $152.26$ & $2.38\cdot 10^{-17}$ & $1.23\cdot 10^{-08}$ \\
+        $\mathcal{O}_{gen}$ & $1.94$ & $1.58\cdot 10^{-06}$ & $2.32\cdot 10^{-05}$ & $2.65$ & $2.93\cdot 10^{-09}$ & $1.14\cdot 10^{-07}$ \\
+        $\mathcal{O}_{var}$ & $412.54$ &  &  & $522.93$ &  & \\
         \hline
     \end{tabular}
-    \caption{Caption}
+    \caption{Comparison of maximum achieved objective function for both classical sampling techniques. Percentiles of each score based on bulk and tail fitted power law distributions.}
     \label{tab:classical-results}
 \end{table}
 
