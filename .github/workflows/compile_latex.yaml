@@ -7,6 +7,8 @@ on:
     paths:
       - 'thesis/**'
 
+  workflow_dispatch:
+
 permissions:
   contents: write
 
