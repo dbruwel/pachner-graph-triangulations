@@ -1,11 +1,11 @@
 name: Build LaTeX PDF
 
 on:
-  push:
-    branches:
-      - main
-    paths:
-      - 'thesis/**'
+  # push:
+  #   branches:
+  #     - main
+  #   paths:
+  #     - 'thesis/**'
 
   workflow_dispatch:
 
