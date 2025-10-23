@@ -204,7 +204,7 @@
       {\large\SMSsection\\[5pt]
       University of Sydney}\\
       \vskip6mm
-      \includegraphics[width=18mm]{USY_MB1_CMYK_Stacked_Logo}
+      \includegraphics[width=18mm]{thesis/usy_mb1_cmyk_stacked_logo.png}
     \vfil
       \normalsize\Today
     \end{center}
