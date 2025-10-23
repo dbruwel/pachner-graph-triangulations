@@ -7,6 +7,7 @@
 \usepackage{caption}
 \usepackage{subcaption}
 \usepackage{setspace}
+\usepackage{pdflscape}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -508,7 +509,10 @@ While these abstract formulations of the Transformer are theocratically rich, in
 \end{Definition}
 
 \begin{Definition}[Standard Multi-Head Attention]
-    For $X$ defined as above, $MHA(X)=\operatorname{Concat}(h_1(X), ..., h_h(X))W^O$
+    For $X$ defined as above 
+    \begin{equation}
+        MHA(X)=\operatorname{Concat}(h_1(X), ..., h_h(X))W^O
+    \end{equation}
 \end{Definition}
 
 \begin{Definition}[Standard Feedforward Neural Network]
@@ -699,7 +703,16 @@ The prior four objective functions are all inspired by the knot structure of our
 The choice of variance here instead of the average follows from the fact that the average degree becomes independent of the triangulation structure and instead depends on the topology which is constant for a sphere.
 
 \section{Markov Chain Monte Carlo}\label{sec:mcmc}
-To establish a baseline for our objective functions, generic Markov Chain Monte Carlo was run to determine the distribution of our objective function across the Pachner Graph. The MCMC algorithm described by Jonathan samples uniformly around triangulations of a particular number of tetrahedra. We, somewhat arbitrary, choose to examine the Pachner graph around triangulations of 30-tetrahedra, which corresponds to $\gamma=1/10$. This choice is informed by other results in computational topology that have found interesting triangulations of size less than 30 tetrahedra, and because 30 tetrahedra is intractable to enumerate exhaustively. For each objective function we performed $7$ chains of $10,000$ iterations with a step size of $100$. We confirmed convergence with the Gelman-Rubin statistic with a threshold of $1.01$, this threshold is in accordance with modern recommendations. The convergence statistics are in table~\ref{tab:mcmc-convergence}. We extracted the triangulations with $30$ tetrahedra, there were $8,250$ such triangulations so an efficiency of $\approx 12\%$. The following analyses are performed on this subset of triangulations.
+To establish a baseline for our objective functions, generic Markov Chain Monte Carlo was run to determine the distribution of our objective function across the Pachner Graph. The MCMC algorithm described by Jonathan samples uniformly around triangulations of a particular number of tetrahedra. We, somewhat arbitrary, choose to examine the Pachner graph around triangulations of 30-tetrahedra, which corresponds to $\gamma=1/10$. This choice is informed by other results in computational topology that have found interesting triangulations of size less than 30 tetrahedra, and because 30 tetrahedra is intractable to enumerate exhaustively. Samples with $7$ chains of $10,000$ iterations with a step size of $100$ where performed, for each sample all objective functions were calculated (as opposed to running distinct sampling processes for each objective function). This has the benefit of not only saving computational time, but giving us a uniform sample of the space where we can asses the correlation of each objective function. We confirmed convergence with the Gelman-Rubin statistic with a threshold of $1.01$, this threshold is in accordance with modern recommendations. The convergence statistics are in table~\ref{tab:mcmc-convergence}. For interest, figure~\ref{fig:obj-correlation} shows the correlation between each objective functions across the entire set of MCMC samples. It is important to note that this correlation tells us the correlation for ``an average'' sample, and the correlation between the functions could dramatically change in very specific parts of the distribution - in particular near the respective maxima of each variable.
+
+\begin{figure}
+    \centering
+    \includegraphics[width=0.5\linewidth]{thesis/figures/obj_correlation.pdf}
+    \caption{Correlation plot for each objective function.}
+    \label{fig:obj-correlation}
+\end{figure}
+
+We extracted the triangulations with $30$ tetrahedra, there were $8,250$ such triangulations so an efficiency of $\approx 12\%$. The following analyses are performed on this subset of triangulations.
 
 \begin{table}[htb]
     \centering
@@ -722,7 +735,7 @@ The distribution for the score for each objective function outlined in section~\
 
 All but $\mathcal{O}_{var}$ present power law distributions or power law distributed tails. To confirm this we fit both a power law distribution across the entire data, and also compute $x_{\min}$ according to the procedure of Clauset, Shalizi, and Newman, and fit a power law distribution to the tails. Both these fits are done with MLE. A plot on a log-log histogram of the data, and the fitted distributions is seen in figure~\ref{fig:mcmc-score-dist-log}
 
-\begin{figure}[htb]
+\begin{figure}[H]
     \centering
     \begin{subfigure}[b]{0.45\textwidth}
         \centering
@@ -763,7 +776,7 @@ All but $\mathcal{O}_{var}$ present power law distributions or power law distrib
     \label{fig:mcmc-score-dist}
 \end{figure}
 
-\begin{figure}[htb]
+\begin{figure}[H]
     \centering
     \begin{subfigure}[b]{0.45\textwidth}
         \centering
@@ -799,18 +812,18 @@ All but $\mathcal{O}_{var}$ present power law distributions or power law distrib
 
 \section{Classical Optimisation}
 \subsection{Direct Ascent}
-We perform direct accent starting from the seed triangulation of `cMcabbgqs` which has one vertex and two tetrahedra. We performed this direct accent 20 times at different temperatures ($0.1, \sqrt{0.1}$, $1$, $\sqrt{10}$, $10$) and compared the maximum achieved score at each level, an example of this for $\mathcal{O}_{deg}$ in figure~\ref{fig:direct-ascent-temp}. In all cases it was found that a lower temperature lead to better results, this suggests that the graph is connected enough that greedy ascent is sufficient (that is, the neighbour with the greatest score is accepted at each step). We perform greedy ascent for each objective function for $28$ steps to a triangulation of $30$ tetrahedra, the chains are presented in figure~\ref{fig:direct-ascent-all}. We see that for .... the ascent profile is rather deterministic, suggesting ... However, for ... we observe a more complex objective function geometry.
+We perform direct accent starting from the seed triangulation of \linebreak\verb`cMcabbgqs` which has one vertex and two tetrahedra. We performed this direct accent 20 times at different temperatures ($0.1, \sqrt{0.1}$, $1$, $\sqrt{10}$, $10$) and compared the maximum achieved score at each level, an example of this for $\mathcal{O}_{deg}$ in figure~\ref{fig:direct-ascent-temp}. In all cases it was found that a lower temperature lead to better results, this suggests that the graph is connected enough that greedy ascent is sufficient (that is, the neighbour with the greatest score is accepted at each step). We perform greedy ascent for each objective function for $28$ steps to a triangulation of $30$ tetrahedra, the chains are presented in figure~\ref{fig:direct-ascent-all}. We see that for .... the ascent profile is rather deterministic, suggesting ... However, for ... we observe a more complex objective function geometry.
 
 While the direct ascent approach does perform particularly well, it is computational slow, requiring, and can only find a single triangulation of interest, i.e. its terminal triangulation after ascent. As such, in situations where a single high value triangulation is desired this is a beneficial approach. However, if the goal is to explore a variety of different high valued triangulations, the effectiveness decreases. Additionally, even in the higher temperature case, there is a particularly low efficiency. For triangulations of size $T$ tetrahedra, there are $2T$ neighbours of size $T+1$, of which only one is selected at each step, so the sampling efficiency is $1/2T$ which is about $<2\%$.
 
-\begin{figure}
+\begin{figure}[H]
     \centering
-    \includegraphics[width=0.85\linewidth]{thesis/figures/direct_ascent_temp.pdf}
+    \includegraphics[width=0.8\linewidth]{thesis/figures/direct_ascent_temp.pdf}
     \caption{Direct Ascent on $\mathcal{O}_{deg}$ at different temperatures ($\beta=1/T$)}
     \label{fig:direct-ascent-temp}
 \end{figure}
 
-\begin{figure}
+\begin{figure}[H]
     \centering
     \begin{subfigure}[b]{0.45\textwidth}
         \centering
@@ -852,13 +865,9 @@ While the direct ascent approach does perform particularly well, it is computati
 \end{figure}
 
 \subsection{Simulated Annealing}
-We perform simulated annealing as described in section~\ref{sec:simulated-annealing}. This is done for a target of $10,000$ iterations with a step size of $10$ and target acceptance rate of $20\%$, this acceptance rate was chosen heuristically based on a number of different small experiments. To ensure a fair comparison with direct ascent, the potential was set to $-\infty$ for triangulations with more than 30 tetrahedra. For $\mathcal{O}_{deg}$, the chain was stopped early at $3,307$ samples because the computational time required to score a single triangulation had become unfeasibly slow ($>1$min$/$sample).
+We perform simulated annealing as described in section~\ref{sec:simulated-annealing}. This is done for a target of $10,000$ iterations with a step size of $10$ and target acceptance rate of $20\%$, this acceptance rate was chosen heuristically based on a number of different small experiments. To ensure a fair comparison with direct ascent, the potential was set to $-\infty$ for triangulations with more than 30 tetrahedra. For $\mathcal{O}_{deg}$ and $\mathcal{O}_{norm}$, the chain was stopped early at $3,307$ and $2,940$ samples because the computational time required to score a single triangulation had become unfeasibly slow \linebreak($>1$min$/$sample). The actual acceptance rate was calculated in each case. For $\mathcal{O}_{det}, \mathcal{O}_{gen}$ and $\mathcal{O}_{var}$ the achieved acceptance rate was within $1\%$ of the target. For $\mathcal{O}_{deg}$ and $\mathcal{O}_{norm}$ the acceptance rate is lower, though this is likely due to the reduced number of samples achieved. The chains for each objective function and the achieved acceptance rates are included in figure~\ref{fig:simulated-annealing}.
 
-The chains for each objective function are plotted in figure~\ref{fig:simulated-annealing}. 
-
-The achieved acceptance rates were typically above $10\%$ with acceptation to $\mathcal{O}_{var}$ which achieved a poor acceptance rate of $1.4\%$. The acceptance rates are included in figure~\ref{fig:simulated-annealing}.
-
-\begin{figure}
+\begin{figure}[H]
     \centering
     \begin{subfigure}[b]{0.45\textwidth}
         \centering
@@ -902,58 +911,60 @@ The achieved acceptance rates were typically above $10\%$ with acceptation to $\
 \section{Comparison of Classical Optimisation}
 The best result from each optimisation technique is compiled in table~\ref{tab:classical-results}, this table includes the achieved percentile of the best sample, computed by the fitted power law distribution from section~\ref{sec:mcmc}.
 
-\begin{table}[]
+\begin{landscape}
+\begin{table}[H]
     \centering
-    \begin{tabular}{|c|c|c|c|c|}
+    \begin{tabular}{|c|c|c|c|c|c|c|}
         \hline
-        Objective Function & \multicolumn{2}{|c|}{Direct Ascent} & \multicolumn{2}{|c|}{Simulated Annealing} \\
+        Objective Function & \multicolumn{3}{|c|}{Direct Ascent} & \multicolumn{3}{|c|}{Simulated Annealing} \\
         \hline
-         & Score & Percentile & Score & Percentile \\
+         & Score & Bulk Percentile & Tail Percentile & Score & Bulk Percentile & Tail Percentile \\
         \hline
-        $\mathcal{O}_{deg}$ & 152.26 &  & 433.42 & \\
-        $\mathcal{O}_{det}$ & 27.19 &  & 13.84 & \\
-        $\mathcal{O}_{norm}$ & 29.06 &  & 152.26 & \\
-        $\mathcal{O}_{gen}$ & 1.94 &  & 2.65 & \\
-        $\mathcal{O}_{var}$ & 412.54 &  & 522.93 & \\
+        $\mathcal{O}_{deg}$ & 152.26 &  &  & 433.42 &  & \\
+        $\mathcal{O}_{det}$ & 27.19 &  &  & 13.84 &  & \\
+        $\mathcal{O}_{norm}$ & 29.06 &  &  & 152.26 &  & \\
+        $\mathcal{O}_{gen}$ & 1.94 &  &  & 2.65 &  & \\
+        $\mathcal{O}_{var}$ & 412.54 &  &  & 522.93 &  & \\
         \hline
     \end{tabular}
     \caption{Caption}
     \label{tab:classical-results}
 \end{table}
 
-\begin{table}[]
+\begin{table}[H]
     \centering
     \begin{tabular}{|c|c|}
         \hline
-         & Best Triangulation (IsoSig) \\
+         & Best Triangulation (\verb|IsoSig|) \\
         \hline
-        $\mathcal{O}_{deg}$ & EMzMzMzMzMvAAMzMzMzMPabcdefghijklmnqpqrstuvwxyzABCDDjxxxxxxxxxxxxxlfxfxxxxxxxxxxxxj \\
-        $\mathcal{O}_{det}$ & ELLMMzMzMzMzMzMzMzMzQbeddfghijklmnopqrstuvwxyzABCDDDxxrfaxxxxxxxxxxxxxxxxxxxxxxxxvc \\
-        $\mathcal{O}_{norm}$ & EMzMzMzMzMvAAMzMzMzMPabcdefghijklmnqpqrstuvwxyzABCDDjxxxxxxxxxxxxxlfxfxxxxxxxxxxxxj \\
-        $\mathcal{O}_{gen}$ & ELwvMvQPLMzAPLLAPMzPQcbehgklimllpnqptrutwvzxyABDCBDDaacmvlpvlooashoqkmbuoageahamkcg \\
-        $\mathcal{O}_{var}$ & EMzMzMzMzMzMvAAMzMzMPabcdefghijklmnopqsttuvwxyzABCDDvaaaaaaaaaaaaaaaaciqnaaaaaaaaav \\
+        $\mathcal{O}_{deg}$ & \verb|EMzMzMzMzMvAAMzMzMzMPabcdefghijklmnqpqrstuvwxyzABCDDjxxxxxxxxxxxxxlfxfxxxxxxxxxxxxj| \\
+        $\mathcal{O}_{det}$ & \verb|ELLMMzMzMzMzMzMzMzMzQbeddfghijklmnopqrstuvwxyzABCDDDxxrfaxxxxxxxxxxxxxxxxxxxxxxxxvc| \\
+        $\mathcal{O}_{norm}$ & \verb|EMzMzMzMzMvAAMzMzMzMPabcdefghijklmnqpqrstuvwxyzABCDDjxxxxxxxxxxxxxlfxfxxxxxxxxxxxxj| \\
+        $\mathcal{O}_{gen}$ & \verb|ELwvMvQPLMzAPLLAPMzPQcbehgklimllpnqptrutwvzxyABDCBDDaacmvlpvlooashoqkmbuoageahamkcg| \\
+        $\mathcal{O}_{var}$ & \verb|EMzMzMzMzMzMvAAMzMzMPabcdefghijklmnopqsttuvwxyzABCDDvaaaaaaaaaaaaaaaaciqnaaaaaaaaav| \\
         \hline
     \end{tabular}
     \caption{Best Triangulation Direct Ascent}
     \label{tab:placeholder}
 \end{table}
 
-\begin{table}[]
+\begin{table}[H]
     \centering
     \begin{tabular}{|c|c|}
         \hline
-         & Best Triangulation (IsoSig) \\
+         & Best Triangulation (\verb|IsoSig|) \\
         \hline
-        $\mathcal{O}_{deg}$ & ELvLLzvMvzMQAMLMQzQMQbdgfjpmtosmvruqptvwuzyxBCzACBDDafgfjxaovwrdsifjouitrwblqjfhroj \\
-        $\mathcal{O}_{det}$ & ELLvMLAAzPwMzAPzvAMQQadeihhhljnplnqpturttxBBCADBAADDbabagjgxbadjbhohagkfauahoxrccjo \\
-        $\mathcal{O}_{norm}$ & EvLPzvvzLAvzLPPQQMQQQdcdgklqsvoAptytAzBxxzCwyBBDzADDonnapdeaacqowdbauqadasckkjabvhd \\
-        $\mathcal{O}_{gen}$ & ELMvLAAvMAQzLwPLAMMMPcbdgfiihnmloopnqtsvtxwyzyABACDDaaaavlsvaccfbxsaqranmglanxxnxxr \\
-        $\mathcal{O}_{var}$ & EMLLLvzPPzwPLMQzAPzAQabddglnjokkqnouqswstuvwzyzBCDCDgagbaaagacvaggaccavgfbcafcoaaco \\
+        $\mathcal{O}_{deg}$ & \verb|ELvLLzvMvzMQAMLMQzQMQbdgfjpmtosmvruqptvwuzyxBCzACBDDafgfjxaovwrdsifjouitrwblqjfhroj| \\
+        $\mathcal{O}_{det}$ & \verb|ELLvMLAAzPwMzAPzvAMQQadeihhhljnplnqpturttxBBCADBAADDbabagjgxbadjbhohagkfauahoxrccjo| \\
+        $\mathcal{O}_{norm}$ & \verb|EvLPzvvzLAvzLPPQQMQQQdcdgklqsvoAptytAzBxxzCwyBBDzADDonnapdeaacqowdbauqadasckkjabvhd| \\
+        $\mathcal{O}_{gen}$ & \verb|ELMvLAAvMAQzLwPLAMMMPcbdgfiihnmloopnqtsvtxwyzyABACDDaaaavlsvaccfbxsaqranmglanxxnxxr| \\
+        $\mathcal{O}_{var}$ & \verb|EMLLLvzPPzwPLMQzAPzAQabddglnjokkqnouqswstuvwzyzBCDCDgagbaaagacvaggaccavgfbcafcoaaco| \\
         \hline
     \end{tabular}
     \caption{Best Triangulation Simulated Annealing}
     \label{tab:placeholder}
 \end{table}
+\end{landscape}
 
 \section{Baseline Transformer Efficiency on Isomorphism Signatures}
 
