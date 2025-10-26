@@ -12,14 +12,9 @@ from flax.core import freeze
 
 from pachner_traversal.data_io import Dataset, Encoder
 from pachner_traversal.transformer import MinimalTrainState, Transformer, train_step
-from pachner_traversal.utils import results_path
+from pachner_traversal.utils import results_path, data_path
 
 logger = logging.getLogger(__name__)
-
-data_path = (
-    pathlib.Path(__file__).parent.parent.parent / "data" / "input_data" / "processed"
-)
-save_path = results_path("sgd_models")
 
 
 @partial(jax.jit, static_argnames=["vocab_size"])
@@ -53,7 +48,7 @@ def train_model(
 
     vocab_size = len(encoder.char_to_id)
     d_model = 64  # Dimension of embeddings and model
-    num_layers = 12  # Number of transformer blocks
+    num_layers = 6  # Number of transformer blocks
     num_heads = 8  # Number of attention heads
     d_ff = 64  # Dimension of the feed-forward network
     seq_len = dataset.max_len + 1  # Sequence length
@@ -99,7 +94,7 @@ def train_model(
         state, loss = train_step(state, batch_input, batch_label)
         losses[step] = float(loss)
 
-        if (step + 1) % 100 == 0:
+        if ((step + 1) % 100 == 0) or (step == 0):
             logger.info(
                 f"Step {step + 1:3d}/{num_train_steps}, Loss: {float(loss):.4f}"
             )
@@ -107,6 +102,12 @@ def train_model(
                 state, test_batch_input, test_batch_label, vocab_size
             )
             test_losses[step] = float(test_loss)
+
+            pd.Series(losses).to_csv(save_path / "train_losses.csv")
+            pd.Series(test_losses).to_csv(save_path / "test_losses.csv")
+
+            with open(save_path / "params.pkl", "wb") as file:
+                pickle.dump(state.params, file)
 
     logger.info("\n Training finished.")
 
@@ -118,11 +119,41 @@ def train_model(
 
 
 if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO)
+
+    processed_data_path = data_path / "input_data" / "processed"
+
     train_model(
-        data_path / "all_5tet.hdf5",
-        save_path / "12block_8head_5tet",
-        num_test_samps=700,
+        processed_data_path / "spheres_6tet.hdf5",
+        results_path("sgd_models/spheres_6block_8head_6tet"),
     )
-    train_model(data_path / "all_6tet.hdf5", save_path / "12block_8head_6tet")
-    train_model(data_path / "all_7tet.hdf5", save_path / "12block_8head_7tet")
-    train_model(data_path / "all_8tet.hdf5", save_path / "12block_8head_8tet")
+
+    train_model(
+        processed_data_path / "spheres_7tet.hdf5",
+        results_path("sgd_models/spheres_6block_8head_7tet"),
+    )
+
+    train_model(
+        processed_data_path / "spheres_8tet.hdf5",
+        results_path("sgd_models/spheres_6block_8head_8tet"),
+    )
+
+    train_model(
+        processed_data_path / "spheres_9tet.hdf5",
+        results_path("sgd_models/spheres_6block_8head_9tet"),
+    )
+
+    train_model(
+        processed_data_path / "spheres_10tet.hdf5",
+        results_path("sgd_models/spheres_6block_8head_10tet"),
+    )
+
+    train_model(
+        processed_data_path / "spheres_11tet.hdf5",
+        results_path("sgd_models/spheres_6block_8head_11tet"),
+    )
+
+    train_model(
+        processed_data_path / "spheres_12tet.hdf5",
+        results_path("sgd_models/spheres_6block_8head_12tet"),
+    )
