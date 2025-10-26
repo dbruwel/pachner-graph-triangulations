@@ -976,6 +976,18 @@ The best result from each optimisation technique is compiled in table~\ref{tab:c
 \end{landscape}
 
 \section{Baseline Transformer Efficiency on Isomorphism Signatures}
+A dataset of triangulations of $S^3$ is collected for a range of different sizes ($6-$tetrahedra to $12-$tetrahedra) These either come from the census of triangulations, or from MCMC. A separate transformer model is trained for each number of tetrahedra. Each transformer has the exact same parameters: an embedding dimension of $64$, $6$ layers, $8$ heads, a dropout rate of $0.1$, and a learning rate of $ 0.0005$. Each model was trained from the same starting key for $50,000$ iterations, where an iteration is a single batch of size $32$. Each batch was a randomised sample from the training data. A fixed, random, test set of $1,000$ was used for validation. These parameters were chosen as a computationally reasonable starting point for training, though there is significant research to suggest that larger models will perform better, especially given the essentially unlimited training data that we have.
+
+Figure~\ref{fig:sgd-test-losses} shows a log-log plot of the test loss over the number of iterations. It is evident that the curves are still decreasing, and at $50,000$ iterations there isn't significant enough curvature to infer when the training would plateau, this suggests that further training time would yield better results. Regardless of the small architecture and low training time, the data does exhibit promising results.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.7\linewidth]{thesis/figures/sgd_test_losses.pdf}
+    \caption{Caption}
+    \label{fig:sgd-test-losses}
+\end{figure}
+
+ Figure~\ref{fig:generation-efficiency} and table~\ref{tab:generation-efficiency} show the generation efficiency for the transformers trained on different numbers of tetrahedra. ``Loads'' indicates if the whether the generated string is formatted correctly to be loaded into regina. ``Valid'' checks if the string represents a topologically valid triangulation, i.e. doesn't have any singularities etc. in it. ``Closed'' checks if the manifold is closed (compact and has no boundary). ``Sphere'' checks if the manifold represents a sphere, i.e. if its fundamental group is trivial. In general, of the manifolds that load, almost all of them are valid. Also, of the manifolds that are closed about $70\%$ are spheres - though there is not enough data to suggest if this holds true in general. However, the fraction of valid manifolds that are closed does show evidence that it is decreasing as the number of tetrahedra increases. 
 
 \begin{table}[H]
     \centering
@@ -996,10 +1008,16 @@ The best result from each optimisation technique is compiled in table~\ref{tab:c
     \label{tab:generation-efficiency}
 \end{table}
 
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.7\linewidth]{thesis/figures/generation_efficiency.pdf}
+    \caption{Caption}
+    \label{fig:generation-efficiency}
+\end{figure}
 
 
 \chapter{Discussion and Future Work}
-...
+\section{}
 
 \bibliographystyle{plain}
 \bibliography{references}
