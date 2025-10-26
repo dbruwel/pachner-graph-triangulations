@@ -111,15 +111,15 @@ The report is structured as follows. Chapter 1 brings together the necessary pre
 A $n-$\emph{dimensional manifold} or a $n-$\textit{manifold} is a topological generalisation of a surface, they are topological spaces that are ``well behaved'' and locally homeomorphic to $\mathbb{R}^n$. We recall the following basic definitions before precisely defining a manifold.
 
 \begin{Definition}[Second Countable]
-    A Topological space $\mathcal{T}$ is \textit{Second Countable} if the topology $\tau_\mathcal{T}$ of $\mathcal{T}$ has a countable base.
+    A Topological space $(\mathcal{T}, \tau_\mathcal{T})$ is \textbf{Second Countable} if the topology $\tau_\mathcal{T}$ of $\mathcal{T}$ has a countable base.
 \end{Definition}
 \begin{Definition}[Hausdorff]
-    A Topological space $\mathcal{T}$ is \textit{Hausdorff} if for any two points $x\neq y$ in $\mathcal{T}$ there are neighbourhoods $U$ of $x$ and $V$ of $y$ such that $U\cap V=\varnothing$
+    A Topological space $(\mathcal{T}, \tau_\mathcal{T})$ is \textbf{Hausdorff} if for any two points $x\neq y$ in $\mathcal{T}$ there are neighbourhoods $U$ of $x$ and $V$ of $y$ such that $U\cap V=\varnothing$
 \end{Definition}
 
 With these we can define
 \begin{Definition}[$n-$dimensional manifold]
-    A $n-$\textit{dimensional manifold} is a Hausdorff, second countable, topological space $\mathcal{M}$ where for every point $p\in\mathcal{M}$ there is a neighbourhood $U(p)$ of $p$ that is Homeomorphic to an open subset of Euclidean space $\mathbb{R}^n$
+    A $n-$\textbf{dimensional manifold} is a Hausdorff, second countable, topological space $\mathcal{M}$ where for every point $p\in\mathcal{M}$ there is a neighbourhood $U(p)$ of $p$ that is Homeomorphic to an open subset of Euclidean space $\mathbb{R}^n$
 \end{Definition}
 
 \begin{Remark}
@@ -130,21 +130,21 @@ With these we can define
 We will refer to these simply as Manifolds, compared to other areas of research these may be called \textit{topological manifolds} to emphasise that they do not have any further structure (c.f. \textit{differentiable manifolds, Riemannian manifolds, etc.})
 \end{Remark}
 
-Some examples of Manifolds include the circles $S^1$, the sphere $S^2$, the Torus $T^2$, Euclidean space $\mathbb{R}^n$. Some non-examples include the disk $D^2$ because its boundary has no neighbourhood that is homeomorphic to an open subset of $R^n$, the figure-eight curve because at the ``crossing'' there is no way to deform it to look like an open subset of $\mathbb{R}$, or the line with two origins because this is clearly not Hausdorff \cite{}.
+Some examples of Manifolds include the circles $S^1$, the sphere $S^2$, the Torus $T^2$, Euclidean space $\R^n$. Some non-examples include the disk $D^2$ because its boundary has no neighbourhood that is homeomorphic to an open subset of $\R^n$, the figure-eight curve because at the ``crossing'' there is no way to deform it to look like an open subset of $\R$, or the line with two origins because this is clearly not Hausdorff.
 
-In the study of triangulations we are often interested in a specific category of manifolds known as \textit{piecewise-linear manifolds} or \textit{PL-manifolds} these are manifolds that require each point $p$ to have a neighbourhood $U(p)$ of $p$ that is a piecewise-linear deformation of $\mathbb{R}^n$. We say that two PL-manifolds are \textit{PL-homeomorphic} if they can be transformed into each other via piecewise-linear deformations. This is all more formally defined in terms of charts, atlases, and transition maps which can be found in almost any introductory book on geometric topology (e.g. \cite{}).
+In the study of triangulations we are often interested in a specific additional structure that a manifold can admit known as a \textit{piecewise-linear structure} or \textit{PL-structure}. Intuitively, a PL-structure allows a manifold to be realised as a collection of ``flat pieces'' joined together in in a linear fashion. For example $S^1$ admits PL-structure that can be realised as the boundary of a triangle, or a square, etc. We say that two PL-manifolds (manifolds with PL-structure) are \textit{PL-homeomorphic} if they can be transformed into each other via a homeomorphism that is itself piecewise linear. This is all formally defined in terms of charts, atlases, and transition maps which can be found in most introductory books on geometric topology (e.g. ``Introduction to piecewise-linear topology '' \cite{Rourke2012}).
 
-A particularly useful result due to Tibor Radó and Edwin Moise for low dimensional topology says that for dimension 3 or less PL-manifolds and PL-homeomorphisms are the ``same'' as manifolds and homeomorphisms. More precisely
+A particularly useful result due to Radó \cite{Rado1925} and Moise \cite{Moise1977} says that for dimension 3 or less PL-manifolds and PL-homeomorphisms are the ``same'' as manifolds and homeomorphisms. More precisely
 
 \begin{Theorem}[Hauptvermutung]
-    For dimension 3 or less, every manifold is homeomorphic to a unique PL-manifold up to PL-homeomorphism.
+    For dimension 3 or less, every manifold admits a unique PL-manifold up to PL-homeomorphism.
 \end{Theorem}
-
-The proof of this theorem can be found in e.g. \cite{Rado1925, Moise1977}
 
 \begin{Remark}
     This theorem does not hold for \textit{four} or more dimensions \cite{Milnor1961}.
 \end{Remark}
+
+We will be considering manifolds of dimension 3, so will often talk of a manifold and the unique class of PL-structures (up to PL-homeomorphism) that the manifold can admit as being the same thing.
 
 \subsection{Triangulations}
 We begin by defining \textit{simplices} - the fundamental building blocks of triangulations
@@ -159,11 +159,11 @@ Any subset of $i+1$ points of an $n-$simplex forms another simplex that we call 
 
 We can takes simplices and ``glue'' them together to form more complex geometric structures. Formally this is done via \textit{face gluings}
 \begin{Definition}[face gluing]
-    For two $n-$simplices $\Delta_1$ and $\Delta_2$ and two $i-$dimensional faces $F_1\subseteq \Delta_1$ and $F_2\subseteq \Delta_2$ we define the \textit{face gluing} of $F_1$ to $F_2$ by taking $\Delta_1\sqcup \Delta_2/\sim$ where $\sim$ is defined by a \textit{gluing map} which is a homeomorphism between $F_1$ and $F_2$
+    For two $n-$simplices $\Delta_1$ and $\Delta_2$ and two $i-$dimensional faces $F_1\subseteq \Delta_1$ and $F_2\subseteq \Delta_2$ we define the \textbf{face gluing} of $F_1$ to $F_2$ by taking $\Delta_1\sqcup \Delta_2/\sim$ where $\sim$ is defined by a \textit{gluing map} which is a homeomorphism between $F_1$ and $F_2$
 \end{Definition}
 We typically create the gluing map by taking a bijection between the vertices of $F_1$ and $F_2$ and linearly interpolating to create the full homeomorphism.
 
-We can easily extend this to define gluings of faces of the same triangulation, or even a gluing of a face to itself.
+\textbf{\textit{Jonathan - I'm not so sure about the following - is this as general as what we were dealing with? Does it allow for an edge to form a loop, or multiple edges to go between the same vertices etc?}}
 
 \begin{Definition}[PL-Sphere]
     The PL $0-$sphere is a pair of isolated points. For integers $n>0$ the PL $n-$sphere is a PL manifold homeomorphic to the $n-$sphere.
@@ -173,10 +173,14 @@ We can easily extend this to define gluings of faces of the same triangulation, 
     Construct $\mathcal{T}$ from a finite collection of $n-$simplices $\{\Delta_1,...,\Delta_k\}$, called \textit{facets}, by gluing their $n-1-$dimensional faces together. We call this a PL-triangulation if the following conditions are met
     \begin{enumerate}
         \item If a face is glued to itself, the face gluing must happen along the identity map.
-        \item For all vertices $v$, the set of all simplices $\Delta$ such that the join $v*\Delta$ is in $\mathcal{T}$ forms a PL $n-1-$sphere
+        \item For all vertices $v$, the \textbf{link} defined as the set of all simplices $\Delta$ such that the join $v*\Delta$ is in $\mathcal{T}$ forms a PL $n-1-$sphere
     \end{enumerate}
     This is a PL-triangulation of a manifold $\mathcal{M}$ if there is a homeomorphism from $\mathcal{T}\to\mathcal{M}$.
 \end{Definition}
+
+\begin{Remark}
+    We can view PL-manifolds (manifolds with PL-structure) and PL-triangulations as the same thing in some sense. That being that for every PL-manifold there is a PL-triangulation that compatible with it, and every PL-triangulation is a PL-manifold.
+\end{Remark}
 
 \section{Knot Theory}
 \begin{Definition}[Ambient Isotopy]
@@ -199,14 +203,7 @@ We can easily extend this to define gluings of faces of the same triangulation, 
     For a knot $K$, the tubular neighbourhood $\nu(K)$ is a small, closed, 3-dimensional region surrounding $K$ that is homeomorphic to the solid torus $S^1\times D^2$. The knot complement is $X_K=S^3\backslash \nu(K)$
 \end{Definition}
 
-We have that the boundary $\partial x_K\cong T^2$ is a torus, as such it is useful to define
-
-\begin{Definition}[Meridian and Longitude]
-    A meridian ($\mu$) of $\partial X_K\cong T^2$ is a cycle that bounds a disk in the tubular neighbourhood $\nu(K)$, and links with the knot.
-
-    A longitude ($\lambda$) of $\partial X_K\cong T^2$ is a cycle in the direction of the knot, and does not link with the knot.
-\end{Definition}
-The pair $(\mu, \lambda)$ for a basis for $H_1(\partial X_k, \mathbb{Z})\cong\mathbb{Z}\oplus\mathbb{Z}$
+We have that the boundary $\partial x_K\cong T^2$ is a torus.
 
 \begin{Definition}[Infinite Cyclic Cover]
     For the knot complement $X_K$, $\tilde{X}_K$ a cover of $X_K$ is an infinite cyclic cover if $\operatorname{Deck}(\tilde{X}_K/X_K)\cong\mathbb{Z}$
@@ -217,19 +214,21 @@ Every knot has a unique infinite cyclic cover. This follows from the fact that $
     For a knot $K$, take the infinite cyclic cover $\tilde{X}_K$ of the knot complement. The deck transformation group of this space is isomorphic to $\mathbb{Z}$, generated by some transformation $t$. Form the ring of Laurent polynomials $\Lambda=\mathbb{Z}[t, t^{-1}]$. The Alexander module is the first homology group $H_1(\tilde{X}_K)$ viewed as a module over $\Lambda$.
 \end{Definition}
 
+\begin{Definition}[Elementary Ideal]
+    For a module $M$ over a unique factorisation domain $R$ with presentation of $n$ generators $g_i$ and $m$ relations $r_j=a_{j1}g_1+a_{j2}g_2+\dots=0$ we construct an $m\times n$ matrix $A$ of all the relations. The $k$th elementary ideal is the ideal $E_k(M)$ generated by all the $(n-k)\times (n-k)$ minors of $A$.
+\end{Definition}
+\begin{Theorem}
+    The elementary ideals are independent of how the module is presented. So we refer to the elementary ideals of the module without reference to the presentation.
+\end{Theorem}
+
 \begin{Definition}[Alexander Polynomial]
     The Alexander Polynomial is the generator of the first elementary ideal of the Alexander module.
 \end{Definition}
 
-% \begin{Definition}[Dehn surgery]
-%     A Dehn surgery on a knot $K$ is done in two parts.
-%     \begin{enumerate}
-%         \item First, drill out $K$, that is form $X_K=S^3\backslash \nu(K)$, the boundary of this is a torus.
-%         \item Fill this drilled out section back in by forming a map between the boundary $T^2$ solid torus $S^1\times D^2$ and the boundary of $X_K$.
-%     \end{enumerate}
-%     The map formed in the second part depends only on sending the meridian of the boundary of the solid torus to some closed curve $\gamma$ of the boundary of $X_K$. Because $X_K$ is parameterised by $(\mu, \lambda)$, we know that $[\gamma]=[p\lambda + q\mu]$, where $p, q$ are co-prime integers. The ratio $p/q$ is called the slope and defines the Dehn surgery uniquely.
-% \end{Definition}
-
+\begin{Theorem}
+    The Alexander polynomial is a knot invariant (the same for equivalent knots).
+\end{Theorem}
+The proof of the above is due to J. W. Alexander \cite{Alexander1928}.
 
 
 \subsection{Isomorphism Signatures}
@@ -239,9 +238,9 @@ We say that two PL-triangulations are \textit{combinatorially isomorphic} if the
     \item Partition the facets into labelled bins based on this invariant (this labelling is canonical based on the value of the invariant)
     \item For each facet in each bin (containing multiple facets), look at which bins the facets neighbouring (from gluing) facets are in, use this information to construct a new label, if there are facets in the same bin that get a different new label, split the bin in some canonical way and create a new labelling.
     \item Repeat the above process, constructing a splitting tree. This tree is canonical. This tree is not guaranteed to split the bins into singletons. If it gets ``stuck'', make an arbitrary choice and continue the algorithm until everything falls into a singleton. This is a possible canonical labelling.
-    \item if an arbitrary choice had to be made (or perhaps multiple), rerun the entire algorithm for each possible choice that could have been made, creating a small list of possible canonical labelling. Chose the lexicographically smallest labelling.
+    \item If an arbitrary choice had to be made (or perhaps multiple), rerun the entire algorithm for each possible choice that could have been made, creating a small list of possible canonical labelling. Chose the lexicographically smallest labelling.
 \end{enumerate}
-The details of the initial invariant, how the bins are labelled, and optimisations can be found in \cite{}. In the worst case scenario this process takes $\mathcal{O}(n!\cdot k^2)$ where $n$ is the dimension and $k$ is the number of facets. For a $3-$dimensional triangulation the $n!$ term is small and this algorithm is fast.
+The choice of canonical labelling used for the rest of this paper is as is in regina \cite{Regina}. The details of the initial invariant, how the bins are labelled, and optimisations can be found in the corresponding paper \cite{Regina}. In the worst case scenario this process takes $\mathcal{O}(n!\cdot k^2)$ where $n$ is the dimension and $k$ is the number of facets. For a $3-$dimensional triangulation the $n!$ term is small and this algorithm is fast.
 
 Once a canonical labelling is found, an ``isomorphism signature'' is calculated. For a $3-$dimensional triangulation, the only information that needs to be stored is the number of tetrahedra, and for face of each tetrahedron what the destination tetrahedron is, and what the vertex order is. We do not need to specify the destination face because this can be determined by a combination of permutation labelling, looking at where the destinations faces are being mapped, and strict ordering. To efficiently store this, the following is done.
 \begin{enumerate}
@@ -253,68 +252,8 @@ Once a canonical labelling is found, an ``isomorphism signature'' is calculated.
 \end{enumerate}
 This process form a string / number representing the unique combinatorial isomorphism signature for any given triangulation of a $3-$manifold (practically there are size restrictions on the number of facets $k$).
 
-\subsection{Computational Complexity}
-\begin{Definition}[Time Complexity]
-    For an algorithm with input size $n$, the time complexity is the asymptotic worst case runtime of the algorithm, written in ``Big-O'' notation as $\mathcal{O}(g(n))$.
-\end{Definition}
-
-\begin{Definition}[Space Complexity]
-    For an algorithm with input size $n$, the space complexity is the asymptotic worst case amount of memory the algorithm needs to allocate, written in ``Big-O'' notation as $\mathcal{O}(g(n))$.
-\end{Definition}
-
-\begin{Definition}[Decision Problem]
-    A decision problem is a type of problem that can be answer as either ``yes'' or ``no''
-\end{Definition}
-
-\begin{Remark}
-    While most problems are not decision problems, it is often possible to convert many problems into a decision problem. For example, if the problem is to multiply two numbers together, we can convert this to a decision problem of ``is the $i$th binary digit a $0$?'', this can be repeated for all digits.
-\end{Remark}
-
-\begin{Definition}[Complexity Class]
-    A complexity class is a class of problems that can be solved under some model of computation within some resource bound i.e. some time or space bound. A problem belongs to a given complexity class if there exist an algorithm to solve the problem within this bound. For ``turning machines'', the main complexity classes are
-    \begin{enumerate}
-        \item $L$: The problem can be solved using a logarithmic amount of space.
-        \item $NL$: A solution can be verified using a logarithmic amount of space.
-        \item $P$: The problem can be solved in polynomial time.
-        \item $NP$: A solution can be verified in polynomial time.
-        \item $PSPACE$: A solution can be found using a polynomial amount of space.
-        \item $EXPTIME$: A solution can be found using an exponential amount of time.
-    \end{enumerate}
-    There exist many other complexity classes for both turning machines and other models for computation.
-\end{Definition}
-
-\begin{Remark}
-    A turning machine is a common model for computation, we do not define it here but there are many resources available.
-\end{Remark}
-
-\begin{Remark}
-    We have defined $NL$ and $NP$ as having solutions verifiable in a specific bound, this means that if the question is for example, is there a path of length $k$ between two nodes, someone can give a path that is a solution, and it is possible to verify that this connects the two nodes and has length $k$. Formally $NL$ and $NP$ are not defined this way, but instead using things called ``non-deterministic Turing machines'', but the definitions can be shown to be equivalent.
-\end{Remark}
-
-\begin{Theorem}
-    $L\subseteq NL\subseteq P\subseteq NP\subseteq PSCPAE\subseteq EXPTIME$
-\end{Theorem}
-
-\begin{Remark}
-    There are conjectures that some of these subsets may be proper subsets or equalities, most famously the question of if $P=NP$, but there are not as of yet any solutions.
-\end{Remark}
-
-\begin{Definition}[Hard Problem]
-    For a given complexity class $C$, a problem $P$ is called a $C-$hard problem if every problem $P'\in C$ can be ``reduced'' to $P$ via some algorithm that is ``efficient'' relative to $C$.
-\end{Definition}
-
-\begin{Remark}
-    We do not formally define what it means to be ``efficient'' relative to $C$ as it is getting into the details too much, but for $NP$ and $PSCPAE$ problems, a polynomial time reduction is efficient.
-\end{Remark}
-
-\begin{Definition}[Complete Problem]
-    For a given complexity class $C$, a problem $P$ is called a $C-$complete problem if it is a $C-$hard problem and $P\in C$
-\end{Definition}
-
-Practically, problems that belong to $P$ can be solved tractable on a modern computer, we can typically scale resources and solve the problem. However, all the algorithms we have for $NP$ complete problems require exponential resources to run, which becomes computationally infeasible quickly. As such, if we find a problem to be $NP-$complete or harder, it means we can't just ``throw more compute'' at the problem to solve it and may have to resort to suboptimal solutions.
-
 \subsection{Pachner Moves and the Pachner Graph}
-A Pachner move is a specific process that changes a PL-manifold without changing the underlying topological space.
+A Pachner move is a specific process that changes a PL-triangulation without changing the underlying topological space.
 
 \begin{Definition}[Complementary Triangulation]
     Let $\Delta$ a $d+1$simplex, let $A$ be a a connected sub complex of $\partial \Delta$ - that is a set of $d-$simplexes that form a connected topological space. The \textit{complementary triangulation} of $A$ is $B=\partial\Delta \backslash A$.
@@ -344,16 +283,6 @@ Because of the above theorem, the Pachner graph is fully connected for any PL-ma
     The Pachner graph grows super exponentially in its level.
 \end{Theorem}
 
-We also have that
-
-\begin{Theorem}
-    The shortest path between $v_i$ and $v_j$ two vertices of the Pachner graph is PSPACE hard problem.
-\end{Theorem}
-
-\begin{Remark}
-    It is not currently known if the graph traversal is $PSPACE$ complete
-\end{Remark}
-
 We notice that $(4,1)$ and $(1,4)$ moves change the number of vertices, but the $(3,2)$ and $(2,3)$ moves do not. We are often interested in ``single vertex'' triangulations, for these we can exclusively use $(3, 2)$ and $(2,3)$ moves. A particularly useful result is that
 
 \begin{Theorem}
@@ -363,6 +292,94 @@ We notice that $(4,1)$ and $(1,4)$ moves change the number of vertices, but the 
 We analogously define the Pachner graph for $1-$vertex triangulations of $S^3$, which is once again a fully connected graph. Unlike the general Pachner graph, it is currently unknown if the Pachner graph for $1-$vertex triangulations of $S^3$ grow super exponentially or exponentially in its level.
 
 \section{Machine Learning Preliminaries}
+\subsection{Computational Complexity}
+\begin{Definition}[Time Complexity]
+    For an algorithm with input size $n$, the time complexity is the asymptotic worst case runtime of the algorithm, written in ``Big-O'' notation as $\mathcal{O}(g(n))$.
+\end{Definition}
+
+\begin{Definition}[Space Complexity]
+    For an algorithm with input size $n$, the space complexity is the asymptotic worst case amount of memory the algorithm needs to allocate, written in ``Big-O'' notation as $\mathcal{O}(g(n))$.
+\end{Definition}
+
+\begin{Definition}[Decision Problem]
+    A decision problem is a type of problem that can be answer as either ``yes'' or ``no''
+\end{Definition}
+
+
+\begin{Definition}[Decidable]
+    A decision problem is \textbf{decidable} if there exists an algorithm that can always provide the correct answer for any given input in a finite amount of time. Conversely the problem is \textbf{undecidable} if it is not decidable.
+\end{Definition}
+
+\begin{Remark}
+    While most problems are not decision problems, it is often possible to convert many problems into a decision problem. For example, if the problem is to multiply two numbers together, we can convert this to a decision problem of ``is the $i$th binary digit a $0$?'', this can be repeated for all digits.
+\end{Remark}
+
+\begin{Definition}[Complexity Class]
+    A complexity class is a class of problems that can be solved under some model of computation within some resource bound i.e. some time or space bound. A problem belongs to a given complexity class if there exist an algorithm to solve the problem within this bound. For ``turning machines'', the main complexity classes are
+    \begin{enumerate}
+        \item $L$: The problem can be solved using a logarithmic amount of space.
+        \item $NL$: A solution can be verified using a logarithmic amount of space.
+        \item $P$: The problem can be solved in polynomial time.
+        \item $NP$: A `yes' solution can be verified in polynomial time.
+        \item $\operatorname{co}NP$: A `no' solution can be verfied in polynomial time.
+        \item $PSPACE$: A solution can be found using a polynomial amount of space.
+        \item $EXPTIME$: A solution can be found using an exponential amount of time.
+    \end{enumerate}
+    There exist many other complexity classes for both turning machines and other models for computation.
+\end{Definition}
+
+\begin{Remark}
+    $NP$ and $\operatorname{co}NP$ are distinct. For example for a graph $G$, the problem of if there is a path that visits all nodes exactly once is $NP$ because I can confirm that a path exists if you simply give me one, but it is believed to not be $\operatorname{co}NP$ as this would mean I could easily verify based on some example path that there can't be a path that visits all nodes exactly once.
+\end{Remark}
+
+\begin{Remark}
+    A turning machine is a common model for computation, we do not define it here but there are many resources available.
+\end{Remark}
+
+\begin{Remark}
+    We have defined $NL$ and $NP$ as having solutions verifiable in a specific bound, this means that if the question is for example, is there a path of length $k$ between two nodes, someone can give a path that is a solution, and it is possible to verify that this connects the two nodes and has length $k$. Formally $NL$ and $NP$ are not defined this way, but instead using things called ``non-deterministic Turing machines'', but the definitions can be shown to be equivalent.
+\end{Remark}
+
+\begin{Theorem}
+    $L\subseteq NL\subseteq P\subseteq NP\subseteq PSCPAE\subseteq EXPTIME$
+\end{Theorem}
+
+\begin{Remark}
+    There are conjectures that some of these subsets may be proper subsets or equalities, most famously the question of if $P=NP$, but there are not as of yet any solutions.
+\end{Remark}
+
+\begin{Definition}[Hard Problem]
+    For a given complexity class $C$, a problem $P$ is called a $C-$hard problem if every problem $P'\in C$ can be ``reduced'' to $P$ via some algorithm that is ``efficient'' relative to $C$.
+\end{Definition}
+
+\begin{Remark}
+    We do not formally define what it means to be ``efficient'' relative to $C$ as it is getting into the details too much, but for $NP$ and $PSCPAE$ problems, a polynomial time reduction is efficient.
+\end{Remark}
+
+\begin{Definition}[Complete Problem]
+    For a given complexity class $C$, a problem $P$ is called a $C-$complete problem if it is a $C-$hard problem and $P\in C$
+\end{Definition}
+
+Practically, problems that belong to $P$ can be solved tractable on a modern computer, we can typically scale resources and solve the problem. However, all the algorithms we have for $NP$ complete problems require exponential resources to run, which becomes computationally infeasible quickly. As such, if we find a problem to be $NP-$complete or harder, it means we can't just ``throw more compute'' at the problem to solve it and may have to resort to suboptimal solutions using heuristics etc.
+
+From these definitions we can discuss a few important problems that we will encounter, and their respective complexity. The general high level of complexity of many of these problems is a motivating factor for our algorithms.
+
+\begin{Theorem}
+    Finding the shortest path between two vertices $v_i$ and $v_j$ of the Pachner graph is PSPACE complete.
+\end{Theorem}
+
+\begin{Theorem}\ref{thm:trivial-presentation-undecidable}
+    Deciding if a presentation of a group is trivial is undecidable. 
+\end{Theorem}
+
+\begin{Theorem}
+    Deciding if $3D$ triangulation is $S^3$ is in $NP\cap \operatorname{co}NP$
+\end{Theorem}
+
+\begin{Theorem}
+    Checking if a knot is the unknot is $NP\cap \operatorname{co}NP$
+\end{Theorem}
+
 \subsection{Markov Chain Monte Carlo}
 \begin{Definition}[Markov Chain]
     A \textit{Markov Chain} is a sequence of values $x(t)$ indexed by ``time'' where the sequence has the \textit{Markov Property} - that is $x(t+1)$ depends only on $x(t)$, typically probabilistically.
@@ -450,7 +467,7 @@ The between chain variance follows from the central limit theorem that $\operato
 This result follows directly from the law of total variance.
 
 From this we can construct
-\begin{Definition}[Gelman-Rubin Statistic]
+\begin{Definition}[Gelman-Rubin Statistic]\label{def:gelman-rubin}
     Let $\hat{V}$ be the Gelman-Rubin variance estimate, and $W$ be the within chain variance. The Gelman-Rubin statistic is
     $$\hat{R}=\sqrt{\frac{\hat{V}}{W}}$$
 \end{Definition}
@@ -463,7 +480,7 @@ For a measurable space $(\mathcal{X}, \mathcal{F}, \mu)$ with base measure $\mu$
 While the concept above is inspired as a Heuristic from concepts in thermal physics, it has valid grounding in probability and machine learning. At a high level, this is because for any $x, x'\in \mathcal{X}$, $\pi_T(x')/\pi_T(x)=e^{-(E(x')-E(x))/T}$, which if $E(x') > E(x)$ tends to $0$ as $T\to 0$, but if $E(x') < E(x)$ tends to $\infty$. As such, a sharp delta function is formed around $x_{min}=\arg\min(E)$. While this does mean that at $T=0$ we have that $\pi(x)=\delta(x-x_{min})$ is the stationary solution to our Metropolis Hastings Markov Transition Kernel, at $T=0$ the measure of valid starting points $\{x_0\}$ tends to have measure $1$ under $\pi$ but measure $0$ under $\nu$. Informally, at low $T$ we almost always accept points where $E(x')<E(x)$ and almost never accept points where $E(x')>E(x)$, so this is just hill climbing and unless $E$ is convex, the sampling will likely get stuck in a local minima.
 
 
-\subsection{Transformers}
+\subsection{Transformers}\label{subsec:transformers}
 \begin{Definition}[Row Operator]
     For a field $F$, and a function $s:F^n\to F^n$ define the row operator $\mathcal{R}_s:M_n(F)\to M_n(F)$ as the act of applying $s$ to each row of $M_n(F)$. That is $$\mathcal{R}_s\left((r_1, r_2, ..., r_n)^T\right)=\left(s(r_1), s(r_2),...,s(r_n)\right)^T$$
 \end{Definition}
@@ -605,58 +622,125 @@ Where $r(\theta)=\frac{\pi_\theta(y)}{\pi_{\theta_{old}}(y)}$ is called the impo
     L^{CLIP}(\theta)=\mathbb{E}_{y\sim\pi_{\theta_{old}}}[\min\left(r(\theta)A, \operatorname{clip}(r, 1-\epsilon, 1+\epsilon)A\right)]
 \end{equation}
 
+\chapter{Problem Formulation}
+We begin by simply stating the problem that we are studying. The central problem is the optimisation of an objective function over the space of manifold triangulations. Formally given the space of all triangulations of some manifold $M$, denoted $\mathcal{T}(M)$, and some \textit{objective function} $\mathcal{O}:\mathcal{T}(M)\to\R$ (that is some function we are interested in maximising) we want to find some $T^*\in\mathcal{T}(M)$ subject to some specific size constraint that maximises this function:
+\begin{equation}
+    T^*=\arg\max_{T\in\mathcal{T}(M),\operatorname{size}(T)\leq S_{\max}}\mathcal{O}(T)
+\end{equation}
+Because the space $\mathcal{T}(M)$ is intractably large and poorly understood, finding the global maxima is likely impossible, as are any analytic techniques. Hence, we develop and compare a series of techniques that can be used to find a specific triangulation $T\in\mathcal{T}(M)$ with $\mathcal{O}(T)$ significantly higher than a typical triangulation from $\mathcal{T}(M)$.
+
+To achieve this we address two key sub-problems
+\begin{enumerate}
+    \item \textbf{Establishing a Baseline:} We need to explore techniques of quantifying for a specific triangulation $T\in\mathcal{T}(M)$ what it means to be significantly better than a typical triangulation in $\mathcal{T}(M)$.
+    \item \textbf{Generative Modelling:} We lay the groundwork for a range of new optimisation techniques from the field of reinforcement learning. This involves first establishing a technique that can be used to generate triangulations from $\mathcal{T}(M)$ using deep learning techniques.
+\end{enumerate}
+
+The motivation for this work stems from a range of fields where optimising some objective functions over $\mathcal{T}(M)$ is of particular interest. While the techniques we develop are specifically designed to be agnostic to the objective function, we focus primarily on one specific class of objective functions that relate to the knots present in triangulations as a proof of concept.
+
 \chapter{Search and Sampling Algorithms}
-We are often interested in exploring the characteristics and properties of triangulations of a manifold $\mathcal{M}$. Due to the unwieldy size of $\mathcal{T}(\mathcal{M})$, it is typical to sample from $\mathcal{T}(\mathcal{M})$ and study these samples. This is the task of a sampling algorithm. There are particular situations in which we may want to find a triangulation that has a particularly ``high score''. This is a search task, with an ``objective function'' $O:\mathcal{T}(\mathcal{M})\to \mathbb{R}$ where we aim to find a triangulation $\Delta\in\mathcal{T}(\mathcal{M})$ such that $O(\Delta)$ is ``high'' (we use high somewhat informally, as we do not know much of the geometry of different objective functions over $\mathcal{T}(\mathcal{M})$).
-
 \section{Classical Techniques}
-\subsection{Direct Accent}
-For an objective function $O:\mathcal{T}(\mathcal{M})\to\R$, for small triangulations (number of tetrahedra around 6 or lower), we can typically calculate $O$ exhaustively from a census. In doing this, we may find that $O$ tends to increase with more tetrahedra, this leads to the notion of direct accent. The basic idea is to start at some small triangulation, enumerate all of its neighbours that have more tetrahedra, and then sample one of these according to its score. This process can then be repeated to generate a chain of tetrahedra of increasing size, and the whole process repeated to generate multiple chains. The detailed algorithm is described in algorithm~\ref{alg:direct-accent}
+\subsection{Direct Accent}\label{sec:direct-accent}
+For an objective function $O:\mathcal{T}(\mathcal{M})\to\R$, for small triangulations (number of tetrahedra around 6 or lower), we can typically calculate $O$ exhaustively from a census. In doing this, we may find that $O$ tends to increase with more tetrahedra, this motivates the notion of direct accent.
+The concept is to start with some some small triangulation, enumerate all of its neighbours that have more tetrahedra, and then sample one of these randomly, biased towards choosing one with a higher objective. This process can then be repeated to generate a chain of triangulations of increasing size, and the whole process repeated to generate multiple chains.
 
+In order for this search technique to work, we need to be able to do two things.
+\begin{enumerate}
+    \item enumerate all the neighbours of a specific triangulation $T'$ that are larger, call this set $N_+(T')$
+    \item convert from $\{\mathcal{O}(T)\;:\;T\in N_+(T')\}$ to some selection probability
+\end{enumerate}
+To address this first point, we consider $(2-3)$ moves. In order for a $(2-3)$ move to happen we need to have a face that is shared by two distinct tetrahedra, this face will be converted to an edge that is ``perpendicular'' in some sense. Hence, we simply iterate through all $2T$ faces and check if a $(2-3)$ move is possible, performing it if it is. The details are explained in more detail in Altmann and Spreer \cite{Altmann2025}.
+
+For the second point, we need to convert from a list of scores $\{O_1, ..., O_n\}$ to a list of probabilities $\{p_1, ..., p_n\}$ ensuring that the probability is positive and normalised to sum to one. This is a standard problem in machine learning and is addressed by the softmax function
+\begin{align}
+    p_i &= \frac{e^{\beta O_i}}{\sum_j e^{\beta O_j}}
+\end{align}
+Where $\beta>0$ is some fixed parameter, often related to the inverse of the ``temperature'' $\beta=1/T$, lending from an analogy to thermal physics.
+
+With these defined, we can now detail direct ascent in algorithm~\ref{alg:direct-accent}. The algorithm details a single run of direct ascent, this can be done multiple times to get a range of different ascent paths. So long as $\beta<\infty$ there is a possibility for unique paths. When $\beta=0$ it is essentially a random search, choosing any neighbour independent of the objective functions value. When $\beta=\infty$ or is particularly large, the neighbour chosen is the one with the greatest objective of all neighbours.
 
 \begin{algorithm}
 \caption{Direct Accent}\label{alg:direct-accent}
 \begin{algorithmic}
-\State Let $\Delta_0$ be the initial triangulation.
+\State Let $T_0\in\mathcal{T}(M)$ be the initial triangulation.
 \State Let $\beta > 0$ be a fixed parameter.
-\State let $T\in \N$ be a fixed chain size.
-\For{$t=1$ to $T$}
-    \State Generate all neighbours $\Delta_{ti}$ of $\Delta_{t-1}$ by applying $(2-3)$ or $(1-4)$ moves.
-    \For{each neighbours $\Delta_{ti}$}
-        \State Calculate the percentage advantage $A_i = \frac{O(\Delta_{ti}) - O(\Delta_{t-1})}{O(\Delta_{t-1})}$.
+\State let $N\in \N$ be a fixed chain size.
+\State Let $\mathcal{O}:\mathcal{T}(M)\to \R$ be some objective function.
+\For{$n=1$ to $N$}
+    \State Generate all neighbours $T_{ni}$ of $T_{n-1}$ by applying $(2-3)$ moves.
+    \For{each neighbours $T_{ni}$ in the set}
+        \State Calculate the selection probability $p_i = \frac{e^{\beta O_i}}{\sum_j e^{\beta O_j}}$.
     \EndFor
-    \For{each neighbours $\Delta_{ti}$ in the set}
-        \State Calculate the selection probability $p_i = \frac{e^{\beta A_i}}{\sum_j e^{\beta A_j}}$.
+    \State Sample $T_n$ from the set of neighbours $\{T_{ni}\}$ with probability $p_i$.
     \EndFor
-    \State Sample $\Delta_t$ from the set of neighbours $\{\Delta_{ti}\}$ with probability $p_i$.
-    \EndFor
-    \State Return $\Delta_T$
+    \State Return $T_N$
 \end{algorithmic}
 \end{algorithm}
 
 \subsection{Markov Chain Monte Carlo}
+For an objective function $\mathcal{O}:\mathcal{T}(M)\to \R$, we will be interested in knowing what a ``typical'' objective function value looks like. One way to do this is to adapt Markov chain Monte Carlo (MCMC) to the Pachner graph, and generate a uniform sampling of the space, calculating $\mathcal{O}$ on each member of the sample and analysing its statistical properties. The main issue with this is that the Pachner graph is infinite, so its impossible to define a uniform distribution on the space. Furthermore, the number of triangulations for a given number of tetrahedra increases incredibly quickly, and at an unknown rate. Hence, a uniform sampling across all levels would be currently impossible to prove (as the number of triangulations is unknown) and would spend ``more time'' at large triangulations. Hence, we modify the problem to the goal of returning a sample that is uniform for a given level, but is otherwise different for different levels, and in particular the probability of sampling a triangulation of size $t$ decreases as $t$ gets larger \textit{faster} than the number of triangulations grows, this ensures that the probability of sampling large triangulations tends to zero, moderating the size of the triangulations sampled. The specific algorithm developed to do this was developed by Altmann and Spreeer. The algorithm is outlined in \ref{alg:mcmc}. We note that $n(T_s)$ is the number of tetrahedra of $T_s$ and an $i-$neighbour is a triangulation resulting from an $i-$Pachner move for $i=2, 3$ is a $(3-2)$ and $(2-3)$ move respectively. This algorithm represents a single chain of MCMC, typically multiple are run to ensure convergence as in accordance with definition~\ref{def:gelman-rubin}
+
+\begin{algorithm}
+\caption{MCMC for Triangulations}\label{alg:mcmc}
+\begin{algorithmic}
+\State Let $T_1\in\mathcal{T}(M)$ be the initial triangulation.
+\State Let $\gamma=1/k, k\in\mathbb{N}$
+\State Let $N$ be the number of iterations
+\State Let $\mathcal{O}:\mathcal{T}(M)\to \R$ be some objective function.
+\For{$s=1$ to $S$}
+    \State Sample $u\in U([0, 1])$ uniform
+    \If{$u<e^{-\gamma n(T_s)}$}
+        \State Set $i:=1$, $m:=2n$
+    \Else
+        \State Set $i:=2$, $m:=2n-2$
+    \EndIf
+    \State Enumerate $i-$neighbours $T_1',...,T_\ell'$ of $T_s$
+    \State Sample $v\in U([0, 1])$ uniform
+    \If{$v<\ell / m$}
+        \State Set $T_{s+1}$ to a random choice of $T_1',...,T_\ell'$
+    \Else
+        \State Set $T_{s+1}$ to $T_{s}$
+    \EndIf
+\EndFor
+\end{algorithmic}
+\end{algorithm}
 
 \subsection{Simulated Annealing}\label{sec:simulated-annealing}
-Because the above Markov Chain Monte Carlo algorithm leads to a uniform distribution, we can use it as a symmetric proposal distribution \textbf{(need to check this)}.
-We implement a standard simulated aneling algorithm as described in algorithm~\ref{alg:simulated-annealing}
+Because the above Markov Chain Monte Carlo algorithm leads to a uniform distribution, we can use it as a proposal distribution for simulated annealing. This allows us to directly modify the MCMC algorithm to become a simulated annealing algorithm. The concept is to propose a triangulation, compare its objective function to the current objective function, if it is better move to this new triangulation, if it is worse move to the new triangulation with some probability, staying at the same triangulation otherwise. Similar to direct ascent, we need to define some way of calculating the probability of moving in the scenario that it is worse, and similar to direct ascent we chose a function 
+\begin{align}
+    p(o_{p}, o_{c})=e^{-\beta(o_c-o_p)}
+\end{align}
+Where once again $\beta=1/T$ controls how much randomness is involved. Unlike direct ascent, the value of $\beta$ is usually chosen to vary from iteration to itinerate. This is called a temperature schedule. So we have $\beta_n$ for each step $n$.
+
+The implemented standard simulated aneling algorithm is described in algorithm~\ref{alg:simulated-annealing}.
+
+The key to this algorithm performing successfully is that we have a good choice for $\beta_n$. If it's too high we will get stuck in local maxima, and if its too low we essentially have a random walk which won't achieve much more than MCMC. As such, we pick a ``target acceptance rate''. The ``acceptance rate'' is the percentage of the time that we accept a proposal as opposed to staying still. Higher acceptance rates correspond to random walks, and lower ones correspond to the algorithm sitting in the one place. The ``target acceptance rate'' is what we want the acceptance rate to be. During sampling, we track a exponential moving average estimate for what the current acceptance rate is according to
+\begin{align}
+    r_n=(1-\alpha)r_{n-1}+\alpha a_n
+\end{align}
+Where $a_n=0$ if the move was not accepted and $a_n=1$ if the move was accepted. We then compare the moving average acceptance rate $r_n$ to the target acceptance rate $r$ and compute the difference $r_n-r$ and update $\beta$ according to
+\begin{align}
+    \beta_n=\beta_{n-1}e^{\lambda(r_n-r)}
+\end{align}
+Here $\lambda$ represents how aggressively to track the target, and $\alpha$ represents how quickly to forget past acceptance rates. This gives us an adaptive simulated annealing.
 
 \begin{algorithm}
 \caption{Simulated Annealing}\label{alg:simulated-annealing}
 \begin{algorithmic}
-    \State Let $\Delta_0$ be some starting triangulation.
-    \State Let $T$ be the chain length.
+    \State Let $T_0$ be some starting triangulation.
+    \State Let $N$ be the chain length.
     \State Let $M$ be some hash table memory.
-    \State Let $O:\Delta\to \R$ be some objective function.
-    \State Let $T_t$ be some temperature schedule.
-    \For{$t=1$ to $T$}
-        \State Propose $\tilde\Delta_t$ from $\Delta_{t-1}$ by using $1-$step of the described MCMC algorithm.
-        \State Retrieve $o_{t-1}=O(\Delta_{t-1})$ from $M$
-        \State Check if $o_t=O(\tilde\Delta_t)$ is in $M$, if it is - retrieve it, if not - compute it and store it in $M$.
-        \State Compute $\alpha=e^{-(o_{t-1}-o_t)/T_t}$
-        \State Generate some $p\sim \mathcal{U}([0, 1])$
+    \State Let $\mathcal{O}:\mathcal{T}(M)\to \R$ be some objective function.
+    \State Let $\beta_n$ be some temperature schedule.
+    \For{$n=1$ to $N$}
+        \State Propose $T_n'$ from $T_{n-1}$ by using $1-$step of the described MCMC algorithm.
+        \State Retrieve $o_{n-1}=\mathcal{O}(T_{n-1})$ from $M$
+        \State Check if $o_n=\mathcal{O}(T_n)$ is in $M$, if it is - retrieve it, if not - compute it and store it in $M$.
+        \State Compute $\alpha=e^{-\beta_n(o_{n-1}-o_n)}$
+        \State Generate some $p\sim U([0, 1])$
         \If{$p\leq\alpha$}
-            \State Accept $\Delta_t=\tilde{\Delta}_t$
+            \State Accept $T_n=T_n'$
         \Else
-            \State Let $\Delta_t=\Delta_{t-1}$
+            \State Let $T_n=T_{n-1}$
         \EndIf
     \EndFor
 \end{algorithmic}
@@ -665,13 +749,7 @@ We implement a standard simulated aneling algorithm as described in algorithm~\r
 
 \section{Transformers}
 \subsection{Base Transformer}
-We use a standard GPT-2 style transformer with dropout and pre-layer normalisation. The final transformer model takes the sequence, performs token and positional embedding, dropout, and then $n_{layers}$ of the standard transformer block as described in definition~\ref{...}. Between each transformer block there is a dropout of $0.1$ applied. This architecture is the standard GPT-2 style architecture. We use an embedding dimension of $64$, and the feed forward neural networks are also all of dimension $64$. The vocabulary size includes all the letters of the training data, plus three special tokens ``[BOS]'', ``[EOS]'', and ``[PAD]'' for the beginning of sentence, end of sentence, and padding respectively. For training we use AdamW, with a cross entropy objective function, and a batch size of 32.
-
-\subsection{Reinforcement on the Topology}
-The transformer may not generate sequences which represent our target manifold, or any manifold at all. As such after training is complete, reinforcement learning can be applied with a score function which returns $1$ if the triangulation is of the correct manifold type, and $0$ if it is not. A softer scoring function can be used that returns intermediate values depending on if the isomorphism signature corresponds to an invalid structure, a valid manifold of the wrong type, or a valid manifold of the correct type.
-
-\subsection{Reinforcement on the Objective}
-Once the transformer is generating samples with a relatively high chance of being valid isomorphism signatures, if we have a specific objective function $O:\Delta\to\R$ which we seek to maximise, we can use this score function in the standard reinforcement learning algorithms described in \ref{...}.
+We use a standard GPT-2 style transformer with dropout and pre-layer normalisation. The final transformer model takes the sequence, performs token and positional embedding, dropout, and then $n_{layers}$ of the standard transformer block as described in definition~\ref{subsec:transformers}. Between each transformer block there is a dropout of $0.1$ applied. This architecture is the standard GPT-2 style architecture. We use the same dimension for the embedding dimension and the feed forward neural networks. The vocabulary size includes all the letters of the training data, plus three special tokens \verb|[BOS]|, \verb|[EOS]|, and \verb|[PAD]| for the beginning of sentence, end of sentence, and padding respectively. For training we use AdamW, with a cross entropy objective function.
 
 \chapter{Numerical Experiments}
 \section{Objective Functions}\label{sec:objective-functions}
@@ -687,33 +765,26 @@ For any $T\in\mathcal{T}_1(S^3)$, we can consider an edge $e_\alpha$, because th
 \end{enumerate}
 The first of these objective functions, $\mathcal{O}_{deg}$ is motivated by the fact that $2g(K)\geq \deg(\Delta_K(t))$. The second objective function, $\mathcal{O}_{det}$ is motivated by the connection between the determinant $|\Delta_K(-1)|$ and the knot colouring. The third objective function, $\mathcal{O}_{norm}$ is a standard objective function on vectors.
 
-\subsection{Fundamental Group of $T/ e_\alpha$}
-As discussed, for $T\in\mathcal{T}_1(S^3)$, any edge $e_\alpha$ can form a knot. Typically in knot theory we are interested in the study of the knot complement $S^3\backslash K$, however there is a connection between this and the resultant manifold after pinching $e_\alpha$, that is forming $M_\alpha=T/e_\alpha$. As such, there is interest in studying the fundamental group $\pi_1(M_\alpha)$. This inspires our fourth objective function
+\subsection{Fundamental Group of $T\backslash\nu( e_\alpha)$}
+As discussed, for $T\in\mathcal{T}_1(S^3)$, any edge $e_\alpha$ can form a knot. Typically in knot theory we are interested in the study of the knot complement $M_\alpha=S^3\backslash \nu(K_\alpha)$. This inspires our fourth objective function
 \begin{enumerate}[resume]
     \item $\mathcal{O}_{gen}:T\mapsto\sum_{e_\alpha} \#_{gen}(\pi_1(M_\alpha))$ where $\#_{gen}$ is the number of generators of the presentation of the fundamental group.
 \end{enumerate}
-While we would ideally like to use the reduced presentation of the fundamental group, this is hard* to calculate, so we use the standard presentation returned by ..., as a heuristic, and then perform the full computationally expensive reduction once the results are found.
+While we would ideally like to use the reduced presentation of the fundamental group, as discussed in \ref{thm:trivial-presentation-undecidable} there is no algorithm to do this always in finite time, so we use the standard presentation returned by regina \cite{Regina}, as a heuristic, and then a reduction process can be attempted afterwards to check if the fundamental group can be reduced, and if so what it can be reduced to.
 
 \subsection{Edge Degree Variance}
-The prior four objective functions are all inspired by the knot structure of our triangulations. While this is of particular interest, we also would like to consider the complexity of the triangulation itself. This inspires us to consider the degree of the edges in our manifold, where the degree of an edge is the number of tetrahedra that share this edge.
+The prior four objective functions are all inspired by the knot structure of our triangulations. While this is of particular interest because it is a topological property of the triangulation, we would also like to consider the complexity of the triangulation itself. This inspires us to consider the degree of the edges in our manifold, where the degree of an edge is the number of tetrahedra that share this edge.
 \begin{enumerate}[resume]
     \item $\mathcal{O}_{var}:T\mapsto \operatorname{Var}_{e_\alpha}(\deg(e_\alpha))$ where we have taken the variance.
 \end{enumerate}
-The choice of variance here instead of the average follows from the fact that the average degree becomes independent of the triangulation structure and instead depends on the topology which is constant for a sphere.
+The choice of variance here follows from the simple argument that $V=1$ because we have defined our space of triangulations to be single vertex triangulations. We know that $\chi=0$ for $S^3$, so $1-E+F-T=0$. Also we know that each of the tetrahedra have $4$ faces, but because $S^3$ is closed they have to be glued together in pairs, so $F=2T$, this means $E=1+T$. Also, each tetrahedra has to contain $6$ edges, so the total edge degree must be $6T$, and the average edge degree $\frac{6T}{T+1}$, hence this is constant for a fixed number of tetrahedra, regardless of the triangulation. Hence the variance is chosen because it captures how ``uniform'' or conversely ``irregular'' the triangulation is.
 
 \section{Markov Chain Monte Carlo}\label{sec:mcmc}
-To establish a baseline for our objective functions, generic Markov Chain Monte Carlo was run to determine the distribution of our objective function across the Pachner Graph. The MCMC algorithm described by Jonathan samples uniformly around triangulations of a particular number of tetrahedra. We, somewhat arbitrary, choose to examine the Pachner graph around triangulations of 30-tetrahedra, which corresponds to $\gamma=1/10$. This choice is informed by other results in computational topology that have found interesting triangulations of size less than 30 tetrahedra, and because 30 tetrahedra is intractable to enumerate exhaustively. Samples with $7$ chains of $10,000$ iterations with a step size of $100$ where performed, for each sample all objective functions were calculated (as opposed to running distinct sampling processes for each objective function). This has the benefit of not only saving computational time, but giving us a uniform sample of the space where we can asses the correlation of each objective function. We confirmed convergence with the Gelman-Rubin statistic with a threshold of $1.01$, this threshold is in accordance with modern recommendations. The convergence statistics are in table~\ref{tab:mcmc-convergence}. For interest, figure~\ref{fig:obj-correlation} shows the correlation between each objective functions across the entire set of MCMC samples. It is important to note that this correlation tells us the correlation for ``an average'' sample, and the correlation between the functions could dramatically change in very specific parts of the distribution - in particular near the respective maxima of each variable.
+To establish a baseline for our objective functions, generic Markov Chain Monte Carlo was run to determine the distribution of our objective function across the Pachner Graph. The MCMC algorithm described by Altmann and Spreer \cite{Altmann2025} samples uniformly around triangulations of a particular number of tetrahedra. We, choose to examine the Pachner graph around triangulations of 30-tetrahedra, which corresponds approximately to $\gamma=1/10$. This choice is informed by other results in computational topology that have found interesting triangulations of size less than $30$ tetrahedra (for example Burton \cite{Burton2023}), and because $30$ tetrahedra is intractable to enumerate exhaustively. Samples with $7$ chains of $10,000$ iterations with a step size of $100$ where performed, for each sample all objective functions were calculated (as opposed to running distinct sampling processes for each objective function). This has the benefit of not only saving computational time, but giving us a uniform sample of the space where we can asses the correlation of each objective function. We confirmed convergence with the Gelman-Rubin statistic with a threshold of $1.01$, this threshold is in accordance with modern recommendations \cite{Vehtari2021}. The convergence statistics are in table~\ref{tab:mcmc-convergence}. For interest, figure~\ref{fig:obj-correlation} shows the correlation between each objective functions across the entire set of MCMC samples. It is important to note that this correlation tells us the correlation for ``an average'' sample, and the correlation between the functions could dramatically change in very specific parts of the distribution - in particular near the respective maxima of each variable.
 
 We extracted the triangulations with $30$ tetrahedra, there were $8,250$ such triangulations so an efficiency of $\approx 12\%$. The following analyses are performed on this subset of triangulations.
 
-\begin{figure}
-    \centering
-    \includegraphics[width=0.5\linewidth]{thesis/figures/obj_correlation.pdf}
-    \caption{Correlation plot for each objective function.}
-    \label{fig:obj-correlation}
-\end{figure}
-
-\begin{table}[htb]
+\begin{table}[H]
     \centering
     \begin{tabular}{|c|c|}
         \hline
@@ -729,6 +800,13 @@ We extracted the triangulations with $30$ tetrahedra, there were $8,250$ such tr
     \caption{Convergence statistics of MCMC Runs}
     \label{tab:mcmc-convergence}
 \end{table}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.7\linewidth]{thesis/figures/obj_correlation.pdf}
+    \caption{Correlation plot for each objective function.}
+    \label{fig:obj-correlation}
+\end{figure}
 
 The distribution for the score for each objective function outlined in section~\ref{sec:objective-functions} is displayed in figure~\ref{fig:mcmc-score-dist}.
 
@@ -820,9 +898,11 @@ The $\mathcal{O}_{var}$ appears to have some positively skewed distribution, con
 
 \section{Classical Optimisation}
 \subsection{Direct Ascent}
-We perform direct accent starting from the seed triangulation of \linebreak\verb`cMcabbgqs` which has one vertex and two tetrahedra. We performed this direct accent 20 times at different temperatures ($0.1, \sqrt{0.1}$, $1$, $\sqrt{10}$, $10$) and compared the maximum achieved score at each level, an example of this for $\mathcal{O}_{deg}$ in figure~\ref{fig:direct-ascent-temp}. In all cases it was found that a lower temperature lead to better results, this suggests that the graph is connected enough that greedy ascent is sufficient (that is, the neighbour with the greatest score is accepted at each step). We perform greedy ascent for each objective function for $28$ steps to a triangulation of $30$ tetrahedra, the chains are presented in figure~\ref{fig:direct-ascent-all}. We see that for .... the ascent profile is rather deterministic, suggesting ... However, for ... we observe a more complex objective function geometry.
+We perform direct accent as described in section~\ref{sec:direct-accent} starting from the seed triangulation of \verb`cMcabbgqs` which has one vertex and two tetrahedra. We performed this direct accent 20 times at different temperatures ($\beta = 1/T = 0.1, \sqrt{0.1}$, $1$, $\sqrt{10}$, $10$) and compared the maximum achieved score at each level, an example of this for $\mathcal{O}_{deg}$ in figure~\ref{fig:direct-ascent-temp}. In all cases it was found that a lower temperature lead to better results, this suggests that the graph is connected enough that greedy ascent is sufficient (that is, the neighbour with the greatest score is accepted at each step).
 
-While the direct ascent approach does perform particularly well, it is computational slow, requiring, and can only find a single triangulation of interest, i.e. its terminal triangulation after ascent. As such, in situations where a single high value triangulation is desired this is a beneficial approach. However, if the goal is to explore a variety of different high valued triangulations, the effectiveness decreases. Additionally, even in the higher temperature case, there is a particularly low efficiency. For triangulations of size $T$ tetrahedra, there are $2T$ neighbours of size $T+1$, of which only one is selected at each step, so the sampling efficiency is $1/2T$ which is about $<2\%$.
+We perform greedy ascent for each objective function for $28$ steps to a triangulation of $30$ tetrahedra, the chains are presented in figure~\ref{fig:direct-ascent-all}.
+
+We see that for each objective function the ascent profile is almost fully deterministic. All objective functions demonstrate monotonic growth. $\mathcal{O}_{deg}$ demonstrates accelerated growth, and $\mathcal{O}_{det}$, $\mathcal{O}_{var}$, and $\mathcal{O}_{norm}$ demonstrate linear growth; in either case this suggests that an arbitrarily high score can be achieved by simply extending this procedure to larger triangulations. On the other hand, $\mathcal{O}_{gen}$ appears to be plateauing suggesting that the exploration technique may not yield significant improvement as we extend to large triangulations. Interestingly, $\mathcal{O}_{var}$ presenting slightly better than expected values for even triangulations than odd triangulations (if we assume linearity), this leads to a slight oscillating behaviour. 
 
 \begin{figure}[H]
     \centering
@@ -872,10 +952,14 @@ While the direct ascent approach does perform particularly well, it is computati
     \label{fig:direct-ascent-all}
 \end{figure}
 
-\subsection{Simulated Annealing}
-We perform simulated annealing as described in section~\ref{sec:simulated-annealing}. This is done for a target of $10,000$ iterations with a step size of $10$ and target acceptance rate of $20\%$, this acceptance rate was chosen heuristically based on a number of different small experiments. To ensure a fair comparison with direct ascent, the potential was set to $-\infty$ for triangulations with more than 30 tetrahedra. For $\mathcal{O}_{deg}$ and $\mathcal{O}_{norm}$, the chain was stopped early at $3,307$ and $2,940$ samples because the computational time required to score a single triangulation had become unfeasibly slow \linebreak($>1$min$/$sample). The actual acceptance rate was calculated in each case. For $\mathcal{O}_{det}, \mathcal{O}_{gen}$ and $\mathcal{O}_{var}$ the achieved acceptance rate was within $1\%$ of the target. For $\mathcal{O}_{deg}$ and $\mathcal{O}_{norm}$ the acceptance rate is lower, though this is likely due to the reduced number of samples achieved. The chains for each objective function and the achieved acceptance rates are included in figure~\ref{fig:simulated-annealing}.
+While the direct ascent approach does appear to perform particularly well and predictably, and is an incredibly simple algorithm to implement. It only generates a single triangulation, and requires calculating the objective function on a large number of discarded triangulations - in total to generate the ascent profile of 28 triangulations required exploring on the order of $1,000$ triangulations. As such, in situations where a single high value triangulation is desired, this technique demonstrates value. However, if the goal is to explore a variety of different high valued triangulations and have a high exploration efficiency - this technique is not suitable.
 
-\begin{figure}[H]
+\subsection{Simulated Annealing}
+We perform simulated annealing as described in section~\ref{sec:simulated-annealing}. This is done for a target of $10,000$ iterations with a step size of $10$ and target acceptance rate of $20\%$, $\alpha=0.01$ and $\lambda=0.1$, this acceptance rate was chosen heuristically based on a number of different small experiments. To ensure a fair comparison with direct ascent, the potential was set to $-\infty$ for triangulations with more than 30 tetrahedra. For $\mathcal{O}_{deg}$ and $\mathcal{O}_{norm}$, the chain was stopped early at $3,307$ and $2,940$ samples because the computational time required to score a single triangulation had become unfeasibly slow ($>10$second$/$sample). The actual acceptance rate was calculated in each case. For $\mathcal{O}_{det}, \mathcal{O}_{gen}$ and $\mathcal{O}_{var}$ the achieved acceptance rate was within $1\%$ of the target. For $\mathcal{O}_{deg}$ and $\mathcal{O}_{norm}$ the acceptance rate is lower, though this is likely due to the reduced number of samples achieved. The chains for each objective function and the achieved acceptance rates are included in figure~\ref{fig:simulated-annealing}.
+
+For $\mathcal{O}_{deg}$ and $\mathcal{O}_{norm}$ which were both stopped early, the objective function appears to still be increasing, suggesting that a higher objective function could have been achieved if let run for the full 10,000 iterations. However, it is important to realise that the more complex a knot is, the longer it takes to calculate the Alexander polynomial, so if the algorithm was to continue to run and improve the objective function, it is likely that it would continue to slow down. The computation for the Alexander polynomial is slow because the symbolic determinant of a large collection of matrices is required to be calculated. This is a poorly optimised problem. However, the full symbolic result is possibly not required, and specific algorithms to calculate the degree and norm could potentially be developed to significantly improve the compute time, and leverage the parallelism of GPUs. $\mathcal{O}_{gen}$, and $\mathcal{O}_{var}$ both appeared to plateau relatively early and did not show significant improvement after around $2,000$ epochs. Similar could be suggested for $\mathcal{O}_{det}$, though the results are less conclusive. 
+
+\begin{figure}
     \centering
     \begin{subfigure}[b]{0.45\textwidth}
         \centering
@@ -917,7 +1001,25 @@ We perform simulated annealing as described in section~\ref{sec:simulated-anneal
 \end{figure}
 
 \section{Comparison of Classical Optimisation}
-The best result from each optimisation technique is compiled in table~\ref{tab:classical-results}, this table includes the achieved percentile of the best sample, computed by the fitted power law distribution from section~\ref{sec:mcmc}.
+The best result from each optimisation technique are compiled in table~\ref{tab:classical-results}. This table includes the achieved percentile of the best sample, computed by the fitted power law distribution for both the entire distribution (overall) and the tail distribution (tail) from section~\ref{sec:mcmc}.
+
+In all cases the search techniques uncovered samples that where at least in the $10^{-5}$th percentile. Meaning that $100,000$ samples of $30$ tetrahedra would be required. Given the $30$ tetrahedra sampling rate was on the order of $10\%$ at least $1,000,000$ samples from MCMC would be required to find a solution as good, simulated annealing only used $10,000$, and direct ascent only around $1,000$ making the classical search techniques at least $100\times$ more efficient. In the best case scenario, the score was in the $10^{-13}$th percentile (conservatively choosing the largest of total and tail) making the search at least $10^{10}\times$ more efficient.
+
+With the exception of $\mathcal{O}_{det}$, the simulated annealing performed better than the greedy ascent. That being said, simulated annealing also had to perform $2\times$ to $5\times$ more calculations than the direct ascent (of the $10,000$ steps, the model would sometimes propose an already visited node which didn't need to be recomputed). The improvement was 1-2 orders of magnitude in percentile (conservatively) suggesting that simulated annealing is the better choice when maximising the objective function as much as possible is desired. Though the increased complexity in the algorithm, and the slower $2\times$ to $5\times$ slower runtime are drawbacks if absolute maximums are not required. Interestingly, $\mathcal{O}_{det}$ performed significantly better under direct ascent. Achieving a particularly high percentile on the order $10^{-13}$. It was not entirely clear that simulated annealing for $\mathcal{O}_{det}$ had settled down, and a longer chain may have achieved better results, but it is also possible that the objective function for $\mathcal{O}_{det}$ is convex enough that direct ascent is highly efficient.
+
+For the knot based objective functions, we consider the best triangulations achieved overall from both techniques, identifying which edge within the triangle has the most complex knot (as defined by the objective function).
+
+For $\mathcal{O}_{deg}$ the edge that had the greatest degree had a degree of $1,626$. Additionally, it had a fundamental group that was not of the form $\langle a, b\;|\; a^pb^{-q}\rangle$ and had an Alexander polynomial that could not be decomposed over $\mathbb{Q}$, as such it is not a torus knot, and is likely a prime knot. It is likely a satellite knot \textbf{\textit{Jonathan - Can we check this?}}. In total for this triangulation, $3$ of the edges where unknots.
+
+For $\mathcal{O}_{det}$ the edge that had the greatest determinant had a determinant of $57$. The Alexander polynomial factors to $(a^4 - a^3 + a^2 - a + 1) (a^{20} - a^{15} + a^{10} - a^5 + 1)$ and the fundamental group was $\langle a b \;|\; a^{12} b a^{-13} b \rangle$. This is likely a (5,2)-cable of the (5,2)-torus knot. In total for this triangulation, $3$ of the edges where unknots.
+
+For $\mathcal{O}_{norm}$ the edge that had the greatest norm had a norm of $359$. The Alexander polynomial had degree $724$ and fundamental group with three generators. The Alexander polynomial has alternating $+1, -1$ coefficients suggesting a torus knot (the fundamental group may not be simplified)
+In total for this triangulation, $3$ of the edges where unknots.
+
+For $\mathcal{O}_{gen}$ the edge that had the greatest number of generators had a $51$ generators, but after simplification only had $3$. The Alexander polynomial had degree $162$. The Alexander polynomial has alternating $+1, -1$ coefficients suggesting a torus knot (the fundamental group may not be fully simplified)
+In total for this triangulation, $4$ of the edges where unknots.
+
+For $\mathcal{O}_{var}$ the best triangulation had edges primarily with degree $1, 2$ or $3$ and with one edge of degree $131$. For this triangulation, all edges where unknotted.
 
 \begin{landscape}
 \begin{table}[H]
@@ -926,7 +1028,7 @@ The best result from each optimisation technique is compiled in table~\ref{tab:c
         \hline
         Objective Function & \multicolumn{3}{|c|}{Direct Ascent} & \multicolumn{3}{|c|}{Simulated Annealing} \\
         \hline
-         & Score & Bulk Percentile & Tail Percentile & Score & Bulk Percentile & Tail Percentile \\
+         & Score & Total Percentile & Tail Percentile & Score & Total Percentile & Tail Percentile \\
         \hline
         $\mathcal{O}_{deg}$ & $152.26$ & $7.19\cdot 10^{-05}$ & $1.21\cdot 10^{-05}$ & $433.42$ & $2.12\cdot 10^{-05}$ & $2.66\cdot 10^{-06}$ \\
         $\mathcal{O}_{det}$ & $27.19$ & $1.38\cdot 10^{-13}$ & $2.62\cdot 10^{-13}$ & $13.84$ & $5.86\cdot 10^{-11}$ & $1.61\cdot 10^{-10}$ \\
@@ -975,13 +1077,13 @@ The best result from each optimisation technique is compiled in table~\ref{tab:c
 \end{landscape}
 
 \section{Baseline Transformer Efficiency on Isomorphism Signatures}
-A dataset of triangulations of $S^3$ is collected for a range of different sizes ($6-$tetrahedra to $12-$tetrahedra) These either come from the census of triangulations, or from MCMC. A separate transformer model is trained for each number of tetrahedra. Each transformer has the exact same parameters: an embedding dimension of $64$, $6$ layers, $8$ heads, a dropout rate of $0.1$, and a learning rate of $ 0.0005$. Each model was trained from the same starting key for $50,000$ iterations, where an iteration is a single batch of size $32$. Each batch was a randomised sample from the training data. A fixed, random, test set of $1,000$ was used for validation. These parameters were chosen as a computationally reasonable starting point for training, though there is significant research to suggest that larger models will perform better, especially given the essentially unlimited training data that we have.
+A dataset of triangulations of $S^3$ is collected for a range of different sizes ($6-$tetrahedra to $12-$tetrahedra). These either come from the census of triangulations \cite{Regina}, or from MCMC. A separate transformer model is trained for each number of tetrahedra. Each transformer has the exact same parameters: an embedding dimension of $64$, $6$ layers, $8$ heads, a dropout rate of $0.1$, and a learning rate of $0.0005$. Each model was trained from the same starting key for $50,000$ iterations, where an iteration is a single batch of size $32$. Each batch was a randomised sample from the training data. A fixed, random, test set of $1,000$ was used for validation. These parameters were chosen as a computationally reasonable starting point for training, though there is significant research to suggest that larger models will perform better, especially given the essentially unlimited training data that we have \cite{Kaplan2020}.
 
 Figure~\ref{fig:sgd-test-losses} shows a log-log plot of the test loss over the number of iterations. It is evident that the curves are still decreasing, and at $50,000$ iterations there isn't significant enough curvature to infer when the training would plateau, this suggests that further training time would yield better results. Regardless of the small architecture and low training time, the data does exhibit promising results.
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.7\linewidth]{thesis/figures/sgd_test_losses.pdf}
+    \includegraphics[width=0.8\linewidth]{thesis/figures/sgd_test_losses.pdf}
     \caption{Caption}
     \label{fig:sgd-test-losses}
 \end{figure}
@@ -1009,14 +1111,21 @@ Figure~\ref{fig:sgd-test-losses} shows a log-log plot of the test loss over the 
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.7\linewidth]{thesis/figures/generation_efficiency.pdf}
+    \includegraphics[width=0.8\linewidth]{thesis/figures/generation_efficiency.pdf}
     \caption{Caption}
     \label{fig:generation-efficiency}
 \end{figure}
 
 
 \chapter{Discussion and Future Work}
-\section{}
+\section{Guided Search}
+During the development of the optimisation techniques, there was interest in understanding if guided search could be used to discover specific, special types of triangulations. In particular, we were interested to see if we could use guided search to discover a triangulation where all the edges were knotted. Burton had used targeted search to find an example where this was true. The concept was that if we find a triangulation which exhibits particularly high ``knottedness'' in general, it may be more likely to have all of its edges knotted. However, after running optimisation on a range of different objective functions, we found that we could achieve much higher values for the objective functions than what was actually obtained by the triangulation discovered by Burton. That is, the objective functions did not discriminate enough to be used to locate such a triangulation. This is not a failure in the optimisation techniques, but rather in the definition of the objective function. In general, if the discussed optimisation techniques are to be used for searching for specific triangulations, it needs to be done on some objective function that is known to be optimised by a hypothetical solution. For example - the number of edges unknotted is known to be minimised by a triangulation of the desired form (tautologically), unfortunately it is too flat to actually serve any value for searching (tending to ``hover'' around 2 quite easily).
+
+\section{Reinforcement Learning}
+We have successfully trained transformers to be able to generate triangulations, though the efficiency isn't particularly high. Before deciding to do reinforcement learning on the objective function, it may be beneficial to improve the rate at which the model is generating valid spheres. Apart from increasing the amount of training time, one possible avenue would be to do reinforcement learning with the objective being whether or not the triangulation is a sphere (or to start simply if its valid). In order to apply reinforcement learning, it is generally required that the number of positive samples per batch is $\geq1$. Considering our batch size is $32$, this would mean the efficiency needs to be above $0.03$. This is achieved for $6-$tetrahedra directly for spheres, and for $6, 7, 8-$tetrahedra for the initial task of being valid. The batch size could certainly be increased though this would require more compute power. As such, reinforcement learning is a valid avenue immediately for triangulations of size $6, 7$ and $8$, and would likely apply to larger triangulations after training with gradient descent for longer and with a larger model.
+
+\section{Alternate Isomorphism Signatures}
+It is a well empirically observed result that increasing the embedding dimension increases performance for transformers. This can be explained with two factors. Firstly, in general more parameters of any form gives the model more freedom and nuance allowing it to fit to the data better. Secondly, and more pertinent, the embedding layer is the component of the model that learns to express what each letter ``means''. With the current isomorphism signatures, they are simply representations of numbers, so specific letters don't contain any geometric meaningful information, the model has to ``waste effort'' learning how to decode the isomorphism signatures, which is a relatively sophisticated encoding structure. A different encoding strategy could be used to represent the triangulations where each token has a specific and unique meaning. One possibility is ``dehydrated isomorphism signatures''. These have a potential advantage because each pair of letters encodes a unique piece of geometric information, and the position encodes the gluing information. This is far more subtile for the specific task that transformers were developed to handle and using such a signature could lead to faster training times, and higher accuracy for the same sized model. Additionally, there could be potential interest in the embedding vectors learned themselves.
 
 \bibliographystyle{plain}
 \bibliography{references}
