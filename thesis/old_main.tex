@@ -91,559 +91,555 @@
 
 \chapter*{Introduction}
 % Big picture
-Decomposing a surface or higher-dimensional manifold into discrete units, such as triangles and tetrahedra, is a standard technique used across a range of disciplines. This process, known as triangulation, transforms the analytic problem of studying a continuous space into a combinatorial one, thereby opening it up to a range of computational methods. Applications of triangulation are widespread. In physics, they appear in the Regge calculus of general relativity \cite{Regge1961} and causal dynamical triangulations of quantum gravity \cite{Ambjorn2004}, where spacetime is discretised for simulations. Engineering disciplines use meshes—a form of triangulation—to approximate structures like wings or bridges for finite element analysis \cite{Courant1994}. Triangulations are also fundamental in computer graphics for rendering objects \cite{Gouraud1998} and in data science for topological data analysis \cite{Zomorodian2004}. Within mathematics, they are used to compute topological invariants like homology groups \cite{Hatcher2005}, study combinatorial Ricci flows in differential geometry \cite{Chow2003}, and have been instrumental in graph theory, for instance, in the proof of the four-colour theorem \cite{Kenneth1977}. A key challenge is that triangulations of a given space are not unique, and their suitability depends on the specific application. For instance, algebraic topology often seeks triangulations with the minimum number of faces \cite{Hatcher2005}, whereas computer graphics prioritises triangulations that best approximate the original surface geometry. Consequently, significant research has focused on understanding the space of all possible triangulations for a given manifold and developing techniques to generate optimal ones.
+The process of decomposing a surface or higher dimensional surface into discrete units such as triangles and tetrahedra is a standard technique used in a range of disciplines to take the analytic problem of studying a space or surface, to a combinatorial problem that opens it up to a range of computational techniques. Some examples of where triangulations are used includes physics such as the Regge calculus of general relativity \cite{Regge1961} and the causal dynamic triangulations of quantum gravity \cite{Ambjorn2004} where spacetime is triangulated for simulations; engineering where fluid and solid dynamics use ``meshes'' (triangulations) to approximate wings or bridges so that each component can be studied easily \cite{Courant1994}; computer graphics where objects are rendered with triangulations \cite{Gouraud1998}; and data science where the data can be used to generate a triangulation that can then be explored to reveal more about the system \cite{Zomorodian2004}. Triangulations also have many important purposes within mathematics itself, where they can be used to compute topological properties like homology groups and the Euler characteristic \cite{Hatcher2005}; differential geometry with fields such as combinatorial Ricci flows \cite{Chow2003}; and graph theory where concepts from triangulations were used in proofs such as the proof of the four colouring theorem \cite{Kenneth1977}. The main challenge with triangulations of surfaces and spaces, is that they are not unique, and different triangulations of a surface are better for different tasks. For example, finding the triangulation with the least faces helps in algebraic topology \cite{Hatcher2005}, whereas in computer graphics the triangulation that best approximates the geometry of the original surface is preferred. As such, considerable effort has been put into trying to explore and understand the world of triangulations of a given surface and find techniques to generate ``good'' triangulations.
 
 % Narrowing focus
-While there are various criteria for what constitutes an optimal triangulation, this report primarily explores topological and combinatorial properties. Specifically, we seek single-vertex triangulations of the $3$-sphere that correspond to interesting or complex knots. Although the techniques developed can be extended to other notions of optimality, we focus on topological and combinatorial properties because they are fundamental to the triangulation itself. These properties do not depend on specific geometric embeddings, such as the angles or sizes of the component simplices. This approach narrows the focus to abstract triangulations—which are discrete and countable—improving computational manageability and ensuring that the results are general and dependent only on the triangulation's intrinsic structure, not on extrinsic geometric factors.
+While there are a range of different notions of what is meant by good, this report primarily explores topological and combinatorial properties of triangulations. Specifically, we look for single vertex triangulations of the $3-$sphere that can be related to interesting or complex knots. The techniques developed can undoubtedly be extended to a range of different notions of goodness, but topological and combinatorial properties are fundamental to the triangulation itself, and do not depend on the specific geometry like the angles within or the size of specific triangles in the triangulation. This has the advantage of narrowing the focus of exploration to abstract triangulations which are discrete and countable, improving computational manageability and ensuring that the results are general and only dependent on the triangulation itself, not other erroneous geometric factors.
 
 % Statement of aims
-The primary objective of this report is to implement, analyse, and compare a range of computational techniques for searching the space of triangulations. We investigate classical search and sampling methods, namely Markov Chain Monte Carlo (MCMC), greedy search, and simulated annealing. While greedy search algorithms have been a central tool in this field, MCMC is a more recent technique \cite{Altmann2025}. We further adapt the MCMC framework to implement simulated annealing. Additionally, we lay the groundwork for a new approach using transformer-based models to explore the space. This opens the door for reinforcement learning, a field with a growing repertoire of successes in complex problems, from game playing \cite{Silver2016} and algorithm discovery \cite{Mankowitz2023} to mathematical conjecture \cite{Davies2021, Novikov2025}.
+The primary objective of this report is to implement, analyse, and compare a range of different computational techniques for searching the space of triangulations. We investigate classical search and sampling techniques, namely Markov Chain Monte Carlo, greedy search, and simulated annealing. While greedy search algorithms have been a central tool to the study of this problem, Markov Chain Monte Carlo is a relatively new technique \cite{Altmann2025} and we introduce adaptations of this algorithm to simulated annealing. Additionally, we introduce the groundwork for a new approach that uses transformer-based models to explore the space, opening the door for reinforcement learning which is steadily developing a repertoire of success in a range of different problems, including learning to play games like Go \cite{Silver2016}, finding improved sorting algorithms \cite{Mankowitz2023}, finding improved solutions to $4\times4$ matrix multiplication and kissing number problems \cite{Novikov2025}, and helping with the development of new conjectures \cite{Davies2021}.
 
 % Roadmap
-The report is structured as follows:
-\begin{itemize}
-    \item Chapter 1 introduces the necessary preliminary concepts, including manifolds, knot theory, and an overview of relevant statistical and machine learning techniques.
-    \item Chapter 2 provides a detailed outline and discussion of the specific algorithms implemented, including justifications for our design choices.
-    \item Chapter 3 presents a description and analysis of a series of numerical experiments conducted on five different search problems.
-    \item Chapter 4 concludes with a discussion of our findings and outlines directions for future research.
-\end{itemize}
+The report is structured as follows: Chapter 1 brings together the necessary preliminaries, including manifolds, some knot theory, and an overview of various statistical and machine learning techniques. Chapter 2 provides a detailed outline and discussion of the specific algorithms that we are implementing, including justifications for the choices we made. Chapter 3 presents a description and analysis of a series of numeric experiments run across 5 different search problems and compares them. Finally, chapter 4 concludes with a discussion of our findings and outlines the direction for future research.
+
+% reset the page numbering and change to arabic numbers
+% \newpage\setcounter{page}{1}\pagenumbering{arabic}
 
 \chapter{Preliminaries}
 \section{Mathematical Preliminaries}
 \subsection{Manifolds}
-A $d$-dimensional manifold, or $d$-manifold, is a topological space that generalises the notion of a surface by being locally homeomorphic to Euclidean space, $\mathbb{R}^d$. More precisely, we recall the following definitions.
+A $d-$\emph{dimensional manifold} or a $d-$\textit{manifold} is a topological generalisation of a surface. They are topological spaces that are ``well behaved'' and locally homeomorphic to $\mathbb{R}^d$. We recall the following basic definitions before precisely defining a manifold.
 
 \begin{Definition}[Second Countable]
-A topological space $(\mathcal{M}, \tau_\mathcal{M})$ is \textbf{Second Countable} if the topology $\tau_\mathcal{M}$ of $\mathcal{M}$ has a countable base.
+    A Topological space $(\mathcal{M}, \tau_\mathcal{M})$ is \textbf{Second Countable} if the topology $\tau_\mathcal{M}$ of $\mathcal{M}$ has a countable base.
 \end{Definition}
 \begin{Definition}[Hausdorff]
-A topological space $(\mathcal{M}, \tau_\mathcal{M})$ is \textbf{Hausdorff} if for any two distinct points $x, y \in \mathcal{M}$, there exist neighbourhoods $U$ of $x$ and $V$ of $y$ such that $U\cap V=\varnothing$.
+    A Topological space $(\mathcal{M}, \tau_\mathcal{M})$ is \textbf{Hausdorff} if for any two points $x\neq y$ in $\mathcal{M}$ there are neighbourhoods $U$ of $x$ and $V$ of $y$ such that $U\cap V=\varnothing$
 \end{Definition}
 
-With these, we can formally define a manifold.
-\begin{Definition}[$d$-dimensional manifold]
-A $d$-\textbf{dimensional manifold} is a Hausdorff, second-countable topological space $\mathcal{M}$ where for every point $p\in\mathcal{M}$ there is a neighbourhood $U(p)$ of $p$ that is homeomorphic to an open subset of Euclidean space $\mathbb{R}^d$.
+With these we can define
+\begin{Definition}[$d-$dimensional manifold]
+    A $d-$\textbf{dimensional manifold} is a Hausdorff, second countable, topological space $\mathcal{M}$ where for every point $p\in\mathcal{M}$ there is a neighbourhood $U(p)$ of $p$ that is Homeomorphic to an open subset of Euclidean space $\mathbb{R}^d$.
 \end{Definition}
 
 \begin{Remark}
-The condition of having a neighbourhood homeomorphic to an open subset of $\mathbb{R}^d$ is equivalent to stating that each point is either isolated (if $d=0$) or has a neighbourhood homeomorphic to all of $\mathbb{R}^d$.
+    We have used a homeomorphism to an open set of $R^d$. This is equivalent to saying that each point is either isolated (if $d=0$) or has a neighbourhood that is homeomorphic to all of $\mathbb{R}^d$.
 \end{Remark}
 
 \begin{Remark}
-We will refer to a $d$-manifold simply as a manifold. In other contexts, this might be called a \textit{topological manifold} to distinguish it from objects with additional structure (c.f. \textit{differentiable manifold, Riemannian manifold, etc.}).
+We will refer to an $d-$manifold simply as manifolds. Compared to other areas of research where we may call it a \textit{topological manifold} to emphasise that it does not have any further structure (c.f. \textit{differentiable manifold, Riemannian manifold, etc.}).
 \end{Remark}
 
-Common examples of manifolds include the circle $S^1$, the sphere $S^2$, the torus $T^2$, and Euclidean space $\mathbb{R}^d$. Some non-examples include the disk $D^2$, because its boundary points have no neighbourhood homeomorphic to an open subset of $\mathbb{R}^2$; the figure-eight curve, because at the crossing point no neighbourhood is homeomorphic to an open subset of $\mathbb{R}$; and the line with two origins, because it is not Hausdorff.
+Some examples of manifolds include the circles $S^1$, the sphere $S^2$, the Torus $T^2$, and Euclidean space $\R^d$. Some non-examples include the disk $D^2$ because its boundary has no neighbourhood that is homeomorphic to an open subset of $\R^d$, the figure-eight curve because at the ``crossing'' there is no way to deform it to look like an open subset of $\R$, or the line with two origins because this is not Hausdorff.
 
-In the study of triangulations, we are often interested in an additional structure known as a \textit{piecewise-linear structure}, or \textit{PL-structure}. Intuitively, a PL-structure allows a manifold to be realised as a collection of ``flat pieces'' joined together linearly. For instance, $S^1$ admits a PL-structure that can be realised as the boundary of a triangle or a square. Two PL-manifolds (manifolds with a PL-structure) are \textit{PL-homeomorphic} if they can be transformed into each other via a homeomorphism that is itself piecewise-linear. A formal treatment of PL-structures in terms of charts and atlases can be found in introductory texts on geometric topology (e.g., ``Introduction to piecewise-linear topology'' \cite{Rourke2012}).
+In the study of triangulations we are often interested in a specific additional structure that a manifold can admit known as a \textit{piecewise-linear structure} or \textit{PL-structure}. Intuitively, a PL-structure allows a manifold to be realised as a collection of ``flat pieces'' joined together in in a linear fashion. For example $S^1$ admits a PL-structure that can be realised as the boundary of a triangle, or a square, etc. We say that two PL-manifolds (manifolds with PL-structure) are \textit{PL-homeomorphic} if they can be transformed into each other via a homeomorphism that is itself piecewise linear. This is all formally defined in terms of charts, atlases, and transition maps which can be found in most introductory books on geometric topology (e.g. ``Introduction to piecewise-linear topology '' \cite{Rourke2012}).
 
-A key result for this work, due to Radó \cite{Rado1925} and Moise \cite{Moise1977}, establishes an equivalence between topological and piecewise-linear structures in low dimensions.
+A particularly useful result due to Radó \cite{Rado1925} and Moise \cite{Moise1977} says that for dimension 3 or less PL-manifolds and PL-homeomorphisms are the ``same'' as manifolds and homeomorphisms. More precisely
 
-\begin{Theorem}[Hauptvermutung, simplified]
-For dimensions $d \leq 3$, every manifold admits a PL-structure that is unique up to PL-homeomorphism.
+\begin{Theorem}[Hauptvermutung]
+    For dimension 3 or less, every manifold admits a unique PL-manifold up to PL-homeomorphism.
 \end{Theorem}
 
 \begin{Remark}
-This theorem does not hold for dimensions four or more \cite{Milnor1961}.
+    This theorem does not hold for \textit{four} or more dimensions \cite{Milnor1961}.
 \end{Remark}
 
-As this work focuses on manifolds of dimension 3, we will often treat a 3-manifold and its unique PL-structure as equivalent.
+We will be considering manifolds of dimension 3, so will often talk of a manifold and the unique class of PL-structures (up to PL-homeomorphism) that the manifold can admit as being the same thing.
 
 \subsection{Triangulations}
-We begin by defining \textit{simplices}—the fundamental building blocks of triangulations.
+We begin by defining \textit{simplices} - the fundamental building blocks of triangulations
 
 \begin{Definition}[Simplex]
-A $d$-simplex $\Delta$ is the $d$-dimensional convex hull of $d+1$ affinely independent vertices.
+    An $d-$simplex $\Delta$ is the $d-$dimensional convex hull of $d+1$ vertices.
 \end{Definition}
 
-A 0-simplex is a point, a 1-simplex is a line segment, a 2-simplex is a triangle, and a 3-simplex is a tetrahedron. For any $i<d$, any subset of $i+1$ vertices of a $d$-simplex forms an $i$-dimensional simplex that we call an $i$-\textbf{dimensional face} of the original simplex. One way to construct an $d-$simplex is by taking the \textit{join} of $d$ points where we recall that
+A $0-$simplex is a point, a $1-$simplex a line segment, a $2-$simplex a triangle, and a $3-$simplex a tetrahedron. One way to construct an $d-$simplex is by taking the \textit{join} of $d$ points where we recall that
 \begin{Definition}[Join]
     For two topological spaces $X$ and $Y$, the join denoted $X*Y$ is constructed by taking $X\times Y\times[0,1]$ and taking the quotient by the equivalence relation $(x, y, 0)\sim(x,y',0)$ and $(x, y, 1)\sim(x',y,1)$ for $x,x'\in X$ and $y,y'\in Y$.
 \end{Definition}
 For for $i<d$, any subset of $(i+1)$ points of an $d-$simplex forms another simplex that we call an $i-$\textbf{dimensional face}.
 
 \begin{Definition}[Boundary of a Simplex]
-For a $d$-simplex $\Delta$, the boundary, denoted $\partial\Delta$, is the union of all its $(d-1)$-dimensional faces.
+    For an $d-$simplex $\Delta$, the boundary denote $\partial\Delta$ is the union of all its $(d-1)-$dimensional faces.
 \end{Definition}
 
-We can take simplices and glue them together along their faces to form more complex geometric structures.
-\begin{Definition}[Face Gluing]
-For two $d$-simplices, $\Delta_1$ and $\Delta_2$, and two of their respective $i$-dimensional faces, $F_1\subseteq \Delta_1$ and $F_2\subseteq \Delta_2$, a \textbf{face gluing} is the space $\Delta_1\sqcup \Delta_2/\sim$ obtained by identifying the faces via a homeomorphism, or \textit{gluing map}, between $F_1$ and $F_2$.
+We can takes simplices and ``glue'' them together to form more complex geometric structures. Formally this is done via \textit{face gluings}
+\begin{Definition}[Face gluing]
+    For two $d-$simplices $\Delta_1$ and $\Delta_2$ and two $i-$dimensional faces $F_1\subseteq \Delta_1$ and $F_2\subseteq \Delta_2$ we define the \textbf{face gluing} of $F_1$ to $F_2$ by taking $\Delta_1\sqcup \Delta_2/\sim$ where $\sim$ is defined by a \textit{gluing map} which is a homeomorphism between $F_1$ and $F_2$
 \end{Definition}
-Typically, the gluing map is defined by a bijection between the vertices of $F_1$ and $F_2$, which is then extended linearly.
+We typically create the gluing map by taking a bijection between the vertices of $F_1$ and $F_2$ and linearly interpolating to create the full homeomorphism.
 
 \begin{Definition}[PL-Sphere]
-The PL $0$-sphere is a pair of isolated points. For integers $d>0$, the PL $d$-sphere is a PL-manifold that is PL-homeomorphic to the boundary of a $(d+1)$-simplex.
+    The PL $0-$sphere is a pair of isolated points. For integers $n>0$ the PL $d-$sphere is a PL manifold PL-homeomorphic to the boundary of an $(d+1)-$simplex.
 \end{Definition}
 
 \begin{Definition}[PL-Triangulation]
-A \textbf{PL-triangulation} $T$ is a topological space constructed from a finite collection of $d$-simplices $\{\Delta_1,...,\Delta_k\}$, called \textbf{facets}, by gluing their $(d-1)$-dimensional faces together, subject to the following conditions:
-\begin{enumerate}
-    \item If a face is identified with itself as a result of the gluings, the identification map must be the identity.
-    \item For any vertex $v$, the \textbf{link} of $v$ (the complex formed by all simplices $\sigma \in T$ such that $v$ is not a vertex of $\sigma$ but whose vertices, together with $v$, form a simplex in $T$) must be a PL $(d-1)$-sphere.
-\end{enumerate}
-This is a PL-triangulation of a manifold $\mathcal{M}$ if there is a PL-homeomorphism from $T$ to $\mathcal{M}$.
+    Construct the triangulation $T$ from a finite collection of $d-$ simplices $\{\Delta_1,...,\Delta_k\}$, called \textbf{facets}, by gluing their $(d-1)-$dimensional faces together. We call this a PL-triangulation if the following conditions are met
+    \begin{enumerate}
+        \item If a face is identified with itself as a result of the face gluings, the identification must happen along the identity map.
+        % \item For all vertices $v$, the \textbf{link} defined as the set of all simplices $\Delta$ such that the join $v*\Delta$ is in $T$ forms a PL $n-1-$sphere
+        \item For all vertices $v$, the \textbf{link} defined as the boundary of a small neighbourhood of $v$ forms a PL $(d-1)-$sphere
+    \end{enumerate}
+    This is a PL-triangulation of a manifold $\mathcal{M}$ if there is a PL-homeomorphism from $T\to\mathcal{M}$.
 \end{Definition}
 
 \begin{Remark}
     We can view PL-manifolds (manifolds with PL-structure) and PL-triangulations as the same thing in some sense. That being that for every PL-manifold there is a PL-triangulation that is compatible with it, and every PL-triangulation is a PL-manifold.
 \end{Remark}
 
-\subsection{Knot Theory}
-This section introduces fundamental concepts from knot theory, building upon standard results from algebraic topology. For a comprehensive background reference, see Hatcher's ``Algebraic Topology'' \cite{Hatcher2005}.
+\section{Knot Theory}
+For our preliminaries on knot theory, we will assume some knowledge on algebraic topology. There are many resources on the topic that can be used as reference, for example ``Algebraic Topology'' by Hatcher \cite{Hatcher2005}.
 
 \begin{Definition}[Ambient Isotopy]
-For a pair of manifolds $N$ and $M$ and embeddings $g, h$ of $N$ into $M$, an \textbf{ambient isotopy} from $g$ to $h$ is a continuous map $F:M\times[0,1]\to M$ such that for each $t\in[0,1]$, the map $F_t:M\to M$ is a homeomorphism, $F_0$ is the identity map, and $F_1\circ g=h$.
+    For a pair of manifolds $N, M$ and embeddings $g, h$ of $N$ into $M$, an ambient isotopy from $g$ to $h$ is a continuous map $F:M\times[0,1]\to M$ such that $F_t:M\to M$ is a homeomorphism, $F_0$ is the identity, and $F_1\circ g=h$
 \end{Definition}
 
 \begin{Definition}[Knot]
-A \textbf{knot} is a smooth embedding of the circle $S^1$ into the 3-sphere $S^3$.
+    A knot is a smooth embedding of $S^1$ into $S^3$
 \end{Definition}
 
 \begin{Remark}
-We often refer to a knot as both the embedding function and its image in $S^3$. When we say ``a knot $K$'', we typically mean the image of the embedding.
+    We somewhat loosely refer to a knot as both the actual embedding function, and its image in $S^3$. However, if we say ``a knot $K$'', we typically mean the image of the embedding.
 \end{Remark}
 
 \begin{Definition}[Knot Equivalence]
-Two knots are \textbf{equivalent} if there is an ambient isotopy between their respective embedding functions.
+    Two knots are said to be equivalent if there is an ambient isotopy between their embedding functions.
 \end{Definition}
 
 \begin{Definition}[Knot Invariant]
-A \textbf{knot invariant} is a quantity or property assigned to a knot $K$ that is the same for all knots equivalent to $K$.
+    A knot invariant is a property that can be assigned to a knot $K$ that is the same for all equivalent knots.
 \end{Definition}
 
 \begin{Remark}
-A knot invariant is not necessarily unique; non-equivalent knots may share the same invariant.
+    A knot invariant can be the same for multiple non-equivalent knots.
 \end{Remark}
 
 \begin{Definition}[Knot Complement]
-For a knot $K$, its \textbf{tubular neighbourhood} $\nu(K)$ is a small, closed, 3-dimensional region surrounding $K$ that is homeomorphic to the solid torus $S^1\times D^2$. The \textbf{knot complement} is the space $X_K=S^3\setminus \nu(K)$.
+    For a knot $K$, the tubular neighbourhood $\nu(K)$ is a small, closed, 3-dimensional region surrounding $K$ that is homeomorphic to the solid torus $S^1\times D^2$. The knot complement is $X_K=S^3\backslash \nu(K)$
 \end{Definition}
 
-% --- DIAGRAM REMINDER ---
-% Please insert a diagram of the trefoil knot and its tubular neighbourhood here.
-% For example: [Diagram of the trefoil knot, its tubular neighbourhood, and the resulting complement]
-% -------------------------
-
-The boundary of the knot complement, $\partial X_K$, is a torus, $\partial X_K\cong T^2$. A central knot invariant for this project is the Alexander polynomial, the definition of which requires the following concepts.
+We have that the boundary $\partial X_K\cong T^2$ is a torus. We take some time to define the Alexander polynomial, this is an important knot invariant central to this project. The following definitions are used only as preliminaries for definition~\ref{def:alex-poly} of the Alexander polynomial.
 
 \begin{Definition}[Infinite Cyclic Cover]
-For the knot complement $X_K$, a cover $\tilde{X}_K$ of $X_K$ is an \textbf{infinite cyclic cover} if the group of deck transformations $\operatorname{Deck}(\tilde{X}_K/X_K)$ is isomorphic to the infinite cyclic group $\mathbb{Z}$.
+    For the knot complement $X_K$, $\tilde{X}_K$ a cover of $X_K$ is an infinite cyclic cover if $\operatorname{Deck}(\tilde{X}_K/X_K)\cong\mathbb{Z}$
 \end{Definition}
-Every knot complement has a unique infinite cyclic cover. This follows from the fact that its first homology group is infinite cyclic, $H_1(X_K;\mathbb{Z})\cong \mathbb{Z}$ (a result of Alexander duality), and from the classification theorem for covering spaces.
+Every knot has a unique infinite cyclic cover. This follows from the fact that $H_1(X_K;\mathbb{Z})\cong Z$ and the properties of covering spaces.
 
 \begin{Definition}[Alexander Module]
-For a knot $K$, consider the infinite cyclic cover $\tilde{X}_K$ of its complement. The deck transformation group of this space is isomorphic to $\mathbb{Z}$ and is generated by some transformation $t$. We form the ring of Laurent polynomials $\Lambda=\mathbb{Z}[t, t^{-1}]$. The \textbf{Alexander module} is the first homology group $H_1(\tilde{X}_K; \mathbb{Z})$, viewed as a module over the ring $\Lambda$.
+    For a knot $K$, take the infinite cyclic cover $\tilde{X}_K$ of the knot complement. The deck transformation group of this space is isomorphic to $\mathbb{Z}$, generated by some transformation $t$. Form the ring of Laurent polynomials $\Lambda=\mathbb{Z}[t, t^{-1}]$. The Alexander module is the first homology group $H_1(\tilde{X}_K)$ viewed as a module over $\Lambda$.
 \end{Definition}
 
 \begin{Definition}[Elementary Ideal]
-For a module $M$ over a unique factorisation domain $R$ with a presentation of $n$ generators $g_i$ and $m$ relations $r_j=\sum_{i=1}^{n} a_{ji}g_i=0$, we construct the $m\times n$ presentation matrix $A=(a_{ji})$. The $k$-th \textbf{elementary ideal} is the ideal $E_k(M)$ generated by all $(n-k)\times (n-k)$ minors of $A$.
+    For a module $M$ over a unique factorisation domain $R$ with presentation of $n$ generators $g_i$ and $m$ relations $r_j=a_{j1}g_1+a_{j2}g_2+\dots=0$ we construct an $m\times n$ matrix $A$ of all the relations. The $k$th elementary ideal is the ideal $E_k(M)$ generated by all the $(n-k)\times (n-k)$ minors of $A$.
 \end{Definition}
 \begin{Theorem}
-The elementary ideals are independent of the chosen presentation of the module.
+    The elementary ideals are independent of how the module is presented. So we refer to the elementary ideals of the module without reference to the presentation.
 \end{Theorem}
 
 \begin{Definition}[Alexander Polynomial]\label{def:alex-poly}
-The \textbf{Alexander Polynomial}, $\Delta_K(t)$, is the generator of the first elementary ideal of the Alexander module. This ideal is principal, and its generator is unique up to multiplication by a unit in $\Lambda$, i.e., a factor of $\pm t^k$ for some integer $k$.
+    The Alexander Polynomial is the generator of the first elementary ideal of the Alexander module.
 \end{Definition}
 
 \begin{Theorem}
-The Alexander polynomial is a knot invariant.
+    The Alexander polynomial is a knot invariant.
 \end{Theorem}
-The proof that this is a well-defined knot invariant is originally due to J. W. Alexander \cite{Alexander1928}.
+The proof of the above is due to J. W. Alexander \cite{Alexander1928}.
 
 
 \subsection{Isomorphism Signatures}
-We say that two PL-triangulations are \textit{combinatorially isomorphic} if they are identical up to a relabelling of their faces. Since the initial labelling of a triangulation's components is arbitrary, a canonical representation is necessary for unique identification and comparison. While specific implementations vary, the general algorithm to produce a canonical labelling is as follows.
-
+We say that two PL-triangulations are \textit{combinatorially isomorphic} if they are the same up to relabelling of their faces. Because there is no interesting mathematical information in the labelling, we typically define a canonical labelling. While the exact details of constructing a canonical labelling are specific and can depend on the software choice, the general idea is as follows.
 \begin{enumerate}
-    \item For each facet, calculate an initial, labelling-independent invariant (e.g., the number of distinct facets glued to its boundary faces).
-    \item Partition the facets into bins based on the value of this invariant. This initial partitioning is canonical.
-    \item For each facet, generate a new identifier based on the current partition of its neighbours (i.e., which bins its adjacent facets belong to). Use these new identifiers to refine the partition; if facets within the same bin now have different identifiers, the bin is split.
-    \item Repeat the refinement process until the partition stabilises. If this process does not result in each bin containing a single, unique facet, an arbitrary but deterministic choice is made to break a tie and continue the algorithm.
-    \item If any arbitrary choices were required, the entire process is repeated for each possible choice, generating a set of potential canonical labellings. The final isomorphism signature string is derived from each, and the lexicographically smallest string is chosen as the definitive canonical representation.
+    \item For each facet, calculate some label independent invariant (e.g. the number of unique facets being glued to).
+    \item Partition the facets into labelled bins based on this invariant (this labelling is canonical based on the value of the invariant)
+    \item For each facet in each bin (containing multiple facets), look at which bins the facets neighbouring facets (from gluing) are in. Use this information to construct a new label. If there are facets in the same bin that get a different new label, split the bin in some canonical way and create a new labelling.
+    \item Repeat the above process, constructing a splitting tree. This tree is canonical. This tree is not guaranteed to split the bins into singletons. If it gets ``stuck'', make an arbitrary choice and continue the algorithm until everything falls into a singleton. This is a possible canonical labelling.
+    \item If an arbitrary choice had to be made (or perhaps multiple), rerun the entire algorithm for each possible choice that could have been made, creating a small list of possible canonical labellings. Chose the lexicographically smallest labelling.
 \end{enumerate}
+The choice of canonical labelling used for the rest of this paper is as in the $3-$manifold software Regina \cite{Regina}. The details of the initial invariant, how the bins are labelled, and optimisations can be found in the corresponding paper \cite{Regina}. In the worst case scenario this process takes $\mathcal{O}((d+1)!\cdot n^2)$ where $d$ is the dimension and $n$ is the number of facets. For a $3-$dimensional triangulation the $(d+1)!$ term is small and this algorithm is fast.
 
-
-The specific canonical labelling algorithm used in this work is that implemented in the 3-manifold software Regina \cite{Regina}, which includes details on the initial invariant and various optimisations. In the worst-case, this process takes $\mathcal{O}((d+1)! \cdot n^2)$ time, where $d$ is the dimension and $n$ is the number of facets. For a 3-dimensional triangulation, the $(d+1)! = 24$ term is a small constant, making the algorithm efficient in practice.
-
-Once a canonical labelling is found, an ``isomorphism signature'' is calculated. For a 3-dimensional triangulation, the signature must encode the number of tetrahedra and, for each face of each tetrahedron, the identity of the tetrahedron it is glued to and the orientation of the gluing. The destination tetrahedron and the vertex permutation uniquely determine the destination face, so it does not need to be stored explicitly. To store this information efficiently as a string, the following procedure is used:
+Once a canonical labelling is found, an ``isomorphism signature'' is calculated. For a $3-$ dimensional triangulation, the only information that needs to be stored is the number of tetrahedra, and for each face of each tetrahedron what the destination tetrahedron is, and what the vertex order is. We do not need to specify the destination face because this can be determined by a combination of permutation labelling, looking at where the destinations faces are being mapped, and strict ordering. To efficiently store this, the following is done.
 \begin{enumerate}
-    \item For each face of each tetrahedron, an integer is calculated as $v_i = (6 \cdot \text{destination\_id}) + \text{permutation\_id}$. The `destination_id` is the canonical index of the target tetrahedron, and the `permutation_id` is an integer from 0 to 5 representing one of the $3!=6$ possible vertex mappings for the gluing. This value will be less than $6n$ for a triangulation with $n$ facets.
-    \item A sequence $(v_0, v_1, \dots, v_{4n-1})$ is created by iterating through the tetrahedra in their canonical order, and for each tetrahedron, iterating through its four faces in a fixed local order.
-    \item These values are combined into a single large integer: $I = v_0 + v_1(6n) + v_2(6n)^2 + \dots + v_{4n-1}(6n)^{4n-1}$.
-    \item The integer $I$ is converted to a base-64 string for compact storage.
-    \item The number of tetrahedra, $n$, is converted to a string and prepended to the string representation of $I$.
+    \item For each face of each tetrahedron, calculate $v_i=6\cdot\text{destination id} + \text{permutation id}$. This is valid due to there being 6 vertex permutations. This value will be less than $6k$ for $n$ facets.
+    \item Create a sequence $(v_0, v_1, \cdots, v_{4n-1})$ ordered based on the canonical labelling.
+    \item Compute $I=v_0+v_1(6n)+v_2(6n)^2+\cdots$
+    \item Convert $I$ to base 64 and store as a string.
+    \item Convert $n$ to some string and append to the front of the string representation of $I$.
 \end{enumerate}
-This process yields a unique string that serves as the combinatorial isomorphism signature for any given 3-manifold triangulation, within practical limits on the number of facets $n$.
+This process forms a string / number representing the unique combinatorial isomorphism signature for any given triangulation of a $3-$manifold (practically there are size restrictions on the number of facets $n$).
 
 \subsection{Pachner Moves and the Pachner Graph}
-A Pachner move is a local transformation that modifies a PL-triangulation without changing the underlying topology of the manifold. In two dimensions, the simplest example is an ``edge flip'', where two adjacent triangles are replaced by two different triangles that span the same quadrilateral region.
-
-
-This concept can be generalised to higher dimensions.
+A Pachner move is a specific process that changes a PL-triangulation without changing the underlying topological space.
 
 \begin{Definition}[Complementary Triangulation]
-Let $\Delta$ be a $(d+1)$-simplex and let $A$ be a connected subcomplex of its boundary $\partial \Delta$. The \textbf{complementary triangulation} of $A$ is the subcomplex $B=\partial\Delta \setminus A$.
+    Let $\Delta$ be a $(d+1)$simplex, let $A$ be a a connected subcomplex of $\partial \Delta$ - that is a set of $d-$simplexes that form a connected topological space. The \textit{complementary triangulation} of $A$ is $B=\partial\Delta \backslash A$.
 \end{Definition}
+
+From this we can abstractly define a Pachner move
 
 \begin{Definition}[Pachner Move]
-For a $d$-dimensional PL-manifold, a \textbf{Pachner move} is a local replacement of a subcomplex. It involves identifying a collection of facets that is combinatorially equivalent to a subcomplex $A \subset \partial\Delta^{d+1}$ and replacing it with the corresponding complementary triangulation $B = \partial\Delta^{d+1} \setminus A$.
+    For a $d$-dimensional PL-Manifold, identify an $i-$dimensional simplex $\sigma^i$. The set of all facets that contain $\sigma^i$ forms a subcomplex of the boundary of some $(d+1)-$dimensional triangulation. Replace this set with the complementary triangulation of this sub complex. This Pachner move is called an $i-$move.
 \end{Definition}
 
-The following theorem, due to Pachner \cite{Pachner1991}, establishes the fundamental importance of these moves.
+We have the following proof due to Pachner \cite{Pachner1991}
 \begin{Theorem}\label{thm:pachner-connected}
-Two triangulations, $T$ and $T'$, represent the same PL-manifold if and only if one can be transformed into the other through a finite sequence of Pachner moves.
+    Two triangulations $T$ and $T'$ are reachable in finitely many Pachner moves if and only if they represent the same PL-manifold.
 \end{Theorem}
 
-For triangulations of 3-manifolds, there are two fundamental pairs of inverse Pachner moves:
-\begin{itemize}
-    \item The \textbf{(2,3)-move} and its inverse, the \textbf{(3,2)-move}. The (2,3)-move acts on two tetrahedra that share a common triangular face. These two tetrahedra are removed and replaced by three tetrahedra that share a common edge connecting the two vertices opposite the original shared face. The (3,2)-move is the reverse of this process.
-    \item The \textbf{(1,4)-move} and its inverse, the \textbf{(4,1)-move}. The (1,4)-move acts on a single tetrahedron, which is subdivided into four smaller tetrahedra by introducing a new vertex in its interior. The (4,1)-move is the reverse, removing an interior vertex of degree four and replacing the four surrounding tetrahedra with a single one.
-\end{itemize}
+For triangulations of $3-$manifolds, we can take $i=0, 1, 2, 3$, where $i=0, 3$ are inverses of each other, and likewise $i=1, 2$. For a $2-$move, we identify a triangle and find all the tetrahedra that share that triangle, there are two of these, we replace these with 3 tetrahedra that now share a common edge. The $1-$move is the inverse of this. We often call these moves $(3,2)$ and $(2,3)$ moves to explicitly state how we are going, for example, from $3$ tetrahedra to $2$. For a $0-$move, we identify a vertex with $4$ tetrahedra that share it, and replace these with a single tetrahedron. The $3-$move is the inverse. These are often called $(4,1)$ and $(1,4)$ moves as above.
 
-
-Since any two triangulations of a specific PL-manifold can be reached from one another through Pachner moves, we can define a graph structure on the space of triangulations.
+Because all triangulations of a specific PL-manifold can be reached through Pachner moves, we define
 
 \begin{Definition}[Pachner Graph]
-For a given PL-manifold $\mathcal{M}$, the \textbf{Pachner graph} is the graph $(V, E)$ where the set of vertices $V$ is the set of all combinatorial isomorphism classes of triangulations of $\mathcal{M}$, and an edge $(v_i, v_j)\in E$ exists if and only if the triangulations $v_i$ and $v_j$ are related by a single Pachner move.
+    For a given PL-manifold $\mathcal{M}$, the Pachner graph for $\mathcal{M}$ us the graph $(V, E)$ given by $V=\{\text{triangulations of }\mathcal{M}\}$ and for $v_i, v_j\in V$, $e_{ij}=(v_i, v_j)\in E\iff v_i, v_j$ are related via a single Pachner move.
 \end{Definition}
 
-By Theorem~\ref{thm:pachner-connected}, the Pachner graph is connected for any PL-manifold. The graph is, however, infinite. We can stratify the vertices of the Pachner graph into ``levels'', where each level contains all triangulations with a fixed number of facets.
+Because of theorem~\ref{thm:pachner-connected}, the Pachner graph is connected for any PL-manifold. The Pachner graph is, however, infinite. We additionally endow the Pachner graph with ``levels'' where each level encodes the number of facets in the triangulation.
 
 \begin{Theorem}
-The number of vertices in the Pachner graph (i.e., the number of non-isomorphic triangulations) grows super-exponentially with its level.
+    The size of the Pachner graph grows super exponentially in its level.
 \end{Theorem}
 
-Notice that the (2,3) and (3,2) moves preserve the number of vertices in the triangulation, while the (1,4) and (4,1) moves change it. We are often interested in ``single-vertex'' triangulations, which can be explored using only the vertex-preserving moves. A key result for this subclass, due to Matveev \cite{Matveev2007}, is that this restricted graph is still connected for the 3-sphere.
+We notice that $(4,1)$ and $(1,4)$ moves change the number of vertices, but the $(3,2)$ and $(2,3)$ moves do not. We are often interested in ``single vertex'' triangulations. For these we can exclusively use $(3, 2)$ and $(2,3)$ moves. A particularly useful result due to Matveev \cite{Matveev2007} is that
 
 \begin{Theorem}
-Any single-vertex triangulation of the 3-sphere $S^3$ with at least two tetrahedra can be reached from any other such triangulation through a sequence of only (2,3) and (3,2) moves.
+    Any single vertex triangulation of the $3-$sphere with at least 2 tetrahedra $S^3$ can be reached from any other such triangulation through only $(3,2)$ and $(2,3)$ moves.
 \end{Theorem}
 
-We can analogously define the Pachner graph for 1-vertex triangulations of $S^3$, which is also a connected graph. It is currently an open question whether the number of vertices in this restricted graph grows exponentially or super-exponentially with its level.
+We analogously define the Pachner graph for $1-$vertex triangulations of $S^3$, which is once again a connected graph. It is currently unknown if the Pachner graph for $1-$vertex triangulations of $S^3$ grows super exponentially or exponentially in its level.
 
-\section{Machine Learning and Computational Preliminaries}
+\section{Machine Learning Preliminaries}
 \subsection{Computational Complexity}
-An understanding of computational complexity is crucial for motivating the search and learning-based approaches used in this thesis, as many fundamental problems in topology are computationally intractable.
-
 \begin{Definition}[Time Complexity]
-For an algorithm with input size $n$, the \textbf{time complexity} is the asymptotic worst-case number of elementary operations the algorithm performs, written in ``Big-O'' notation as $\mathcal{O}(g(n))$.
+    For an algorithm with input size $n$, the time complexity is the asymptotic worst case number of steps the algorithm needs to process its input, written in ``Big-O'' notation as $\mathcal{O}(g(n))$.
 \end{Definition}
 
 \begin{Definition}[Space Complexity]
-For an algorithm with input size $n$, the \textbf{space complexity} is the asymptotic worst-case amount of memory the algorithm requires, written in ``Big-O'' notation as $\mathcal{O}(g(n))$.
+    For an algorithm with input size $n$, the space complexity is the asymptotic worst case amount of memory the algorithm needs to allocate when processing its input, written in ``Big-O'' notation as $\mathcal{O}(g(n))$.
 \end{Definition}
 
 \begin{Definition}[Decision Problem]
-A \textbf{decision problem} is a problem that can be answered with either ``yes'' or ``no''.
+    A decision problem is a type of problem that can be answered as either ``yes'' or ``no''
 \end{Definition}
 
+
 \begin{Definition}[Decidable]
-A decision problem is \textbf{decidable} if there exists an algorithm that is guaranteed to provide the correct answer for any input in a finite amount of time. Conversely, the problem is \textbf{undecidable} if no such algorithm exists.
+    A decision problem is \textbf{decidable} if there exists an algorithm that can always provide the correct answer for any given input in a finite amount of time. Conversely the problem is \textbf{undecidable} if it is not decidable.
 \end{Definition}
 
 \begin{Remark}
-Many computational problems can be rephrased as decision problems. For example, the optimisation problem ``find the shortest path between two nodes'' can be converted into the decision problem ``does a path of length at most $k$ exist between these two nodes?''.
+    While most problems are not decision problems, it is often possible to convert many problems into a decision problem. For example, if the problem is to multiply two numbers together, we can convert this to a decision problem of ``is the $i$th binary digit a $0$?'', this can be repeated for all digits.
 \end{Remark}
 
 \begin{Definition}[Complexity Class]
-A \textbf{complexity class} is a set of problems solvable under a given model of computation within a specified resource bound. For the standard Turing machine model, some major complexity classes are:
-\begin{enumerate}
-    \item $L$: Solvable using a logarithmic amount of memory.
-    \item $NL$: A ``yes'' solution can be verified using a logarithmic amount of memory.
-    \item $P$: Solvable in polynomial time.
-    \item $NP$: A ``yes'' solution can be verified in polynomial time.
-    \item $\operatorname{co}NP$: A ``no'' solution can be verified in polynomial time.
-    \item $PSPACE$: Solvable using a polynomial amount of memory.
-    \item $EXPTIME$: Solvable in exponential time.
-\end{enumerate}
-Many other complexity classes exist for various computational models and resource constraints.
+    A complexity class is a class of problems that can be solved under some model of computation within some resource bound i.e. some time or space bound. A problem belongs to a given complexity class if there exist an algorithm to solve the problem within this bound. For ``turning machines'', the main complexity classes are
+    \begin{enumerate}
+        \item $L$: The problem can be solved using a logarithmic amount of space.
+        \item $NL$: A solution can be verified using a logarithmic amount of space.
+        \item $P$: The problem can be solved in polynomial time.
+        \item $NP$: A `yes' solution can be verified in polynomial time.
+        \item $\operatorname{co}NP$: A `no' solution can be verified in polynomial time.
+        \item $PSPACE$: A solution can be found using a polynomial amount of space.
+        \item $EXPTIME$: A solution can be found using an exponential amount of time.
+    \end{enumerate}
+    There exist many other complexity classes for both turning machines and other models for computation.
 \end{Definition}
 
 \begin{Remark}
-The distinction between $NP$ and $\operatorname{co}NP$ is important. For instance, determining if a graph has a Hamiltonian path (a path visiting each node exactly once) is in $NP$, as a proposed path can be easily verified. However, its complement—determining that no such path exists—is in $\operatorname{co}NP$, and it is widely believed that no simple certificate exists to prove the absence of such a path.
+    $NP$ and $\operatorname{co}NP$ are distinct. For example for a graph $G$, the problem of if there is a path that visits all nodes exactly once is $NP$ because I can confirm that a path exists if you simply give me one, but it is believed to not be $\operatorname{co}NP$ as this would mean I could easily verify based on some example path that there can't be a path that visits all nodes exactly once.
 \end{Remark}
 
 \begin{Remark}
-The definitions of $NL$ and $NP$ provided here are based on the concept of a verifiable ``certificate'' for a solution. The formal definitions use non-deterministic Turing machines, but these two formulations can be shown to be equivalent.
+    A turning machine is a common model for computation, we do not define it here but there are many resources available.
+\end{Remark}
+
+\begin{Remark}
+    We have defined $NL$ and $NP$ as having solutions verifiable in a specific bound, this means that if the question is for example, is there a path of length $k$ between two nodes, someone can give a path that is a solution, and it is possible to verify that this connects the two nodes and has length $k$. Formally $NL$ and $NP$ are not defined this way, but instead using things called ``non-deterministic Turing machines'', but the definitions can be shown to be equivalent.
 \end{Remark}
 
 \begin{Theorem}
-The following inclusions hold for the major complexity classes:
-$$ L\subseteq NL\subseteq P\subseteq NP\subseteq PSPACE\subseteq EXPTIME $$
+    $L\subseteq NL\subseteq P\subseteq NP\subseteq PSCPAE\subseteq EXPTIME$
 \end{Theorem}
 
 \begin{Remark}
-It is unknown whether any of these inclusions are proper. The question of whether $P=NP$ is the most famous unsolved problem in computer science.
+    There are conjectures that some of these subsets may be proper subsets or equalities, most famously the question of if $P=NP$, but there are not as of yet any solutions.
 \end{Remark}
 
 \begin{Definition}[Hard Problem]
-For a complexity class $C$, a problem $P_1$ is $C$-\textbf{hard} if every problem $P_2 \in C$ can be reduced to $P_1$ by an algorithm that is efficient relative to the complexity of $C$.
+    For a given complexity class $C$, a problem $P$ is called a $C-$hard problem if every problem $P'\in C$ can be ``reduced'' to $P$ via some algorithm that is ``efficient'' relative to $C$.
 \end{Definition}
 
 \begin{Remark}
-For complexity classes like $NP$ and $PSPACE$, an ``efficient'' reduction is one that runs in polynomial time.
+    We do not formally define what it means to be ``efficient'' relative to $C$ as it is getting into the details too much, but for $NP$ and $PSCPAE$ problems, a polynomial time reduction is efficient.
 \end{Remark}
 
 \begin{Definition}[Complete Problem]
-For a complexity class $C$, a problem $P$ is $C$-\textbf{complete} if it is $C$-hard and $P\in C$.
+    For a given complexity class $C$, a problem $P$ is called a $C-$complete problem if it is a $C-$hard problem and $P\in C$
 \end{Definition}
 
-In practice, problems in $P$ are considered computationally tractable. In contrast, all known algorithms for $NP$-complete problems require resources that grow exponentially with the input size, quickly becoming computationally infeasible. If a problem is proven to be $NP$-complete or harder, it implies that efficient, exact solutions are unlikely to exist, and we must often resort to heuristics or approximation algorithms.
+Practically, problems that belong to $P$ can be solved tractable on a modern computer, we can typically scale resources and solve the problem. However, all the algorithms we have for $NP$ complete problems require exponential resources to run, which becomes computationally infeasible quickly. As such, if we find a problem to be $NP-$complete or harder, it means we can't just ``throw more compute'' at the problem to solve it and may have to resort to suboptimal solutions using heuristics etc.
 
-The following theorems classify the computational difficulty of the core geometric problems addressed in this thesis, motivating our use of heuristic search methods.
-
-\begin{Theorem}
-Finding the shortest path between two triangulations on the Pachner graph is $PSPACE$-complete.
-\end{Theorem}
-
-\begin{Theorem}[Novikov-Boone]
-\label{thm:trivial-presentation-undecidable}
-Determining if a given group presentation defines the trivial group is undecidable.
-\end{Theorem}
+From these definitions we can discuss a few important problems that we will encounter, and their respective complexity. The general high level of complexity of many of these problems is a motivating factor for our algorithms.
 
 \begin{Theorem}
-Recognising if a given 3-dimensional triangulation is homeomorphic to the 3-sphere, $S^3$, is in $NP\cap \operatorname{co}NP$.
+    Finding the shortest path between two vertices $v_i$ and $v_j$ of the Pachner graph is PSPACE complete.
 \end{Theorem}
-This result implies that both a "yes" (it is $S^3$) and a "no" (it is not $S^3$) answer have efficiently verifiable proofs. Problems in this class are not believed to be $NP$-complete.
+
+\begin{Theorem}\label{thm:trivial-presentation-undecidable}
+    Deciding if a presentation of a group is trivial is undecidable.
+\end{Theorem}
 
 \begin{Theorem}
-Determining if a given knot is the unknot is in $NP\cap \operatorname{co}NP$.
+    Deciding if $3-$dimensional triangulation is $S^3$ is in $NP\cap \operatorname{co}NP$
+\end{Theorem}
+
+\begin{Theorem}
+    Checking if a knot is the unknot is $NP\cap \operatorname{co}NP$
 \end{Theorem}
 
 \subsection{Markov Chain Monte Carlo}
 \begin{Definition}[Markov Chain]
-A \textit{Markov Chain} is a sequence of random variables $x_0, x_1, x_2, \dots$ indexed by ``time'', where the sequence possesses the \textit{Markov Property}—that is, the distribution of $x_{t+1}$ depends only on the value of $x_t$.
+    A \textit{Markov Chain} is a sequence of values $x(t)$ indexed by ``time'' where the sequence has the \textit{Markov Property} - that is $x(t+1)$ depends only on $x(t)$, typically probabilistically.
 \end{Definition}
 
-Monte Carlo methods are a broad class of algorithms that use random sampling to obtain numerical results, often to approximate complex integrals or probability distributions. \textit{Markov Chain Monte Carlo} (MCMC) is a specific class of these methods for sampling from a probability distribution by constructing a Markov Chain whose equilibrium distribution is the desired one.
+Monte Carlo methods are a class of methods that use random sampling to approximate something. Often, they are used to approximate the integral of some complex function, however not exclusively.
+
+\textit{Markov Chain Monte Carlo} is a class of methods to sample from a distribution by constructing a Markov Chain that's steady state solution is the distribution. More formally we define
 
 \begin{Definition}[Markov Transition Kernel]
-Let $(\mathcal{X}, \mathcal{F})$ be a measurable space. A \textit{Markov Transition Kernel} is a function $P:\mathcal{X}\times\mathcal{F}\to[0, 1]$ such that:
-\begin{enumerate}
-    \item for any $x\in\mathcal{X}$, the function $A\mapsto P(x, A)$ is a probability measure on $(\mathcal{X}, \mathcal{F})$;
-    \item for any $A\in\mathcal{F}$, the function $x\mapsto P(x, A)$ is a measurable function.
-\end{enumerate}
+    Take $(\mathcal{X}, \mathcal{F})$ a measurable space with $\mathcal{F}$ a sigma algebra. A \textit{Markov Transition Kernel} is a function $P:\mathcal{X}\times\mathcal{F}\to[0, 1]$ such that
+    \begin{enumerate}
+        \item for any $x\in\mathcal{X}$, the function $A\mapsto P(x, A)$ is a probability measure on $(\mathcal{X}, \mathcal{F})$
+        \item for any $A\in\mathcal{F}$, the function $x\mapsto P(x, A)$ is a measurable function.
+    \end{enumerate}
 \end{Definition}
 
-The Markov Transition Kernel describes the evolution of the system's probability distribution. If at time $t$ the system is distributed according to a measure $\nu_t$, then the distribution at time $t+1$ is given by
+The Markov Transition Kernel is used to ``evolve'' the state. That is, if you are currently ``located'' at $x \in \mathcal{X}$, $P(x, A)$ tells you the probability of ``ending up'' in $A$. More precisely, if at time $t$ the system is distributed according to $\nu_t$, then the distribution at $t+1$ is
 \begin{equation}
-    \nu_{t+1}(A) = (\nu_t P)(A)=\int_\mathcal{X}P(x, A)d\nu_t(x).
+    \nu_{t+1} = \nu_t P(A)=\int_\mathcal{X}P(x, A)d\nu_t(x)
 \end{equation}
 
 \begin{Definition}[Target Distribution]
-A probability distribution $\pi$ is the \textbf{target distribution} for a Markov Transition Kernel $P$ if the following two conditions hold:
-\begin{enumerate}
-    \item \textbf{Stationarity}: $\pi P=\pi$.
-    \item \textbf{Ergodicity}: For $\pi$-almost all starting points $x_0$, the distribution of the chain's state after $n$ steps converges to $\pi$ in total variation norm, $$\lim_{n\to\infty}\|P^n(x_0,\cdot)-\pi(\cdot)\|_{TV}=0.$$
-\end{enumerate}
+    $\pi$ is called a target distribution for a Markov Transition Kernel $P$ if the following two conditions hold
+    \begin{enumerate}
+        \item \textbf{Stationarity}: $\pi P=\pi$
+        \item \textbf{Ergodicity}: For $\pi-$almost all points $x_0$, $$\lim_{n\to\infty}\|P^n(x_0,\cdot)-\pi(\cdot)\|_{TV}=0$$
+    \end{enumerate}
 \end{Definition}
 
 \begin{Remark}
-A statement is true for ``$\pi$-almost all $x_0$'' if the set of $x_0$ for which it is false has measure zero under $\pi$.
+    A statement is true for ``$\pi-$almost all $x_0$'' means that it is true for all $x_0$ except a set that has measure $0$ under $\pi$
 \end{Remark}
 
-Directly proving stationarity and ergodicity can be difficult. Instead, a set of sufficient conditions is often used.
+Typically proving stationarity and ergodicity is difficult, so the following is used instead
 
 \begin{Theorem}
-For a Markov transition kernel $P$, if the following conditions hold for a distribution $\pi$, then $\pi$ is the unique target distribution for $P$:
-\begin{enumerate}
-    \item \textbf{$\pi$-irreducibility}: For any set $A\in\mathcal{F}$ with $\pi(A)> 0$, there exists some $n$ such that $P^n(x, A)>0$ for all $x\in\mathcal{X}$. (This ensures the chain can reach any part of the state space from any starting point).
-    \item \textbf{Aperiodicity}: The chain is not trapped in deterministic cycles.
-    \item \textbf{Recurrence}: The chain is guaranteed to return to any given region of the space.
-    \item \textbf{Reversibility (Detailed Balance)}: For any two measurable sets $A, B\in\mathcal{F}$, we have $$\int_AP(x, B)d\pi(x)=\int_BP(x,A)d\pi(x).$$ (This is a stronger condition than stationarity that is often easier to satisfy).
-\end{enumerate}
+    For a Markov transition kernel $P$, if the following are true for some distribution $\pi$
+    \begin{enumerate}
+        \item \textbf{$\pi-$irreducibility}: For any $A\in\mathcal{F}$ with $\pi(A)> 0$, there exists some $n$ such that $P^n(x, A)>0$ for all $x\in\mathcal{X}$
+        \item \textbf{Aperiodicity}: The chain is aperiodic
+        \item \textbf{Recurrent}: For any measurable set $A\in\mathcal{F}$, and any starting point $x\in\mathcal{X}$ the hitting time $\tau_A$ is finite almost surely, where $\tau$ is the amount of steps to go from $x$ to $A$.
+        \item \textbf{Reversibility}: For any two $A, B\in\mathcal{F}$ we have $$\int_AP(x, B)d\pi(x)=\int_BP(x,A)d\pi(x)$$
+    \end{enumerate}
+    then $\pi$ is the target distribution for the Markov transition kernel $P$.
 \end{Theorem}
 
-By the Ergodic Theorem for Markov chains, for any integrable function $f$ of the state (an observable), the sample average converges to the true expectation under the target distribution: $S_n=\frac{1}{n}\sum_i^n f(x_i)\to \mathbb{E}_\pi[f]$. The error of this approximation typically decreases at a rate of $\mathcal{O}(1/\sqrt{n})$.
+In particular, if we have some process $\hat{P}$ that takes in some $x(t)$ and produces some $x(t+1)=\hat{P}(x(t))$ according to some Markov transition kernel $P$, we can create a Markov Chain, by continuously generating samples, and applying $\hat{P}$ to them recurrently, these samples will be ``distributed according to'' $\pi$. More precisely, the partial sums $S_n=\frac{1}{n}\sum_i^n f(x_i)\to \mathbb{E}^\pi[f]$ at a ``rate'' $\mathcal{O}(\sqrt{N})$.
 
-\begin{Definition}[Metropolis-Hastings Algorithm]
-Given a function $f(x)$ that is proportional to the target probability density, $f(x) \propto \pi(x)$, and a proposal distribution $g(x'|x)$, the Metropolis-Hastings algorithm generates a sequence of samples as follows:
-Initialise $x_0$. For each step $t=0, 1, 2, \dots$:
-\begin{enumerate}
-    \item Propose a new state $x'$ according to $g(x'|x_t)$.
-    \item Compute the acceptance ratio $\alpha = \frac{f(x')}{f(x_t)}$.
-    \item Sample $u$ from a uniform distribution on $[0, 1]$.
-    \item If $\alpha > u$, accept the new state by setting $x_{t+1}=x'$. Otherwise, reject and set $x_{t+1}=x_t$.
-\end{enumerate}
+\begin{Definition}[Metropolis Hastings]
+    For some function $f$, not necessarily a probability density, and some ``proposal function'' $g$ the Metropolis Hastings algorithm on $f$ with proposal $g$ is the following:
+    Initialise some $x_0$, for each $t$ do the following
+    \begin{enumerate}
+        \item Propose some $x'$ according to $g(x'|x_t)$
+        \item Compute $\alpha = f(x')/f(x_t)$
+        \item Sample some $u\in[0, 1]$ uniformly
+        \item If $\alpha > u$ accept $x'$ by setting $x_{t+1}=x'$, otherwise set $x_{t+1}=x_t$
+    \end{enumerate}
 \end{Definition}
 
 \begin{Theorem}
-If the proposal function $g$ is symmetric (i.e., $g(x|y)=g(y|x)$), the Markov chain generated by the Metropolis-Hastings algorithm has $\pi$ as its target distribution.
+    If the proposal function $g$ is symmetric - that is $g(x|y)=g(y|x)$, and if $f$ is proportional to some probability distribution $\pi$, then the Metropolis Hastings algorithm for $f$ with proposal $g$ will generate samples according to $\pi$.
 \end{Theorem}
 
 \begin{Remark}
-If the proposal distribution is not symmetric, the acceptance ratio must be modified by the Hastings ratio, $\alpha_H=\alpha\cdot\frac{g(x_t|x')}{g(x'|x_t)}$, to maintain detailed balance.
+    If the proposal distribution is not symmetric, a factor known as the Hastings ratio can be introduced to find $\alpha_H=\alpha\cdot\frac{g(x'|x)}{g(x|x')}$ which is used in the acceptance step.
 \end{Remark}
 
 \subsubsection{Statistics in MCMC}
-For any finite number of samples $n$, the empirical distribution may not have converged to $\pi$. This is particularly common if $\pi$ is multi-modal, as the chain can become ``stuck'' in one mode. Consequently, statistical diagnostics are used to assess convergence, typically by running multiple independent chains.
+While the Metropolis Hastings algorithm (and other MCMC algorithms) converge to $\pi$ as $n\to\infty$, for finite $n$ the distribution will not necessarily be $\pi$, a common example of this is if $\pi$ is bimodal, where sampling can get ``stuck'' in one of the modes of the distribution, thereby not fully exploring the space. As such, there are a number of statistics that are used to check if a finite sample from an MCMC algorithm is likely to have converged to the proper distribution $\pi$. This is typically done by running multiple independent chains of MCMC.
 
-\begin{Definition}[Variance Components]
-Let there be $J$ chains, each of length $L$, with samples $x_1^j, \dots, x_L^j$ for the $j$-th chain.
-\begin{enumerate}
-    \item \textbf{Between-chain variance}: $B=\frac{L}{J-1}\sum_{j=1}^{J}(\bar{x}_j-\bar{x}_*)^2$, where $\bar{x}_j$ is the mean of chain $j$ and $\bar{x}_*$ is the global mean. This measures the variance between the means of each chain.
-    \item \textbf{Within-chain variance}: $W=\frac{1}{J}\sum_{j=1}^{J}s_j^2$, where $s_j^2$ is the sample variance of chain $j$. This is the average of the individual chain variances.
-\end{enumerate}
+\begin{Definition}[Variance]
+    Let there be $J$ chains of $L$ samples, with samples $x_1^j, ..., x_L^j$ for the $j$th chain. We have the
+    \begin{enumerate}
+        \item Between chain variance: $B=\frac{L}{J-1}\sum(\bar{x}_j-\bar{x}_*)^2$
+        \item Within chain variance: $W=\frac{1}{J}\sum\left(\frac{1}{L-1}\sum(x_i^j-\bar{x}_j)^2\right)$
+    \end{enumerate}
 \end{Definition}
 
-From these components, we can estimate the total variance of the underlying distribution.
+The between chain variance follows from the central limit theorem that $\operatorname{Var}(\bar{x}_j)\approx \sigma^2\cdot n$, so $B=\sigma^2=L\cdot\operatorname{Var}(\bar{x}_j)$, and $\frac{1}{J-1}\sum(\bar{x}_j-\bar{x}_*)^2$ is an unbiased estimate of the variance. The within chain variance is simply the average unbiased estimate of the variance of each chain. From these we can derive
+
 \begin{Theorem}[Gelman-Rubin Variance Estimate]
-An estimate for the total variance of the target distribution, accounting for both within- and between-chain variation, is given by
-$$\hat{V}=\frac{L-1}{L}W+\frac{1}{L}B.$$
+    Let there be $J$ chains of $L$ samples, with samples $x_1^j, ..., x_L^j$ for the $j$th chain. We have that the total variance is
+    $$\hat{V}=\frac{L}{L-1}W+\frac{1}{L}B$$
 \end{Theorem}
+This result follows directly from the law of total variance.
 
-This leads to a practical convergence diagnostic.
+From this we can construct
 \begin{Definition}[Gelman-Rubin Statistic]\label{def:gelman-rubin}
-The Gelman-Rubin statistic, or potential scale reduction factor, is
-$$\hat{R}=\sqrt{\frac{\hat{V}}{W}}.$$
+    Let $\hat{V}$ be the Gelman-Rubin variance estimate, and $W$ be the within chain variance. The Gelman-Rubin statistic is
+    $$\hat{R}=\sqrt{\frac{\hat{V}}{W}}$$
 \end{Definition}
-If the chains have converged, they are all sampling from the same distribution, so the within-chain variance should approximate the total variance, yielding $\hat{R} \approx 1$. A value of $\hat{R} > 1$ indicates that the between-chain variance is still large compared to the within-chain variance, suggesting the chains have not yet fully explored the state space. A common heuristic is to require $\hat{R} < 1.01$ to indicate convergence.
+When the chains have converged, each chain is a valid sample from $\pi$, as such $W=\hat{V}$ and $\hat{R}=1$. However, if one or more of the chains has not suitably explored the space, $W<\hat{V}$ and $\hat{R}>1$. The samples will never be a complete representation of the distribution, so typically a threshold of $\hat{R}=1.01$ is used to indicate convergence.
+
 
 \subsection{Simulated Annealing}
-For a measurable space $(\mathcal{X}, \mathcal{F}, \mu)$, we may have a measurable function $E:\mathcal{X}\to\mathbb{R}$, often called an ``energy'' or ``cost'' function. Simulated annealing is a probabilistic optimisation metaheuristic inspired by the annealing process in metallurgy. The core idea is to sample from the temperature-dependent Gibbs distribution, $\pi_{T}(x) \propto e^{-E(x)/T}$, while gradually lowering the temperature parameter $T$.
+For a measurable space $(\mathcal{X}, \mathcal{F}, \mu)$ with base measure $\mu$ (typically the Lebesgue, or count measure), we may have some measurable function $E:\mathcal{X}\to\mathbb{R}$ known as the energy. In thermal physics, for a thermodynamic system at temperature $T$, the probability of finding a particle in a given energy $E$ is given by the Gibbs distribution $\pi_{T}(A)=\frac{1}{Z}\int_Ae^{-E(A)/T}d\mu(x)$ where $Z=\int_\mathcal{X} e^{-E(A)/T}d\mu(x)$ is a normalising factor. Typically as a system ``cools down'' it ``finds its way'' to low energies. Simulated annealing is inspired by this thermodynamic concept, simulating a particle over time as the temperature $T\to 0$ heuristically conjecturing that it will find its way to the lowest energy state. The simulation at a given temperature $T$ is typically done using the Metropolis Hastings algorithm.
 
-Simulated annealing is an MCMC method where the target distribution, $\pi_T$, changes over time. When using the Metropolis-Hastings algorithm with a symmetric proposal, the acceptance ratio for a move from state $x$ to $x'$ at temperature $T$ is
-$$ \alpha = \frac{\pi_T(x')}{\pi_T(x)} = \frac{e^{-E(x')/T}}{e^{-E(x)/T}} = e^{-(E(x')-E(x))/T}. $$
-
-This creates a trade-off between exploration and exploitation. At high temperatures ($T \gg 1$), the acceptance probability for energetically unfavourable moves (where $E(x') > E(x)$) is high, allowing the chain to traverse the state space freely and escape local minima. As the temperature is lowered ($T \to 0$), the probability of accepting such ``uphill'' moves vanishes, causing the algorithm to behave like a greedy search that settles into the nearest energy minimum.
-
-The performance of simulated annealing is highly dependent on the choice of a ``cooling schedule''—the rate at which the temperature $T$ is decreased. While theoretically a sufficiently slow cooling schedule guarantees convergence to the global minimum, in practice this may require an infeasibly long runtime, and the method is used as a heuristic to find good, though not necessarily optimal, solutions.
+While the concept above is inspired as a Heuristic from concepts in thermal physics, it has valid grounding in probability and machine learning. At a high level, this is because for any $x, x'\in \mathcal{X}$, $\pi_T(x')/\pi_T(x)=e^{-(E(x')-E(x))/T}$, which if $E(x') > E(x)$ tends to $0$ as $T\to 0$, but if $E(x') < E(x)$ tends to $\infty$. As such, a sharp delta function is formed around $x_{min}=\arg\min(E)$. While this does mean that at $T=0$ we have that $\pi(x)=\delta(x-x_{min})$ is the stationary solution to our Metropolis Hastings Markov Transition Kernel, at $T=0$ the measure of valid starting points $\{x_0\}$ tends to have measure $1$ under $\pi$ but measure $0$ under $\nu$. Informally, at low $T$ we almost always accept points where $E(x')<E(x)$ and almost never accept points where $E(x')>E(x)$, so this is just hill climbing and unless $E$ is convex, the sampling will likely get stuck in a local minima.
 
 
 \subsection{Transformers}\label{subsec:transformers}
 \begin{Definition}[Row Operator]
-For a field $F$ and a function $s:F^d\to F^d$, define the \textbf{row operator} $\mathcal{R}_s:M_d(F)\to M_d(F)$ as the application of $s$ to each row of a matrix in $M_d(F)$. That is, $$\mathcal{R}_s\left((r_1, r_2, \dots, r_d)^T\right)=\left(s(r_1), s(r_2), \dots, s(r_d)\right)^T.$$
+    For a field $F$, and a function $s:F^d\to F^d$ define the row operator $\mathcal{R}_s:M_d(F)\to M_d(F)$ as the act of applying $s$ to each row of $M_d(F)$. That is $$\mathcal{R}_s\left((r_1, r_2, ..., r_d)^T\right)=\left(s(r_1), s(r_2),...,s(r_d)\right)^T$$
 \end{Definition}
 
 \begin{Definition}[Abstract Transformer Head]
-Let $(v_1, v_2, \dots, v_d)$ be a collection of vectors in a vector space $V$ over a field $F$. Let $\dot{V}$ be the space $V$ equipped with a bilinear form $B:V\times V\to F$. Let $G:F^d\otimes V\to M_d(F)$ be the ``Gram operator'' which computes the matrix of pairwise interactions under $B$. Let $L:V\to W$ be a linear operator and $s:F^d\to F^d$ be a function.
+For a collection of vectors $(v_1, v_2, ..., v_d)$ where $v_i\in V$ an vector space over a field $F$. Form $\dot{V}$ by equipping $V$ with a bilinear form denoted $B:V\times V\to F$. Let $G:F^d\otimes V\to M_d(F)$ denote the ``Gram operator''. Let $L:V\to W$ be an arbitrary linear operator, and $s:F^d\to F^d$ an arbitrary function.
 
-An \textbf{abstract transformer head} is a function $H:F^d\otimes V\to F^d\otimes W$ defined by
+An abstract transformer head is a function $H:F^d\otimes V\to F^d\otimes W$ defined by
 \begin{equation}
-    H(x)=(\mathcal{R}_s(G(x))\otimes L)(x).
+    H(x)=(\mathcal{R}_f(G(x))\otimes L)(x)
 \end{equation}
 \end{Definition}
 
 \begin{Definition}[Abstract Multi-Head Attention]
-Let $H_i$ be an abstract transformer head from $F^d\otimes V_i\to F^d\otimes W_i$ for $i=1, \dots, q$, where each $V_i$ is the space $V$ equipped with a potentially unique bilinear form. Let $O:\bigoplus_{i=1}^q W_i \to U$ be a linear operator. The \textbf{multi-head attention} is an operator $A:F^d\otimes V\to F^d\otimes U$ defined as
+For a collection of vectors $(v_1, v_2, ..., v_d)$ where $v_i\in V$ an vector space over a field $F$. Form spaces $V_1, V_2, ..., V_q$ from $V$ by equipping $V$ with a, possibly unique, inner product. Let $\iota_i:V\to V_i$ be the operation of endowing $V$ with the inner product structure of $V_i$. Let $H_i$ denote the transformer head from $F^d\otimes V_i\to F^d\otimes W_i$ where $W_i, W_j$ may be distinct. Define $O:W_0\oplus W_1\oplus \cdots\oplus W_q\to V$
+
+The multi-head attention is an operation $A:F^d\otimes V\to F^d\otimes V$ defined as
 \begin{equation}
-    A(x)=(I\otimes O)\left(\bigoplus_i H_i(x)\right).
+    A(x)=(I\otimes O)\left(\bigoplus_i H_i(\iota_i(x))\right)
 \end{equation}
 \end{Definition}
 
-\begin{Definition}[Abstract Feedforward Network]
-For a vector space $U$ over a field $F$, an \textbf{abstract feedforward network} is an operator $N:U\to W$ defined by $N(x)=L_2(a(L_1(x)))$, where $L_1:U\to V$ and $L_2: V\to W$ are linear operators and $a:V\to V$ is a non-linear function.
+\begin{Definition}[Abstract Feedforward Neural Network]
+For a vector space $U$ over a field $F$, a Feedforward is a operator $N:U\to W$ for a pair of linear operators $L_1:U\to V$ and $L_2: V\to W$ and a non-linear function $a:V\to V$ is $N(x)=L_2(a(L_1(x)))$
 \end{Definition}
 
 \begin{Definition}[Abstract Transformer Block]
-An \textbf{abstract transformer block} $T:F^d\otimes V\to F^d\otimes V$ is an operator defined by the sequence of operations:
-$$ y_1 = x + A(x) $$
-$$ T(x) = y_1 + (I\otimes N)(y_1) $$
+    For a collection of vectors $(v_1, v_2, ..., v_n)$ where $v_i\in V$ an vector space over a field $F$. A transformer block $T:F^d\otimes V\to F^d\otimes V$ is an operator defined as
+    $$T(x)=x + A(x)+(I\otimes N)(x+A(x))$$
 \end{Definition}
 
-While these abstract formulations are theoretically rich, in practice we work over $F=\mathbb{R}$ with finite-dimensional vector spaces. This allows us to represent linear transformations as matrix multiplications and bilinear forms as $B(v_1, v_2)=v_1^T M v_2$ for some matrix $M$. The abstract components correspond to the standard implementation as follows: the Gram operator $G(x)$ is realised by projecting the input vectors into ``query'' and ``key'' spaces before computing their dot products; the row-wise function $\mathcal{R}_s$ becomes the softmax function; and the linear map $L$ is a projection into a ``value'' space. The non-linear functions are fixed or have a small number of learnable parameters. This gives a finite set of scalar parameters $\theta$ that defines the transformer block. Additionally, components for numerical stability and regularisation are introduced.
+While these abstract formulations of the Transformer are theocratically rich, in practice we are working over $F=\mathbb{R}$ and our vector space $V$ is finite dimensional. This allows us to write $V=\mathbb{R}^{d_e}$, write all the linear transformations as matrix multiplications, and write the bilinear forms as $B(v_1, v_2)=v_2^TMV_1$ for some matrix $M$. Also, the non-linear functions used such as $f$ in the abstract transformer head, and $a$ in the feedforward neural network are fixed, or depend on some small set of learnable parameters. This gives a finite set of scaler parameters $\theta$ that defines the entire transformer block. Additionally, some further components are introduced into the transformer block to ensure computationally stability and regularisation. This lets us define
 
 \begin{Definition}[Standard Transformer Head]
-For a collection of vectors $(v_1, \dots, v_d)$, where $v_i\in \mathbb{R}^{d_e}$, we form the matrix $X\in\mathbb{R}^{d\times d_e}$ by stacking these vectors as rows. A single attention head is calculated as:
-\begin{equation}
-    h(X) = \operatorname{softmax} \left( \frac{(XW^Q)(XW^K)^T}{\sqrt{d_k}}+M \right)(XW^V),
-\end{equation}
-where the softmax is applied row-wise. The matrices $W^Q, W^K \in\mathbb{R}^{d_e\times d_k}$ and $W^V\in\mathbb{R}^{d_e\times d_v}$ are learnable weight matrices for the ``query'', ``key'', and ``value'' projections. The term $1/\sqrt{d_k}$ is a scaling factor for gradient stability. $M\in M_d(\mathbb{R}\cup\{-\infty\})$ is an optional mask, often used in auto-regressive models to prevent positions from attending to subsequent positions.
+    For a collection of vectors $(v_1, v_2, ..., v_d)$ where $v_i\in \mathbb{R}^{d_e}$ we construct $X\in\mathbb{R}^{d\times d_e}$ by stacking these vectors up as columns. The head is calculated as
+
+    \begin{equation}
+        h(X) = \operatorname{softmax} \left( \frac{(XW^Q)(XW^K)^T}{\sqrt{d_k}}+M \right)(XW^V)
+    \end{equation}
+
+    Where the $\operatorname{softmax}$ is applied along each row. The $W^Q, W^K, W^V\in\mathbb{R}^{d_e\times d_k}$ - where $d_k$ is some reduced dimension, typically chosen to be a factor of $d_e$ - are called the ``query'', ``key'', and ``value'' weights. $M\in M_d(\mathbb{R}\cup\{-\infty, \infty\})$ is called the causal mask.
 \end{Definition}
 
 \begin{Definition}[Standard Multi-Head Attention]
-For an input $X$ and $q$ attention heads $h_1, \dots, h_q$, multi-head attention is defined as:
-\begin{equation}
-    MHA(X) = \operatorname{Concat}(h_1(X), \dots, h_q(X))W^O,
-\end{equation}
-where $\operatorname{Concat}$ joins the output matrices of each head along their feature dimension, and $W^O$ is a final learnable output projection matrix.
+    For $X$ defined as above
+    \begin{equation}
+        MHA(X, h)=\operatorname{Concat}(h_1(X), ..., h_h(X))W^O
+    \end{equation}
 \end{Definition}
 
-\begin{Definition}[Standard Feedforward Network]
-For $x\in \mathbb{R}^n$, a standard two-layer feedforward network is $FFN(x)=\sigma_{\text{act}}(xW_1+b_1)W_2+b_2$, where $W_i$ are weight matrices, $b_i$ are bias vectors, and $\sigma_{\text{act}}$ is a non-linear activation function (e.g., ReLU).
+\begin{Definition}[Standard Feedforward Neural Network]
+    For $x\in \mathbb{R^n}$, $FFN(x)=\sigma(xW_1+b_1)W_2+b_2$ where the $W_i$ are called weights and the $b_i$ are called biases. $\sigma$ is a parameter-less ``activation function''.
 \end{Definition}
 
-\begin{Definition}[Layer Normalisation]
-For a vector $x\in \mathbb{R}^d$, let $\mu_x$ and $\sigma_x$ be its mean and standard deviation. The layer normalisation of $x$ is
-\begin{equation}
-    LN(x)_i=\gamma_i\left(\frac{x_i-\mu_x}{\sqrt{\sigma_x^2+\epsilon}}\right) + \beta_i,
-\end{equation}
-where $\gamma, \beta\in\mathbb{R}^d$ are learnable scale and shift parameters, and $\epsilon$ is a small constant for numerical stability.
+\begin{Definition}[Layer Norm]
+    For a vector $x\in \mathbb{R}^d$ define $\mu$ and $\sigma$ as the mean standard deviation of $x$. The layer norm of $x$ is
+    \begin{equation}
+        LN(x)_i=\gamma_i\cdot\left(\frac{x_i-\mu}{
+        \sqrt{\sigma^2+\epsilon}
+        }\right) + \beta_i
+    \end{equation}
+
+    Where $\gamma, \beta\in\mathbb{R}^n$ are learned parameters, and $\epsilon$ is some fixed number for numerical stability.
 \end{Definition}
 
-\begin{Definition}[Dropout]
-For a rate $r\in[0, 1]$, the \textbf{dropout} operator $DO(X, r)$ randomly sets a fraction $r$ of the entries in the matrix or vector $X$ to zero during training. This is a form of regularisation to prevent overfitting.
+\begin{Definition}[Dropout Layer]
+    For $r\in[0, 1]$ the dropout of a vector or matrix $X$ is $DO(X, r)$ which is equal to $X$ in all but $\operatorname{round}(r|X|)$ positions which have randomly been selected and set to zero. Here $|X|$ is the number of entries in $X$.
 \end{Definition}
-
-\begin{Definition}[Standard Transformer Block]
-A standard transformer block applies these components in sequence. Given an input $X$, it computes:
-\begin{align*}
-    X' &= X + MHA(LN(X)) \quad &\text{(Multi-head attention with residual connection)}\\
-    X_{out} &= X' + FFN(LN(X')) \quad &\text{(Feedforward network with residual connection)}
-\end{align*}
-Dropout is typically applied after the MHA and FFN steps during training.
-\end{Definition}
-
-Because these transformer blocks map from $\mathbb{R}^{d\times d_e}$ to $\mathbb{R}^{d\times d_e}$, they can be chained together to form a deep model. For many tasks, the input is a sequence of discrete tokens rather than vectors.
-
-\begin{Definition}[Token Embedding]
-For a vocabulary of size $V$, a token is represented by a one-hot vector $v \in \{0,1\}^V$. The \textbf{token embedding} of $v$ is $h=vE$, where $E\in\mathbb{R}^{V\times d_e}$ is a learnable embedding matrix. This projects the sparse, high-dimensional token vector into a dense, lower-dimensional space.
-\end{Definition}
-
-The transformer block is permutation-invariant, so to incorporate sequential information, we use:
-\begin{Definition}[Positional Encoding]
-For a sequence of embedded vectors $(h_0, h_1, \dots, h_{d-1})$, a \textbf{positional encoding} is added to each vector. This is typically done by adding a vector $P_i$ from a pre-defined or learned matrix $P \in \mathbb{R}^{D_{max}\times d_e}$ to the input vector $h_i$, where $i$ is the position in the sequence. Thus, the final input to the first transformer block is $h_i' = h_i + P_i$.
-\end{Definition}
-
-A prototypical example is the GPT-2 model. A sequence of words is converted to a sequence of token embeddings, to which positional encodings are added. This input is then processed by a series of transformer blocks. The output from the final block is passed through a final layer normalisation and then a linear projection back to the vocabulary dimension. At each position $i$, this yields a vector of logits, which is passed through a softmax function to produce a probability distribution over the entire vocabulary for the next word in the sequence, $w_{i+1}$. The model is trained using a cross-entropy loss objective, comparing the predicted distribution at each position with the actual next word in the training data.
-
-\subsection{Gradient Descent}
-Given a neural network $N(x\;|\;\theta)$ with parameters $\theta\in\mathbb{R}^d$, the goal of training is typically to find a parameter set $\hat{\theta}$ that minimises a loss function $\mathcal{L}(N(x, \theta), y)$ averaged over a set of training data $\{(x_i, y_i)\}$. Since the network $N$ is a complex, non-linear function of $\theta$, this objective function cannot be minimised analytically. Instead, iterative optimisation methods like gradient descent are used.
-
-The fundamental principle of gradient descent is to update the parameters in the opposite direction of the gradient of the loss function, $\theta_{i+1} = \theta_i - \eta \nabla_\theta \mathcal{L}(\theta_i)$, where $\eta$ is the learning rate. More formally, each step can be viewed as solving a local linear approximation of the loss function, regularised by a penalty on the step size. A single update step is the solution to:
-\begin{equation}
-    \theta_{i+1}=\arg\min_\theta \left(\langle g, (\theta-\theta_i)\rangle+\frac{\lambda}{2}\|\theta-\theta_i\|^2\right),
-\end{equation}
-where $g = \nabla_\theta \mathcal{L}(\theta_i)$ is the gradient and the second term penalises large deviations from the current point $\theta_i$.
-
-Computing the gradient over the entire training dataset is computationally expensive. Therefore, in practice, the gradient is estimated using a small, random ``mini-batch'' of data. This approach is known as stochastic gradient descent (SGD). Because each mini-batch provides only a stochastic estimate of the true gradient, the updates can be noisy. To stabilise this process, many algorithms incorporate a momentum term, which uses an exponentially weighted moving average of past gradients.
-
-Different choices for the norm, the gradient calculation, and the use of momentum lead to different optimisers. Common examples include:
-\begin{itemize}
-    \item \textit{SGD}, which typically uses the Frobenius norm and the standard stochastic gradient.
-    \item \textit{Adam}, which uses exponential smoothing for both the gradient (first moment) and its squared values (second moment) to create an adaptive step size, which can be related to the $\ell_1 \to \ell_\infty$ induced norm \cite{OldOptimizerNewNorm}.
-    \item \textit{Shampoo}, which uses pre-conditioning based on the spectral properties of the parameter matrices.
-    \item \textit{Natural Gradient Descent (NGD)}, which uses the Fisher information matrix to define a geometry-aware update direction.
-\end{itemize}
-
-\subsection{Reinforcement Learning}
-In our context, reinforcement learning is a technique for optimising a parameterised probability distribution $\pi_\theta$ from which we can sample outputs $y$. Given a reward function $R(y)$ that evaluates the quality of an output, the objective is to find parameters $\theta$ that maximise the expected reward:
-\begin{equation}
-    J(\theta)=\mathbb{E}_{y\sim\pi_\theta}[R(y)].
-\end{equation}
-
-A direct approach to maximising this objective is to use a policy gradient method known as REINFORCE. We perform gradient ascent on $J(\theta)$ by updating the parameters using the gradient:
-\begin{equation}
-    g=\nabla_\theta J(\theta)=\mathbb{E}_{y\sim\pi_\theta}[\nabla_\theta \ln(\pi_\theta(y)) R(y)].
-\end{equation}
-This gradient can be estimated from a batch of samples and used in a gradient descent optimiser.
-
-A problem with using the raw reward $R(y)$ is that it can lead to high variance in the gradient estimate and instability during training. For instance, if all actions in a batch receive a high positive reward, the algorithm will try to increase the probability of all of them, even if some were significantly better than others. To address this, the reward is often replaced by an \textbf{advantage function}, $A(y)$, which measures how much better a given sample's reward is compared to the expected reward: $A(y_i) = R(y_i) - \mathbb{E}_{y\sim \pi_\theta}[R(y)]$. The expected value, or ``baseline'', can be estimated by the average reward over the current batch of samples.
 
 \begin{Remark}
-The variance of this simple baseline estimate can still be high. More advanced methods train a separate ``critic'' model to provide a learned estimate of the baseline. We do not explore this technique here.
+    Layer norm and dropout were not included in the abstract definition of the transformer block as it is primarily used for numerical stability.
 \end{Remark}
 
-A key challenge with policy gradient methods is that after each parameter update, the gradient estimate $\mathbb{E}_{y\sim\pi_\theta}[\dots]$ becomes invalid because the distribution has changed, requiring a new batch of samples to be generated. To improve sample efficiency, \textbf{importance sampling} allows a batch of samples drawn from an old policy $\pi_{\theta_{old}}$ to be reused for several update steps. This is achieved by re-weighting the advantage function with the importance ratio, $r(\theta)=\frac{\pi_\theta(y)}{\pi_{\theta_{old}}(y)}$:
+\begin{Definition}[Standard Transformer Block]
+For $X$ as defined above
+
+\begin{align*}
+    TB(X, h, r) = DO(X_{MHA}+FFN(LN(X_{MHA})), r)
+\end{align*}
+Where $X_{MHA} = DO(X+MHA(LN(X), h)), r)$
+\end{Definition}
+
+Because these transformer blocks map from $F^d\otimes V\to F^d\otimes V$, or from $\mathbb{R}^{d\times d_e}\to \mathbb{R}^{d\times d_e}$, they can be chained together.
+
+For many tasks which transformers excel in (language modelling, time series forecasting) the input sequence is sequential, and often not encoded into a vector in a meaningful way. As such we have
+
+\begin{Definition}[Token Embedding]
+    For an input vectors $v\in\mathbb{R}^V$, the token embedding of $v$ is $h=x^TE$ where $E\in\mathbb{R}^{V\times d_e}$.
+\end{Definition}
+
+\begin{Remark}
+    For tasks where the input is categorical, $v$ is usually formed with some one-hot-encoding, that is if there are $V$ categories we define for category $c$ $v_c=(0,...,0,1,0,...,0)$ as a vector in $\mathbb{R}^V$ that has a $1$ in the position corresponding to category $c$ (arbitrary), and zeros elsewhere.
+
+    Often (e.g. language modelling) there are many categories, so $d_e<V$ and the embedding becomes a useful technique for encoding ``semantic'' meaning into a vector.
+\end{Remark}
+
+Once we have embedded our vectors, there is often a sequential order to them, i.e $(v_0, v_1, v_2, ...)$. The transformer block as described above, is invariant under changing of this order. As such, we use
+\begin{Definition}[Positional Encoding]
+    For a sequence of vectors indexed by time, $(v_0, v_1, ..., v_d)$ each $v_i\in\mathbb{R}^{d_e}$. For $D_{max}$ the longest possible sequence, and a positional embedding matrix $P\in\mathbb{R}^{D_{max}\times d_e}$, the positional embedding of $(v_0, v_1, ..., v_d)$ is defined with $v_i\mapsto v_i+P_i$ where $P_i$ is the $i$th row.
+\end{Definition}
+
+A prototypical example of applying these steps is in GPT-2, described as follows. For a sequence of words $(w_1, w_2, ...,w_d)$, each word in a vocabulary of size $V$, encode each word via one hot encoding. Perform token embedding into $\mathbb{R}^{d_e}$, and perform a positional encoding. Apply a series of transformer blocks sequentially, apply a single layer norm, apply a linear projection back into $\mathbb{R}^V$ for each ``word'' (via some matrix multiplication), and finally apply softmax to each output ``word''. The final vector is trained to represent the probability of the next word in the sequence of words. So for position $1$ the prediction is for $w_2$, for position $d$ the prediction is for word $w_{d+1}$ not in the data. To train GPT-2 we use an objective function that calculates the cross entropy between the prediction at each step and the actual next word, this is done for each ``word'' in the output layer.
+
+\subsection{Gradient Descent}
+If we have a neural network $N(x\;|\;\theta)$ that takes in some input $x\in V$ and some parameter set $\theta\in\mathbb{R}^d$ and produces some output $y\in W$ where $V, W$ are vector spaces over a field $F$, typically $\mathbb{R}$, and typically finite dimensional. We typically have some ``training data'', which is a set of $\{(x_i, y_i)\;|\;x_i\in V, y_i\in W\}$ where each $y_i$ is the output that we ``want'' from $N(x_i, \theta)$, what we mean by ``want'' is that some function $\mathbb{E}_{x_i}[\mathcal{L}(N(x_i, \hat{\theta}), y_i)]$ is minimised by our parameter choice $\hat{\theta}$. To find this target $\hat{\theta}$. Because $N$ is typically complicated, and has a complex dependence on $\theta$, we cannot directly minimise this objective function to find $\hat{\theta}$, as such we use gradient decent. The concept behind gradient decent is to take some $\theta_i$, find a local, linear approximation of $\mathbb{E}_{x_i}[\mathcal{L}(N(x_i, \hat{\theta_i}), y_i)]$, and find some ``penalty'' for ``trusting'' the approximation too much. Precisely, we compute
 \begin{equation}
-    \mathbb{E}_{y\sim\pi_\theta}[A(y)]=\mathbb{E}_{y\sim\pi_{\theta_{old}}}[r(\theta)A(y)].
+    \theta_{i+1}=\arg\min_\theta \left(\langle g^T, (\theta-\theta_i)\rangle+\frac{\lambda}{2}\|\theta-\theta_i\|^2\right)
 \end{equation}
 
-This allows us to perform several steps of gradient ascent on the same batch of samples. However, after a few updates, $\pi_\theta$ can diverge significantly from $\pi_{\theta_{old}}$, causing the importance ratio to become unstable and the gradient estimate unreliable. Proximal Policy Optimisation (PPO) addresses this by constraining the updates to a ``trust region''. This is implemented by clipping the importance ratio in the objective function. If the advantage $A(y)$ is positive, we cap the increase in probability to prevent excessively large updates. This leads to the PPO-Clip objective function:
+This is done recursively, typically for some number of steps. Here $g$ is the gradient, often we would consider using $\nabla_\theta \mathbb{E}_{x_i}[\mathcal{L}(N(x_i, \hat{\theta_i}), y_i)]$, but computing this over the entire ``training'' data set is slow, so we typically a small ``batch'' of data is taken from the training data and the gradient is taken over this batch. Because this batch is ``random'' a small subset of the true data, our estimate of the gradient is going to be somewhat stochastic, as such many gradient decent algorithms use some sort of exponential smoothing step for the gradient - this is often called the momentum. Different choices of exponential smoothing, and different choices of the norm, and different choices of the gradient lead to different types of optimisers. A few common ones are \textit{SGD} which uses the frobenius norm, the standard gradient, and no smoothing; \textit{adam}, which uses the $\ell_1\to\ell_\infty$ norm, the standard gradient, and exponential smoothing; \textit{shampoo}, which uses the spectral norm, the standard gradient, and exponential smoothing; and \textit{NGF} which uses the frobenius norm, the natural gradient, and no exponential smoothing.
+
+\subsection{Reinforcement Learning}
+For our specific usecase, reinforcement learning is a technique used when we have some ``reward function'' $R(y): Y\to\mathbb{R}$ that tells us how good a specific sample is, and we want to update the parameters of some probability distribution / sampling function $Y\sim\pi_\theta$ to maximise the expected reward, that is
+
 \begin{equation}
-    L^{CLIP}(\theta)=\mathbb{E}_{y\sim\pi_{\theta_{old}}}[\min\left(r(\theta)A(y), \operatorname{clip}(r(\theta), 1-\epsilon, 1+\epsilon)A(y)\right)].
+    J(\theta)=\mathbb{E}_{y\sim\pi_\theta}[R(y)]
+\end{equation}
+
+While reinforcement learning is typically more general than this, and applies to policy learning, this will suffice for our purpose.
+
+The most direct way to update $\pi_\theta$ is to simply take a number of samples from $\pi_\theta$ and calculate
+
+\begin{equation}
+    g=\nabla_\theta J(\theta)=\mathbb{E}_{y\sim\pi_\theta}[\nabla_\theta \ln(\pi_\theta) R(y)]
+\end{equation}
+
+and then use this $g$ in gradient decent as described above.
+
+While the above techniques makes logical sense, the use of $J(\theta)$ being the expected reward can become problematic, for example if our reward function is binary, returning a score of $1$ if the output meets some criteria, and returning a score of $-1$ if it does not, once the parameter set has settled into a stable configuration where each output is valid and produces a score of $1$, $J(\theta)$ continues to update $\theta$ which can lead to oscillations. As such we often use an ``advantage'' function $A$ which is an estimate of how the score $R(y_i)$ for a specific sample compares to the expected score. That is $A(y_i)=R(y_i)-\mathbb{E}_{y\sim \pi_\theta}[R(y)]$. We can estimate the expected score by simply sampling from $\pi_\theta$ a few times, and taking the average, and for a simple problem this is sufficient.
+
+\begin{Remark}
+    This average often has a high variance, so a ``critic'' model is often trained instead to try and learn the baseline. We won't explore this technique here.
+\end{Remark}
+
+We can use the advantage to get a refined objective function $J(\theta)=\mathbb{E}_{y\sim\pi_\theta}[A(y)]$. We can calculate the gradient once again as above, and apply gradient accent. The primary disadvantage here is that each time we take a gradient step, we have to resample from $\pi_\theta$ to get a new batch to calculate the new gradient. The new distribution with parameter set $\theta$ will only be slightly different to the original parameter set before the gradient update $\theta_{old}$, and as such we can keep the old samples $y_i\sim\pi_{\theta_{old}}$ and then use a technique called importance weighting to find that
+\begin{equation}
+    \mathbb{E}_{y\sim\pi_\theta}[A(y)]=\mathbb{E}_{y\sim\pi_{\theta_{old}}}[r(\theta)A(y)]
+\end{equation}
+
+Where $r(\theta)=\frac{\pi_\theta(y)}{\pi_{\theta_{old}}(y)}$ is called the importance ratio. This allows us to take batch of samples from $\pi_{\theta_{old}}$, perform a few steps of gradient accent using this batch, importance reweighing at each step. While this works in expectations, typically after a few gradient steps our samples are no longer representative, and our reweighing erodes. Therefore, it is typical to use a ``trust region'' wherein we can trust an update. One of the most common ways to do this is to ``cap'' positive updates by restricting $r(\theta)\leq 1+\epsilon$ if $A(y)>0$, that is if if we generated good samples from $\theta_{old}$ we want to increase the likelihood of generating them, but not so much so that we can no longer trust the importance sampling as the ratio $r(\theta)$ has become too big, but on the other hand, if the advantage $A<0$, we want to continue to have a learning signal. This yields the proximal policy optimisation (PPO) objective
+\begin{equation}
+    L^{CLIP}(\theta)=\mathbb{E}_{y\sim\pi_{\theta_{old}}}[\min\left(r(\theta)A, \operatorname{clip}(r, 1-\epsilon, 1+\epsilon)A\right)]
 \end{equation}
 
 \chapter{Problem Formulation}
