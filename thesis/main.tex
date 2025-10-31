@@ -111,6 +111,8 @@ The report is structured as follows:
 \chapter{Preliminaries}
 \section{Mathematical Preliminaries}
 \subsection{Manifolds}
+We begging by recalling the definition of a ``manifold'' and introducing a ``piecewise linear manifold''. Piecewise linear manifolds are fundamentally related to triangulations - the central objects we will be studying. 
+
 A $d$-dimensional manifold, or $d$-manifold, is a topological space that generalises the notion of a surface by being locally homeomorphic to Euclidean space, $\mathbb{R}^d$. More precisely, we recall the following definitions.
 
 \begin{Definition}[Second Countable]
@@ -150,7 +152,7 @@ This theorem does not hold for dimensions four or more \cite{Milnor1961}.
 As this work focuses on manifolds of dimension 3, we will often treat a 3-manifold and its unique PL-structure as equivalent.
 
 \subsection{Triangulations}
-We begin by defining \textit{simplices}—the fundamental building blocks of triangulations.
+We begin by defining \textit{simplices}, the fundamental building blocks of triangulations.
 
 \begin{Definition}[Simplex]
 A $d$-simplex $\Delta$ is the $d$-dimensional convex hull of $d+1$ affinely independent vertices.
@@ -190,7 +192,7 @@ This is a PL-triangulation of a manifold $\mathcal{M}$ if there is a PL-homeomor
 \end{Remark}
 
 \subsection{Knot Theory}
-This section introduces fundamental concepts from knot theory, building upon standard results from algebraic topology. For a comprehensive background reference, see Hatcher's ``Algebraic Topology'' \cite{Hatcher2005}.
+This section introduces fundamental concepts from knot theory, building upon standard results from algebraic topology. For a comprehensive background reference, see Hatcher's ``Algebraic Topology'' \cite{Hatcher2005}. We are particularly interested in understanding the ``Alexander polynomial'', as this will involved in many of the search problem we are examining.
 
 \begin{Definition}[Ambient Isotopy]
 For a pair of manifolds $N$ and $M$ and embeddings $g, h$ of $N$ into $M$, an \textbf{ambient isotopy} from $g$ to $h$ is a continuous map $F:M\times[0,1]\to M$ such that for each $t\in[0,1]$, the map $F_t:M\to M$ is a homeomorphism, $F_0$ is the identity map, and $F_1\circ g=h$.
@@ -269,7 +271,7 @@ The specific canonical labelling algorithm used in this work is that implemented
 
 Once a canonical labelling is found, an ``isomorphism signature'' is calculated. For a 3-dimensional triangulation, the signature must encode the number of tetrahedra and, for each face of each tetrahedron, the identity of the tetrahedron it is glued to and the orientation of the gluing. The destination tetrahedron and the vertex permutation uniquely determine the destination face, so it does not need to be stored explicitly. To store this information efficiently as a string, the following procedure is used:
 \begin{enumerate}
-    \item For each face of each tetrahedron, an integer is calculated as $v_i = (6 \cdot \text{destination\_id}) + \text{permutation\_id}$. The `destination_id` is the canonical index of the target tetrahedron, and the `permutation_id` is an integer from 0 to 5 representing one of the $3!=6$ possible vertex mappings for the gluing. This value will be less than $6n$ for a triangulation with $n$ facets.
+    \item For each face of each tetrahedron, an integer is calculated as $v_i = (6 \cdot \text{destination\_id}) + \text{permutation\_id}$. The \verb`destination_id` is the canonical index of the target tetrahedron, and the \verb`permutation_id` is an integer from 0 to 5 representing one of the $3!=6$ possible vertex mappings for the gluing. This value will be less than $6n$ for a triangulation with $n$ facets.
     \item A sequence $(v_0, v_1, \dots, v_{4n-1})$ is created by iterating through the tetrahedra in their canonical order, and for each tetrahedron, iterating through its four faces in a fixed local order.
     \item These values are combined into a single large integer: $I = v_0 + v_1(6n) + v_2(6n)^2 + \dots + v_{4n-1}(6n)^{4n-1}$.
     \item The integer $I$ is converted to a base-64 string for compact storage.
@@ -279,7 +281,6 @@ This process yields a unique string that serves as the combinatorial isomorphism
 
 \subsection{Pachner Moves and the Pachner Graph}
 A Pachner move is a local transformation that modifies a PL-triangulation without changing the underlying topology of the manifold. In two dimensions, the simplest example is an ``edge flip'', where two adjacent triangles are replaced by two different triangles that span the same quadrilateral region.
-
 
 This concept can be generalised to higher dimensions.
 
@@ -301,7 +302,6 @@ For triangulations of 3-manifolds, there are two fundamental pairs of inverse Pa
     \item The \textbf{(2,3)-move} and its inverse, the \textbf{(3,2)-move}. The (2,3)-move acts on two tetrahedra that share a common triangular face. These two tetrahedra are removed and replaced by three tetrahedra that share a common edge connecting the two vertices opposite the original shared face. The (3,2)-move is the reverse of this process.
     \item The \textbf{(1,4)-move} and its inverse, the \textbf{(4,1)-move}. The (1,4)-move acts on a single tetrahedron, which is subdivided into four smaller tetrahedra by introducing a new vertex in its interior. The (4,1)-move is the reverse, removing an interior vertex of degree four and replacing the four surrounding tetrahedra with a single one.
 \end{itemize}
-
 
 Since any two triangulations of a specific PL-manifold can be reached from one another through Pachner moves, we can define a graph structure on the space of triangulations.
 
@@ -350,8 +350,6 @@ Many computational problems can be rephrased as decision problems. For example, 
 \begin{Definition}[Complexity Class]
 A \textbf{complexity class} is a set of problems solvable under a given model of computation within a specified resource bound. For the standard Turing machine model, some major complexity classes are:
 \begin{enumerate}
-    \item $L$: Solvable using a logarithmic amount of memory.
-    \item $NL$: A ``yes'' solution can be verified using a logarithmic amount of memory.
     \item $P$: Solvable in polynomial time.
     \item $NP$: A ``yes'' solution can be verified in polynomial time.
     \item $\operatorname{co}NP$: A ``no'' solution can be verified in polynomial time.
@@ -371,7 +369,7 @@ The definitions of $NL$ and $NP$ provided here are based on the concept of a ver
 
 \begin{Theorem}
 The following inclusions hold for the major complexity classes:
-$$ L\subseteq NL\subseteq P\subseteq NP\subseteq PSPACE\subseteq EXPTIME $$
+$$ P\subseteq NP\subseteq PSPACE\subseteq EXPTIME $$
 \end{Theorem}
 
 \begin{Remark}
@@ -413,6 +411,10 @@ Determining if a given knot is the unknot is in $NP\cap \operatorname{co}NP$.
 \end{Theorem}
 
 \subsection{Markov Chain Monte Carlo}
+We now examine one of the fundamental sets of process that we will be using - Markov chain Monte Carlo. This set of process is particularly general and allows us to generate samples from a space according to some given probability distribution, with the only requirements being that for any point in our space, we can generate a new point with some known probability, and we know the probability density function (up to normalisation) of the probability distribution that we are interested in sampling from.
+
+We will begin by giving an abstract examination of Markov chain Monte Carlo in terms of measure theory. While this examination is interesting and expands our depth of understanding, we will only practically be using the results from definition~\ref{def:mha}.
+
 \begin{Definition}[Markov Chain]
 A \textit{Markov Chain} is a sequence of random variables $x_0, x_1, x_2, \dots$ indexed by ``time'', where the sequence possesses the \textit{Markov Property}—that is, the distribution of $x_{t+1}$ depends only on the value of $x_t$.
 \end{Definition}
@@ -458,7 +460,7 @@ For a Markov transition kernel $P$, if the following conditions hold for a distr
 
 By the Ergodic Theorem for Markov chains, for any integrable function $f$ of the state (an observable), the sample average converges to the true expectation under the target distribution: $S_n=\frac{1}{n}\sum_i^n f(x_i)\to \mathbb{E}_\pi[f]$. The error of this approximation typically decreases at a rate of $\mathcal{O}(1/\sqrt{n})$.
 
-\begin{Definition}[Metropolis-Hastings Algorithm]
+\begin{Definition}[Metropolis-Hastings Algorithm]\label{def:mha}
 Given a function $f(x)$ that is proportional to the target probability density, $f(x) \propto \pi(x)$, and a proposal distribution $g(x'|x)$, the Metropolis-Hastings algorithm generates a sequence of samples as follows:
 Initialise $x_0$. For each step $t=0, 1, 2, \dots$:
 \begin{enumerate}
@@ -512,7 +514,10 @@ This creates a trade-off between exploration and exploitation. At high temperatu
 The performance of simulated annealing is highly dependent on the choice of a ``cooling schedule''—the rate at which the temperature $T$ is decreased. While theoretically a sufficiently slow cooling schedule guarantees convergence to the global minimum, in practice this may require an infeasibly long runtime, and the method is used as a heuristic to find good, though not necessarily optimal, solutions.
 
 
+\section{Deep Learning}
 \subsection{Transformers}\label{subsec:transformers}
+Similar to the section on Markov chain Monte Carlo, we will begin by providing an abstract definition of transformers to provide a greater depth of understanding. Practically we will only be using the results from definition~\ref{def:stand-trans-head} onwards.
+
 \begin{Definition}[Row Operator]
 For a field $F$ and a function $s:F^d\to F^d$, define the \textbf{row operator} $\mathcal{R}_s:M_d(F)\to M_d(F)$ as the application of $s$ to each row of a matrix in $M_d(F)$. That is, $$\mathcal{R}_s\left((r_1, r_2, \dots, r_d)^T\right)=\left(s(r_1), s(r_2), \dots, s(r_d)\right)^T.$$
 \end{Definition}
@@ -545,7 +550,7 @@ $$ T(x) = y_1 + (I\otimes N)(y_1) $$
 
 While these abstract formulations are theoretically rich, in practice we work over $F=\mathbb{R}$ with finite-dimensional vector spaces. This allows us to represent linear transformations as matrix multiplications and bilinear forms as $B(v_1, v_2)=v_1^T M v_2$ for some matrix $M$. The abstract components correspond to the standard implementation as follows: the Gram operator $G(x)$ is realised by projecting the input vectors into ``query'' and ``key'' spaces before computing their dot products; the row-wise function $\mathcal{R}_s$ becomes the softmax function; and the linear map $L$ is a projection into a ``value'' space. The non-linear functions are fixed or have a small number of learnable parameters. This gives a finite set of scalar parameters $\theta$ that defines the transformer block. Additionally, components for numerical stability and regularisation are introduced.
 
-\begin{Definition}[Standard Transformer Head]
+\begin{Definition}[Standard Transformer Head]\label{def:stand-trans-head}
 For a collection of vectors $(v_1, \dots, v_d)$, where $v_i\in \mathbb{R}^{d_e}$, we form the matrix $X\in\mathbb{R}^{d\times d_e}$ by stacking these vectors as rows. A single attention head is calculated as:
 \begin{equation}
     h(X) = \operatorname{softmax} \left( \frac{(XW^Q)(XW^K)^T}{\sqrt{d_k}}+M \right)(XW^V),
@@ -653,13 +658,12 @@ We begin by simply stating the problem that we are studying. The central problem
 \end{equation}
 Because the space $\mathcal{T}(\mathcal{M})$ is intractably large and poorly understood, finding the global maxima is likely impossible, as are any analytic techniques. Hence, we develop and compare a series of techniques that can be used to find a specific triangulation $T\in\mathcal{T}(\mathcal{M})$ with $\mathcal{O}(T)$ significantly higher than a typical triangulation from $\mathcal{T}(\mathcal{M})$.
 
-To achieve this we address two key sub-problems
+While the problem statement is quite general - we are specifically interested in finding triangulations that achieve large objective functions for objectives related to topological and combinatorial properties of the triangulation. In particular we are interested in those related to knots present in the single vertex triangulations of $S^3$ (details elaborated on later). The path that we will be following is
 \begin{enumerate}
-    \item \textbf{Establishing a Baseline:} We need to explore techniques of quantifying for a specific triangulation $T\in\mathcal{T}(\mathcal{M})$ what it means to be significantly better than a typical triangulation in $\mathcal{T}(\mathcal{M})$.
-    \item \textbf{Generative Modelling:} We lay the groundwork for a range of new optimisation techniques from the field of reinforcement learning. This involves first establishing a technique that can be used to generate triangulations from $\mathcal{T}(\mathcal{M})$ using deep learning techniques.
+    \item \textbf{Establishing a Baseline:} We need to explore techniques of quantifying for a specific triangulation $T\in\mathcal{T}(\mathcal{M})$ what it means to be significantly better than a typical triangulation in $\mathcal{T}(\mathcal{M})$. We achieve this with MCMC.
+    \item \textbf{Explore Classical Optimisation:} We will explore two main classical optimisation techniques to find such a $T^*$ - direct ascent and simulated annealing. Direct ascent is a slight modification of greedy search. Both of these techniques use local Pachner moves so are ``slow'' to explore the space.
+    \item \textbf{Generative Modelling:} We establishing a technique that can be used to generate triangulations from $\mathcal{T}(\mathcal{M})$ using deep learning techniques. This lays the groundwork for a range of new optimisation techniques from the field of reinforcement learning. Additionally, this opens the door for doing a hybrid approach where generative models are used to propose ``random'' points on the Pachner graph, and then local search can be performed around it until it gets stuck, and then a random new point can be proposed. 
 \end{enumerate}
-
-The motivation for this work stems from a range of fields where optimising some objective functions over $\mathcal{T}(\mathcal{M})$ is of particular interest. While the techniques we develop are specifically designed to be agnostic to the objective function, we focus primarily on one specific class of objective functions that relate to the knots present in triangulations as a proof of concept.
 
 \chapter{Search and Sampling Algorithms}
 \section{Classical Techniques}
