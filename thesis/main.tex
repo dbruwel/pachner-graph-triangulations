@@ -8,6 +8,7 @@
 \usepackage{setspace}
 \usepackage{pdflscape}
 \usepackage{xcolor}
+\usepackage{url}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -90,16 +91,12 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \chapter*{Introduction}
-% Big picture
 Decomposing a surface or higher-dimensional manifold into discrete units, such as triangles and tetrahedra, is a standard technique used across a range of disciplines. This process, known as triangulation, transforms the analytic problem of studying a continuous space into a combinatorial one, thereby opening it up to a range of computational methods. Applications of triangulation are widespread. In physics, they appear in the Regge calculus of general relativity \cite{Regge1961} and causal dynamical triangulations of quantum gravity \cite{Ambjorn2004}, where spacetime is discretised for simulations. Engineering disciplines use meshes - a form of triangulation - to approximate structures like wings or bridges for finite element analysis \cite{Courant1994}. Triangulations are also fundamental in computer graphics for rendering objects \cite{Gouraud1998} and in data science for topological data analysis \cite{Zomorodian2004}. Within mathematics, they are used to compute topological invariants like homology groups \cite{Hatcher2005}, study combinatorial Ricci flows in differential geometry \cite{Chow2003}, and have been instrumental in graph theory, for instance, in the proof of the four-colour theorem \cite{Kenneth1977}. A key challenge is that triangulations of a given space are not unique, and their suitability depends on the specific application. For instance, algebraic topology often seeks triangulations with the minimum number of faces \cite{Hatcher2005}, whereas computer graphics prioritises triangulations that best approximate the original surface geometry. Consequently, significant research has focused on understanding the space of all possible triangulations for a given manifold and developing techniques to generate optimal ones.
 
-% Narrowing focus
 While there are various criteria for what constitutes an optimal triangulation, this report primarily explores topological and combinatorial properties. Specifically, we seek single-vertex triangulations of the $3$-sphere that correspond to interesting or complex knots. Although the techniques developed can be extended to other notions of optimality, we focus on topological and combinatorial properties because they are fundamental to the triangulation itself. These properties do not depend on specific geometric embeddings, such as the angles or sizes of the component simplices. This approach narrows the focus to abstract triangulations - which are discrete and countable - improving computational manageability and ensuring that the results are general and dependent only on the triangulation's intrinsic structure, not on extrinsic geometric factors. Additionally, there are numerous interesting open problems in low dimensional topology that can be addressed by such techniques \cite{Burton2023}.
 
-% Statement of aims
-The primary objective of this report is to implement, analyse, and compare a range of computational techniques for searching the space of triangulations. We investigate classical search and sampling methods, namely Markov Chain Monte Carlo (MCMC), greedy search, and simulated annealing. While greedy search algorithms have been a central tool in this field, MCMC is a more recent technique \cite{Altmann2025}. We further adapt the MCMC framework to implement simulated annealing. Additionally, we lay the groundwork for a new approach using transformer-based models to explore the space. This opens the door for reinforcement learning, a field with a growing repertoire of successes in complex problems, from game playing \cite{Silver2016} and algorithm discovery \cite{Mankowitz2023} to mathematical conjecture \cite{Davies2021, Novikov2025}.
+The primary objective of this report is to implement, analyse, and compare a range of computational techniques for searching the space of triangulations. We investigate classical search and sampling methods, namely Markov Chain Monte Carlo (MCMC), greedy search, and simulated annealing. While greedy search algorithms have been a central tool in this field, MCMC is a more recent technique \cite{Altmann2025}. We further adapt the MCMC framework to implement simulated annealing. Additionally, we lay the groundwork for a new approach using transformer-based models to explore the space. This opens the door for reinforcement learning, a field with a growing repertoire of successes in complex problems including playing Go \cite{Silver2016}, discovering faster sorting algorithms \cite{Mankowitz2023}, and writing mathematical proofs \cite{Davies2021, Novikov2025}.
 
-% Roadmap
 The report is structured as follows:
 \begin{itemize}
     \item Chapter 1 introduces the necessary preliminary concepts, including manifolds, knot theory, and an overview of relevant statistical and machine learning techniques.
@@ -111,7 +108,7 @@ The report is structured as follows:
 \chapter{Preliminaries}
 \section{Mathematical Preliminaries}
 \subsection{Manifolds}
-We begging by recalling the definition of a ``manifold'' and introducing a ``piecewise linear manifold''. Piecewise linear manifolds are fundamentally related to triangulations - the central objects we will be studying.
+We begin by recalling the definition of a ``manifold'' and introducing a ``piecewise linear manifold''. Piecewise linear manifolds are fundamentally related to triangulations - the central objects we will be studying.
 
 A $d$-dimensional manifold, or $d$-manifold, is a topological space that generalises the notion of a surface by being locally homeomorphic to Euclidean space, $\mathbb{R}^d$. More precisely, we recall the following definitions.
 
@@ -839,6 +836,8 @@ The model parameters are optimized to minimize this loss function using the Adam
 \end{algorithm}
 
 \chapter{Numerical Experiments}
+We conduct a series of numerical experiments. The associated code can be found in the corresponding git repository \cite{Bruwel2025}.
+
 \section{Objective Functions}\label{sec:objective-functions}
 To test the effectiveness of our optimisation strategies, we consider five objective functions defined on the set of all single-vertex triangulations of the 3-sphere, denoted $\mathcal{T}_1(S^3)$.
 
