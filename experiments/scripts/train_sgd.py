@@ -47,13 +47,14 @@ def train_model(
     sample_batch, train_label = encoder.encode(sample_batch_str)
 
     vocab_size = len(encoder.char_to_id)
-    d_model = 64  # Dimension of embeddings and model
+    d_model = 256  # Dimension of embeddings and model
     num_layers = 6  # Number of transformer blocks
     num_heads = 8  # Number of attention heads
     d_ff = 64  # Dimension of the feed-forward network
     seq_len = dataset.max_len + 1  # Sequence length
     learning_rate = 0.0005
     num_train_steps = 50_000
+    dropout_rate = 0.1
 
     key = jax.random.PRNGKey(0)
     main_key, params_key, dropout_key = jax.random.split(key, 3)
@@ -64,6 +65,7 @@ def train_model(
         block_size=seq_len,
         num_layers=num_layers,
         num_heads=num_heads,
+        dropout_rate=dropout_rate,
     )
 
     params = model.init({"params": params_key}, sample_batch, training=True)["params"]
@@ -121,39 +123,9 @@ def train_model(
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
 
-    processed_data_path = data_path / "input_data" / "processed"
+    processed_data_path = data_path / "input_data" / "dehydration" / "processed"
 
     train_model(
-        processed_data_path / "spheres_6tet.hdf5",
-        results_path("sgd_models/spheres_6block_8head_6tet"),
-    )
-
-    train_model(
-        processed_data_path / "spheres_7tet.hdf5",
-        results_path("sgd_models/spheres_6block_8head_7tet"),
-    )
-
-    train_model(
-        processed_data_path / "spheres_8tet.hdf5",
-        results_path("sgd_models/spheres_6block_8head_8tet"),
-    )
-
-    train_model(
-        processed_data_path / "spheres_9tet.hdf5",
-        results_path("sgd_models/spheres_6block_8head_9tet"),
-    )
-
-    train_model(
-        processed_data_path / "spheres_10tet.hdf5",
-        results_path("sgd_models/spheres_6block_8head_10tet"),
-    )
-
-    train_model(
-        processed_data_path / "spheres_11tet.hdf5",
-        results_path("sgd_models/spheres_6block_8head_11tet"),
-    )
-
-    train_model(
-        processed_data_path / "spheres_12tet.hdf5",
-        results_path("sgd_models/spheres_6block_8head_12tet"),
+        processed_data_path / "d_training_spheres_13.hdf5",
+        results_path("sgd_models_dehydration/spheres_256emb_6block_8head_13tet"),
     )
