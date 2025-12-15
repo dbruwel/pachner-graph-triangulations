@@ -10,7 +10,7 @@ import optax
 import pandas as pd
 from flax.core import freeze
 
-from pachner_traversal.data_io import Dataset, Encoder
+from pachner_traversal.data_io_dehydration import Dataset, Encoder
 from pachner_traversal.transformer import MinimalTrainState, Transformer, train_step
 from pachner_traversal.utils import results_path, data_path
 

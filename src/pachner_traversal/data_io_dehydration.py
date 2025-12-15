@@ -41,7 +41,7 @@ def convert_to_hdf5(input_text_file, output_hdf5_file):
                 dset[-len(lines_buffer) :] = lines_buffer
 
 
-def split_to_pairs(signature: str) -> list[str]:
+def split_to_encoding(signature: str) -> list[str]:
     lead_char = signature[0]
     N = ord(lead_char) - 97
     signature = signature[1:]  # Remove the first character
@@ -49,27 +49,18 @@ def split_to_pairs(signature: str) -> list[str]:
     where_chars = signature[len(signature) - 2 * (N + 1) : -(N + 1)]
     how_chars = signature[-(N + 1) :]
 
-    new_tet_pairs = [
-        new_tet_chars[i : i + 2].upper() for i in range(0, len(new_tet_chars), 2)
-    ]
-    how_where_pairs = [where_chars[i] + how_chars[i] for i in range(0, N + 1)]
+    new_tet_split_enc = ["N" + c for c in new_tet_chars]
+    where_split_enc = ["W" + c for c in where_chars]
+    how_split_enc = ["H" + c for c in how_chars]
 
-    return [lead_char] + new_tet_pairs + how_where_pairs
+    return [lead_char] + new_tet_split_enc + where_split_enc + how_split_enc
 
 
-def merge_pairs(pairs: list[str]) -> str:
-    lead_char = pairs[0]
-    N = ord(lead_char) - 97
-
-    new_tet_pairs = pairs[1 : -(N + 1)]
-    how_where_pairs = pairs[-(N + 1) :]
-
-    new_tet_chars = "".join(new_tet_pairs)
-    where_chars = "".join([pair[0] for pair in how_where_pairs])
-    how_chars = "".join([pair[1] for pair in how_where_pairs])
-
-    signature = lead_char + new_tet_chars + where_chars + how_chars
-    signature = signature.lower()
+def merge_pairs(split_enc: list[str]) -> str:
+    signature = "".join(split_enc)
+    signature = signature.replace("N", "")
+    signature = signature.replace("W", "")
+    signature = signature.replace("H", "")
 
     return signature
 
@@ -117,7 +108,7 @@ class Dataset:
                 chunk = dset[i:end_index]  # type: ignore
                 for s in chunk:  # type: ignore
                     string = s.decode("utf-8")
-                    pairs = split_to_pairs(string)
+                    pairs = split_to_encoding(string)
                     chars.update(pairs)
                     max_len = max(max_len, len(pairs))
 
@@ -201,8 +192,8 @@ class Encoder:
             + [self.char_to_id["[PAD]"]] * (self.dataset.max_len - len(x))
         )
 
-        batch_input = [encode_in(split_to_pairs(x)) for x in batch]
-        batch_label = [encode_out(split_to_pairs(x)) for x in batch]
+        batch_input = [encode_in(split_to_encoding(x)) for x in batch]
+        batch_label = [encode_out(split_to_encoding(x)) for x in batch]
 
         return np.array(batch_input), np.array(batch_label)
 

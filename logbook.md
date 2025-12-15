@@ -55,4 +55,20 @@ p_sphere: 0.00065
 p_sphere_sem: 0.00018
 ```
 
+This worked better than the pair processing, though I think this is due to the fact that the strings are not really pairs in the case, I'd like to try encoding them individually, but distinguishing between the embedding if its character that represents "new or old", "face ID", or "gluing orientation".
 
+
+## [2025-12-15] Ran on dehydration signatures in singles with extra encoding.
+```yaml
+model_type: transformer
+model_subtype: gpt2-dehydration
+params:
+  - d_model: 256
+  - num_layers: 6
+  - num_heads: 8
+  - learning_rate: 0.0005
+  - num_train_steps: 50000
+  - droput: 0.1
+save_location: data/results/sgd_models_dehydration/spheres_256emb_6block_8head_13tet/20251213_0904
+```
+This model did not train for the full 50,000 itterations, but stopped at 12,000. Despite this the training loss curve was almost identical to the singles without the extra encoding, and when the training curve was extrapolated, had the same "minimum entropy", sugesting that the extra encoding didn't provide any genuine value. Considering all methods produced consistent generation efficiencies, and the singles produced comprable minimum entropies, it would seem the best strategy is to generate the strings in singles with droput with no extra stuff going on. This is, to my understanding, close to what Ash has done, though without dropout. Considering the test loss hasn't diverged, this is likely sufficient.
