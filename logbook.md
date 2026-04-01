@@ -72,3 +72,7 @@ params:
 save_location: data/results/sgd_models_dehydration/spheres_256emb_6block_8head_13tet/20251213_0904
 ```
 This model did not train for the full 50,000 itterations, but stopped at 12,000. Despite this the training loss curve was almost identical to the singles without the extra encoding, and when the training curve was extrapolated, had the same "minimum entropy", sugesting that the extra encoding didn't provide any genuine value. Considering all methods produced consistent generation efficiencies, and the singles produced comprable minimum entropies, it would seem the best strategy is to generate the strings in singles with droput with no extra stuff going on. This is, to my understanding, close to what Ash has done, though without dropout. Considering the test loss hasn't diverged, this is likely sufficient.
+
+## [2025-12-18] Meeting ideas
+- Get MCMC working for graph encodings - using possibly only a dipole move. In Regina ideally.
+- Possibly start working on graph diffusion model on "graph encoded manifold (GEM)"
