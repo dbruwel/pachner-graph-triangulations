@@ -35,6 +35,11 @@ def get_test_loss(
     return test_loss
 
 
+def write_loss(file_path, step, loss):
+    with open(file_path, "a") as f:
+        f.write(f"{step},{loss}\n")
+
+
 def train_model(
     file_path: pathlib.Path, save_path: pathlib.Path, num_test_samps: int = 1_000
 ) -> None:
@@ -44,20 +49,19 @@ def train_model(
     encoder = Encoder(dataset)
 
     sample_batch_str = dataset.samp_batch(batch_size)
-    sample_batch, train_label = encoder.encode(sample_batch_str)
+    sample_batch, _ = encoder.encode(sample_batch_str)
 
     vocab_size = len(encoder.char_to_id)
-    d_model = 256  # Dimension of embeddings and model
-    num_layers = 6  # Number of transformer blocks
-    num_heads = 8  # Number of attention heads
-    d_ff = 64  # Dimension of the feed-forward network
+    d_model = 64  # Dimension of embeddings and model
+    num_layers = 4  # Number of transformer blocks
+    num_heads = 4  # Number of attention heads
     seq_len = dataset.max_len + 1  # Sequence length
     learning_rate = 0.0005
-    num_train_steps = 50_000
+    num_train_steps = 1_050
     dropout_rate = 0.1
 
     key = jax.random.PRNGKey(0)
-    main_key, params_key, dropout_key = jax.random.split(key, 3)
+    _, params_key, dropout_key = jax.random.split(key, 3)
 
     model = Transformer(
         vocab_size=vocab_size,
@@ -82,39 +86,34 @@ def train_model(
         m_tm1=freeze(jax.tree_util.tree_map(jnp.zeros_like, params)),
         v_tm1=freeze(jax.tree_util.tree_map(jnp.zeros_like, params)),
         t=0,
-        tx=optax.adamw(learning_rate=learning_rate, weight_decay=0.01),
+        tx=optax.adamw(learning_rate=learning_rate, weight_decay=0.01, b2=0.99),
     )
 
     test_batch_input, test_batch_label = encoder.encode(dataset.test_data)
-
-    losses = {}
-    test_losses = {}
 
     logger.info("\n--- Starting Training ---")
     for step in range(num_train_steps):
         batch_input, batch_label = encoder.encode(dataset.samp_batch(batch_size))
         state, loss = train_step(state, batch_input, batch_label)
-        losses[step] = float(loss)
 
-        if ((step + 1) % 100 == 0) or (step == 0):
-            logger.info(
-                f"Step {step + 1:3d}/{num_train_steps}, Loss: {float(loss):.4f}"
-            )
+        if (step + 1) % 500 == 0 or (step + 1) == num_train_steps:
+            msg = f"Step {step + 1:3d}/{num_train_steps}, Loss: {float(loss):.4f}"
+            logger.info(msg)
+
             test_loss = get_test_loss(
-                state, test_batch_input, test_batch_label, vocab_size
+                state,
+                test_batch_input,
+                test_batch_label,
+                vocab_size,
             )
-            test_losses[step] = float(test_loss)
 
-            pd.Series(losses).to_csv(save_path / "train_losses.csv")
-            pd.Series(test_losses).to_csv(save_path / "test_losses.csv")
+            write_loss(save_path / "train_losses.csv", step + 1, float(loss))
+            write_loss(save_path / "test_losses.csv", step + 1, float(test_loss))
 
             with open(save_path / "params.pkl", "wb") as file:
                 pickle.dump(state.params, file)
 
     logger.info("\n Training finished.")
-
-    pd.Series(losses).to_csv(save_path / "train_losses.csv")
-    pd.Series(test_losses).to_csv(save_path / "test_losses.csv")
 
     with open(save_path / "params.pkl", "wb") as file:
         pickle.dump(state.params, file)
@@ -125,7 +124,7 @@ if __name__ == "__main__":
 
     processed_data_path = data_path / "input_data" / "dehydration" / "processed"
 
-    train_model(
-        processed_data_path / "d_training_spheres_13.hdf5",
-        results_path("sgd_models_dehydration/spheres_256emb_6block_8head_13tet"),
-    )
+    file_path = processed_data_path / "d_training_spheres_13.hdf5"
+    save_path = results_path("sgd_models_dehydration/spheres_256emb_6block_8head_13tet")
+
+    train_model(file_path, save_path)
