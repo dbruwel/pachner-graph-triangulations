@@ -221,8 +221,3 @@ if __name__ == "__main__":
     )
 
     convert_to_hdf5(input_path, hdf5_file)
-
-    dataset = Dataset(hdf5_file, 1)
-    encoder = Encoder(dataset)
-
-    pdb.set_trace()
