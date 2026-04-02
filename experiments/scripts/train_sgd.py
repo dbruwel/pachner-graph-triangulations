@@ -139,6 +139,8 @@ def train_model(
 
 
 if __name__ == "__main__":
+    import time
+
     logging.basicConfig(level=logging.INFO)
 
     processed_data_path = data_path / "input_data" / "dehydration" / "processed"
@@ -146,4 +148,8 @@ if __name__ == "__main__":
     file_path = processed_data_path / "d_training_spheres_13.hdf5"
     save_path = results_path("sgd_models_dehydration/spheres_256emb_6block_8head_13tet")
 
+    tic = time.time()
     train_model(file_path, save_path)
+    toc = time.time()
+
+    print(f"Training time: {toc - tic:.2f} seconds")
