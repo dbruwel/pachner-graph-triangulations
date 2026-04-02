@@ -6,13 +6,13 @@ from functools import partial
 import flax
 import jax
 import jax.numpy as jnp
-import numpy as np
 import optax
 import pandas as pd
 from flax.core import freeze
+
 from pachner_traversal.data_io_dehydration import Dataset, Encoder
 from pachner_traversal.transformer import MinimalTrainState, Transformer, train_step
-from pachner_traversal.utils import data_path, results_path
+from pachner_traversal.utils import results_path, data_path
 
 logger = logging.getLogger(__name__)
 
@@ -40,10 +40,6 @@ def write_loss(file_path, step, loss):
         f.write(f"{step},{loss}\n")
 
 
-def get_sample_idx(batch_size, dataset_size):
-    return np.random.choice(dataset_size, size=batch_size, replace=True)
-
-
 def train_model(
     file_path: pathlib.Path, save_path: pathlib.Path, num_test_samps: int = 1_000
 ) -> None:
@@ -52,20 +48,8 @@ def train_model(
     dataset = Dataset(file_path, num_test_samps)
     encoder = Encoder(dataset)
 
-    all_data_str = dataset.read_all_data()
-    all_data_input, all_data_label = encoder.encode(all_data_str)
-
-    test_input = all_data_input[dataset.test_idx]
-    test_label = all_data_label[dataset.test_idx]
-
-    train_idx = list(set(range(len(all_data_label))) - set(dataset.test_idx))
-    train_idx.sort()
-
-    train_input = all_data_input[train_idx]
-    train_label = all_data_label[train_idx]
-
-    sample_idx = get_sample_idx(batch_size, len(train_idx))
-    sample_batch_input = train_input[sample_idx]
+    sample_batch_str = dataset.samp_batch(batch_size)
+    sample_batch, _ = encoder.encode(sample_batch_str)
 
     vocab_size = len(encoder.char_to_id)
     d_model = 64  # Dimension of embeddings and model
@@ -73,7 +57,7 @@ def train_model(
     num_heads = 4  # Number of attention heads
     seq_len = dataset.max_len + 1  # Sequence length
     learning_rate = 0.0005
-    num_train_steps = 1_000
+    num_train_steps = 1_050
     dropout_rate = 0.1
 
     key = jax.random.PRNGKey(0)
@@ -88,9 +72,7 @@ def train_model(
         dropout_rate=dropout_rate,
     )
 
-    params = model.init({"params": params_key}, sample_batch_input, training=True)[
-        "params"
-    ]
+    params = model.init({"params": params_key}, sample_batch, training=True)["params"]
 
     logger.info(
         f"Model initialized. Parameter count: {sum(x.size for x in jax.tree_util.tree_leaves(params))}"
@@ -107,12 +89,11 @@ def train_model(
         tx=optax.adamw(learning_rate=learning_rate, weight_decay=0.01, b2=0.99),
     )
 
+    test_batch_input, test_batch_label = encoder.encode(dataset.test_data)
+
     logger.info("\n--- Starting Training ---")
     for step in range(num_train_steps):
-        sample_idx = get_sample_idx(batch_size, len(train_idx))
-        batch_input = train_input[sample_idx]
-        batch_label = train_label[sample_idx]
-
+        batch_input, batch_label = encoder.encode(dataset.samp_batch(batch_size))
         state, loss = train_step(state, batch_input, batch_label)
 
         if (step + 1) % 500 == 0 or (step + 1) == num_train_steps:
@@ -121,8 +102,8 @@ def train_model(
 
             test_loss = get_test_loss(
                 state,
-                test_input,
-                test_label,
+                test_batch_input,
+                test_batch_label,
                 vocab_size,
             )
 
