@@ -7,6 +7,9 @@ import jax.numpy as jnp
 import optax
 from flax.core import freeze
 from flax.training import train_state
+from regina import Triangulation3
+from pachner_traversal.data_io_dehydration import Dataset
+from pachner_traversal.glue_encoding import encode
 from pachner_traversal.dit import DiT
 
 logger = logging.getLogger(__name__)
@@ -54,6 +57,12 @@ def loss_fn(
     return jnp.mean((pred_noise - noise) ** 2)
 
 
+def encode_batch(sigs: list[str]) -> np.ndarray:
+    """Encode a list of iso-signatures into a float32 array on the fly."""
+    arrays = [encode(Triangulation3.fromIsoSig(s)).astype(np.float32) for s in sigs]
+    return np.stack(arrays, axis=0)
+
+
 def train_model(
     data_path: pathlib.Path,
     save_path: pathlib.Path,
@@ -66,11 +75,14 @@ def train_model(
     T: int = 1000,
     seed: int = 0,
 ):
-    # Load pre-encoded data: shape [num_samples, 144, 1296]
-    data = np.load(data_path)
-    N = data.shape[0]
-    input_dim = data.shape[2]
-    seq_len = data.shape[1]
+    # Load dataset of iso-signatures from HDF5 (compact, ~85 MB)
+    dataset = Dataset(data_path, num_test_samps=1000)
+    N = len(dataset)
+    # Infer shape from a single sample
+    sample_enc = encode(Triangulation3.fromIsoSig(dataset.read_lines([0])[0])).astype(
+        np.float32
+    )
+    seq_len, input_dim = sample_enc.shape
 
     # Diffusion schedule
     betas = get_beta_schedule(T)
@@ -108,9 +120,10 @@ def train_model(
     )
 
     for step in range(num_train_steps):
-        # Sample batch
-        idx = np.random.choice(N, batch_size, replace=True)
-        batch = data[idx].astype(np.float32)
+        # Sample batch and encode on the fly
+        idx = dataset.samp_batch_idx(batch_size)
+        sigs = dataset.read_lines(idx)
+        batch = encode_batch(sigs)
         noise = np.random.randn(*batch.shape).astype(np.float32)
         timesteps = np.random.randint(0, T, size=(batch_size,), dtype=np.int32)
         # JAX arrays
@@ -154,10 +167,16 @@ if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
     from pachner_traversal.utils import data_path, results_path
 
-    data_path_npy = results_path("dit_data/13tet") / "encodings.npy"
-    save_path = results_path("dit_models/13tet")
+    hdf5_path = (
+        data_path
+        / "input_data"
+        / "dehydration"
+        / "processed"
+        / "d_training_spheres_13.hdf5"
+    )
+    save_path = results_path("dit_models/sphere_13tet")
     save_path.mkdir(parents=True, exist_ok=True)
     tic = time.time()
-    train_model(data_path_npy, save_path)
+    train_model(hdf5_path, save_path)
     toc = time.time()
     print(f"Training time: {toc - tic:.2f} seconds")
