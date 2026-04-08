@@ -21,6 +21,7 @@ def set_style() -> None:
 
     plt.style.use(style_path)
 
+
 def compute_rhat(df):
     L = df.shape[0]  # Number of samples per chain
     J = df.shape[1]  # Number of chains
@@ -35,3 +36,14 @@ def compute_rhat(df):
     ESS = S / R
 
     return r, ESS
+
+
+def to_numpy(M):
+    rows = M.rows()
+    cols = M.columns()
+    A = np.zeros((rows, cols), dtype=int)
+    for i in range(rows):
+        for j in range(cols):
+            A[i, j] = M.entry(i, j).longValue()
+
+    return A
