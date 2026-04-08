@@ -236,7 +236,7 @@ def train_model(
     data_path: pathlib.Path,
     save_path: pathlib.Path,
     n_tet: int,
-    num_train_steps: int = 10_000,
+    num_train_steps: int = 100_000,
     batch_size: int = 16,
     d_model: int = 256,
     num_layers: int = 4,
