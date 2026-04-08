@@ -1,7 +1,10 @@
+import logging
 import networkx as nx
 import numpy as np
 from regina import Perm4, Triangulation3
 from scipy.sparse.csgraph import connected_components
+
+logger = logging.getLogger(__name__)
 
 # The following are generated with a simple loop
 # ```python
@@ -178,11 +181,22 @@ def get_vertex_graph(n_tet):
     return vertex_encoding
 
 
-def encode(t):
-    t_size = t.size()
-    block_size = t_size * 12
+def encode(t=None, *, gluing_matrix=None, n_tet=None):
+    """Positional encoding via spectral decomposition of the joint graph.
 
-    gluing_matrix = tri_to_gluing(t)
+    Can be called in two ways:
+        encode(triangulation)              — original API
+        encode(gluing_matrix=G, n_tet=k)   — from a pre-computed gluing matrix
+    """
+    if t is not None:
+        t_size = t.size()
+        gluing_matrix = tri_to_gluing(t)
+    elif gluing_matrix is not None and n_tet is not None:
+        t_size = n_tet
+    else:
+        raise ValueError("Provide either a triangulation or (gluing_matrix, n_tet)")
+
+    block_size = t_size * 12
     face_graph = get_face_graph(t_size)
     vertex_graph = get_vertex_graph(t_size)
 
@@ -214,6 +228,14 @@ def encode(t):
 
     evals, evecs = np.linalg.eigh(full_laplacian)
     evals = evals[::-1]
+    if np.min(evals) < 0:
+        if np.min(evals) < -1e-5:
+            logger.warning(
+                "Significant negative eigenvalues, check the adjacency matrix. "
+                "Min eigenvalue: %s",
+                np.min(evals),
+            )
+        evals = np.clip(evals, 0, None)
     evecs = evecs[:, ::-1]
     evecs_loaded = evecs @ np.diag(np.sqrt(evals))
 

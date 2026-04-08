@@ -36,12 +36,12 @@ class DiTBlock(nn.Module):
         # AdaLN for attention
         x_ln = nn.LayerNorm()(x)
         x_ln = gamma1[:, None, :] * x_ln + beta1[:, None, :]
-        attn = nn.SelfAttention(
+        attn = nn.MultiHeadDotProductAttention(
             num_heads=self.num_heads,
             qkv_features=self.d_model,
             dropout_rate=self.dropout_rate,
             deterministic=not training,
-        )(x_ln)
+        )(x_ln, x_ln)
         x = x + attn
         x = nn.Dropout(rate=self.dropout_rate, deterministic=not training)(x)
         # AdaLN for MLP
