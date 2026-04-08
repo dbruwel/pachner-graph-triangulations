@@ -210,14 +210,14 @@ if __name__ == "__main__":
     from pachner_traversal.utils import data_path
 
     input_path = (
-        data_path / "input_data" / "dehydration" / "raw" / "d_training_spheres_13.txt"
+        data_path / "input_data" / "dehydration" / "raw" / "d_training_spheres_16.txt"
     )
     hdf5_file = (
         data_path
         / "input_data"
         / "dehydration"
         / "processed"
-        / "d_training_spheres_13.hdf5"
+        / "d_training_spheres_16.hdf5"
     )
 
     convert_to_hdf5(input_path, hdf5_file)

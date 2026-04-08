@@ -47,7 +47,7 @@ def get_sample_idx(batch_size, dataset_size):
 def train_model(
     file_path: pathlib.Path, save_path: pathlib.Path, num_test_samps: int = 1_000
 ) -> None:
-    batch_size = 32
+    batch_size = 64
 
     dataset = Dataset(file_path, num_test_samps)
     encoder = Encoder(dataset)
@@ -68,12 +68,12 @@ def train_model(
     sample_batch_input = train_input[sample_idx]
 
     vocab_size = len(encoder.char_to_id)
-    d_model = 64  # Dimension of embeddings and model
-    num_layers = 4  # Number of transformer blocks
+    d_model = 512  # Dimension of embeddings and model
+    num_layers = 6  # Number of transformer blocks
     num_heads = 4  # Number of attention heads
     seq_len = dataset.max_len + 1  # Sequence length
     learning_rate = 0.0005
-    num_train_steps = 1_000
+    num_train_steps = 1_000_000
     dropout_rate = 0.1
 
     key = jax.random.PRNGKey(0)
@@ -146,7 +146,7 @@ if __name__ == "__main__":
     processed_data_path = data_path / "input_data" / "dehydration" / "processed"
 
     file_path = processed_data_path / "d_training_spheres_13.hdf5"
-    save_path = results_path("sgd_models_dehydration/spheres_256emb_6block_8head_13tet")
+    save_path = results_path("sgd_models_dehydration/spheres_512emb_6block_4head_13tet")
 
     tic = time.time()
     train_model(file_path, save_path)
