@@ -251,6 +251,7 @@ def train_model(
 
     for step in range(num_train_steps):
         # Sample batch of iso-signatures → gluing matrices
+        logger.info("Loading data batch...")
         idx = dataset.samp_batch_idx(batch_size)
         sigs = dataset.read_lines(idx)
         x0_gluing = sigs_to_gluings(sigs)  # [B, N, N]
@@ -259,12 +260,15 @@ def train_model(
         timesteps_np = np.random.randint(0, T, size=(batch_size,)).astype(np.int32)
         srt = swap_rate[timesteps_np]  # [B]
 
+        logger.info("Corrupting gluing matrices with forward process...")
         # Forward process: corrupt the gluing matrix with transpositions
         x_t = q_sample(x0_gluing, srt, rng)
 
+        logger.info("Encoding noisy gluing matrices...")
         # Positionally encode the noisy x_t
         x_t_encoded = encode_gluing_batch(x_t, n_tet)  # [B, N, D]
 
+        logger.info("Performing training step...")
         # To JAX
         x0_gluing_j = jnp.array(x0_gluing)
         x_t_encoded_j = jnp.array(x_t_encoded)
