@@ -32,6 +32,7 @@ from pachner_traversal.glue_encoding import encode, tri_to_gluing, gluing_to_tri
 from pachner_traversal.dit_discrete import DiscreteDiT
 
 logger = logging.getLogger(__name__)
+logging.getLogger("jax._src.xla_bridge").addFilter(lambda _: False)
 
 
 class DiscreteTrainState(train_state.TrainState):
@@ -179,7 +180,7 @@ def train_model(
     num_layers: int = 4,
     num_heads: int = 4,
     dropout_rate: float = 0.1,
-    proj_dim: int = 128,
+    proj_dim: int | None = 128,
     mlp_hidden_dim: int = 128,
     mlp_num_layers: int = 2,
     T: int = 100,
