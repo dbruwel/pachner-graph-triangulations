@@ -32,7 +32,7 @@ from pachner_traversal.glue_encoding import encode, tri_to_gluing, gluing_to_tri
 from pachner_traversal.dit_discrete import DiscreteDiT
 
 logger = logging.getLogger(__name__)
-logging.getLogger("jax._src.xla_bridge").addFilter(lambda _: False)
+print(jax.devices())
 
 
 class DiscreteTrainState(train_state.TrainState):
@@ -276,6 +276,8 @@ def train_model(
         )
         state = state.apply_gradients(grads=grads)
         state = state.replace(dropout_key=dropout_key)
+
+        logger.info(f"Step {step+1}/{num_train_steps}, Loss: {float(l):.6f}")
 
         if (step + 1) % 500 == 0 or (step + 1) == num_train_steps:
             logger.info(f"Step {step+1}/{num_train_steps}, Loss: {float(l):.6f}")
