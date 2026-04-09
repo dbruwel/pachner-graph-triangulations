@@ -182,7 +182,7 @@ def train_model(
     proj_dim: int = 128,
     mlp_hidden_dim: int = 128,
     mlp_num_layers: int = 2,
-    T: int = 1000,
+    T: int = 100,
     seed: int = 0,
 ):
     n_nodes = 12 * n_tet
