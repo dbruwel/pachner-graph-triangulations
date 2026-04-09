@@ -22,20 +22,22 @@ class PairwiseMLP(nn.Module):
         # x: [B, N, D]
         B, N, D = x.shape
 
-        # Build all pairs: [B, N, N, 2D]
-        x_i = jnp.tile(x[:, :, None, :], (1, 1, N, 1))  # [B, N, N, D]
-        x_j = jnp.tile(x[:, None, :, :], (1, N, 1, 1))  # [B, N, N, D]
-        pairs = jnp.concatenate([x_i, x_j], axis=-1)  # [B, N, N, 2D]
+        x_i = x[:, :, None, :]  # (B, N, 1, D)
+        x_j = x[:, None, :, :]  # (B, 1, N, D)
 
-        h = pairs
+        f_sum = x_i + x_j
+        f_diff = jnp.abs(x_i - x_j)
+        f_prod = x_i * x_j
+
+        # Stack them along the feature dimension
+        h = jnp.concatenate([f_sum, f_diff, f_prod], axis=-1)
         for i in range(self.num_layers):
             h = nn.Dense(self.hidden_dim, name=f"mlp_{i}")(h)
             h = nn.gelu(h)
-        logits = nn.Dense(1, name="mlp_out")(h)  # [B, N, N, 1]
-        logits = logits.squeeze(-1)  # [B, N, N]
 
-        # Symmetrise: the gluing matrix is symmetric
-        logits = (logits + jnp.transpose(logits, (0, 2, 1))) / 2
+        # [B, N, N, 1]
+        logits = nn.Dense(1, name="mlp_out", kernel_init=nn.initializers.zeros)(h)
+        logits = logits.squeeze(-1)  # [B, N, N]
 
         return logits
 
@@ -60,7 +62,7 @@ def sinkhorn(log_alpha, n_iters: int = 20, temperature: float = 0.05):
         # Column normalisation (log-space)
         log_alpha = log_alpha - jax.nn.logsumexp(log_alpha, axis=-2, keepdims=True)
 
-    return jnp.exp(log_alpha)
+    return log_alpha, jnp.exp(log_alpha)
 
 
 class DiscreteDiT(nn.Module):
@@ -77,7 +79,6 @@ class DiscreteDiT(nn.Module):
     """
 
     n_tet: int
-    d_model: int = 256
     num_layers: int = 4
     num_heads: int = 4
     dropout_rate: float = 0.1
@@ -89,12 +90,11 @@ class DiscreteDiT(nn.Module):
 
     def setup(self):
         n_nodes = 12 * self.n_tet
-        encoding_dim = 3 * 36 * self.n_tet  # 108 * n_tet
+        input_dim = 3 * 36 * self.n_tet  # 108 * n_tet
 
         self.backbone = DiT(
-            input_dim=encoding_dim,
+            input_dim=input_dim,
             seq_len=n_nodes,
-            d_model=self.d_model,
             num_layers=self.num_layers,
             num_heads=self.num_heads,
             dropout_rate=self.dropout_rate,
@@ -110,37 +110,35 @@ class DiscreteDiT(nn.Module):
     ):
         """
         Args:
-            x: [B, n_nodes, encoding_dim] positionally-encoded noisy gluing matrix.
+            x: [B, n_nodes, input_dim] positionally-encoded noisy gluing matrix.
             timesteps: [B] diffusion timestep indices.
             training: whether in training mode (dropout).
             apply_sinkhorn: whether to apply Sinkhorn normalisation at the end.
 
         Returns:
-            logits: [B, n_nodes, n_nodes] raw edge logits.
+            logits_norm: [B, n_nodes, n_nodes] normalized edge logits.
             x0_pred: [B, n_nodes, n_nodes] doubly-stochastic prediction
                      (only if apply_sinkhorn=True, else same as logits).
         """
         # Transformer backbone
-        h = self.backbone(x, timesteps, training=training)  # [B, N, encoding_dim]
+        h = self.backbone(x, timesteps, training=training)  # [B, N, input_dim]
 
         # Pairwise edge prediction
         logits = self.pairwise_mlp(h, training=training)  # [B, N, N]
 
-        # Symmetrise logits: S_sym = (S + S^T) / 2
-        logits = (logits + jnp.transpose(logits, (0, 2, 1))) / 2
-
         # Zero out the diagonal (a node cannot be glued to itself)
         n_nodes = 12 * self.n_tet
         diag_mask = jnp.eye(n_nodes)[None, :, :]
-        logits = logits * (1.0 - diag_mask) + (-1e9) * diag_mask
+        logits = logits * (1.0 - diag_mask) - (1e9) * diag_mask
 
         if apply_sinkhorn:
-            x0_pred = sinkhorn(
+            log_x0_pred, x0_pred = sinkhorn(
                 logits, n_iters=self.sinkhorn_iters, temperature=self.sinkhorn_temp
             )
             # Re-symmetrise after Sinkhorn (it can drift slightly)
             x0_pred = (x0_pred + jnp.transpose(x0_pred, (0, 2, 1))) / 2
         else:
             x0_pred = jax.nn.sigmoid(logits)
+            log_x0_pred = logits
 
-        return logits, x0_pred
+        return log_x0_pred, x0_pred

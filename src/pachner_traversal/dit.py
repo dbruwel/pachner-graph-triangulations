@@ -32,25 +32,25 @@ class DiTBlock(nn.Module):
         gamma_beta = nn.Dense(6 * self.d_model, kernel_init=nn.initializers.zeros)(
             t_emb
         )
-        gamma1, beta1, gamma2, beta2, gamma3, beta3 = jnp.split(gamma_beta, 6, axis=-1)
+        alpha1, beta1, gamma1, alpha2, beta2, gamma2 = jnp.split(gamma_beta, 6, axis=-1)
         # AdaLN for attention
         x_ln = nn.LayerNorm()(x)
-        x_ln = gamma1[:, None, :] * x_ln + beta1[:, None, :]
+        x_ln = (1 + gamma1[:, None, :]) * x_ln + beta1[:, None, :]
         attn = nn.MultiHeadDotProductAttention(
             num_heads=self.num_heads,
             qkv_features=self.d_model,
             dropout_rate=self.dropout_rate,
             deterministic=not training,
         )(x_ln, x_ln)
-        x = x + attn
+        x = x + alpha1[:, None, :] * attn
         x = nn.Dropout(rate=self.dropout_rate, deterministic=not training)(x)
         # AdaLN for MLP
         x_ln = nn.LayerNorm()(x)
-        x_ln = gamma2[:, None, :] * x_ln + beta2[:, None, :]
+        x_ln = (1 + gamma2[:, None, :]) * x_ln + beta2[:, None, :]
         mlp = nn.Dense(4 * self.d_model)(x_ln)
         mlp = nn.gelu(mlp)
         mlp = nn.Dense(self.d_model)(mlp)
-        x = x + mlp
+        x = x + alpha2[:, None, :] * mlp
         x = nn.Dropout(rate=self.dropout_rate, deterministic=not training)(x)
         return x
 
@@ -58,7 +58,6 @@ class DiTBlock(nn.Module):
 class DiT(nn.Module):
     input_dim: int = 1296
     seq_len: int = 144
-    d_model: int = 256
     num_layers: int = 4
     num_heads: int = 4
     dropout_rate: float = 0.1
@@ -70,15 +69,17 @@ class DiT(nn.Module):
         # timesteps: [B]
         # Optionally project input vectors to lower dim
         if self.proj_dim is not None and self.proj_dim != self.input_dim:
+            d_model: int = self.proj_dim
             x = nn.Dense(self.proj_dim, name="input_proj")(x)
         else:
+            d_model: int = self.input_dim
             x = x
         # Embed timesteps
-        t_emb = TimestepEmbedding(self.d_model)(timesteps)
+        t_emb = TimestepEmbedding(d_model)(timesteps)
         # Transformer blocks
         for i in range(self.num_layers):
             x = DiTBlock(
-                d_model=self.d_model,
+                d_model=d_model,
                 num_heads=self.num_heads,
                 dropout_rate=self.dropout_rate,
                 name=f"block_{i}",

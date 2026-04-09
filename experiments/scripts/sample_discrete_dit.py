@@ -43,23 +43,18 @@ def get_schedule_arrays(T: int):
 # ── Matching helpers ────────────────────────────────────────────────────
 
 
-def _matching_to_matrix(matching: dict[int, int], N: int) -> np.ndarray:
-    mat = np.zeros((N, N), dtype=np.float32)
-    for i, j in matching.items():
-        mat[i, j] = 1.0
-    return mat
-
-
 def random_matching(n_nodes: int, rng: np.random.Generator) -> np.ndarray:
     """Generate a uniformly random perfect matching as a permutation matrix."""
-    nodes = list(range(n_nodes))
-    rng.shuffle(nodes)
-    matching = {}
-    for i in range(0, n_nodes, 2):
-        a, b = nodes[i], nodes[i + 1]
-        matching[a] = b
-        matching[b] = a
-    return _matching_to_matrix(matching, n_nodes)
+    perm = rng.choice(n_nodes, size=n_nodes, replace=False)
+    pairs = perm.reshape(-1, 2)
+
+    match_left = np.r_[pairs[:, 0], pairs[:, 1]]
+    match_right = np.r_[pairs[:, 1], pairs[:, 0]]
+
+    matching = np.zeros((n_nodes, n_nodes), dtype=int)
+    matching[match_left, match_right] = 1
+
+    return matching
 
 
 def encode_gluing_batch(gluing_matrices: np.ndarray, n_tet: int) -> np.ndarray:

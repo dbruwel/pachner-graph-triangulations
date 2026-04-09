@@ -41,44 +41,15 @@ class DiscreteTrainState(train_state.TrainState):
 # ── Diffusion schedule ──────────────────────────────────────────────────
 
 
-def get_beta_schedule(T: int, s: float = 0.008) -> np.ndarray:
-    """Cosine schedule (Nichol & Dhariwal 2021), clipped."""
-    steps = np.arange(T + 1, dtype=np.float64)
-    t = steps / T
-    alphas_cumprod = np.cos((t + s) / (1 + s) * np.pi / 2) ** 2
-    alphas_cumprod = alphas_cumprod / alphas_cumprod[0]
-    betas = 1 - (alphas_cumprod[1:] / alphas_cumprod[:-1])
-    betas = np.clip(betas, 1e-5, 0.999)
-    return betas.astype(np.float32)
+def get_swap_rate(n_nodes: int, T: int) -> np.ndarray:
+    """Compute the swap rate at each time step."""
+    alpha = (np.pi / 2 - np.pow(n_nodes, -0.5)) / T
+    swap_rate = -n_nodes * np.log(np.cos(alpha * np.arange(T)))
 
-
-def get_schedule_arrays(T: int):
-    betas = get_beta_schedule(T)
-    alphas = 1.0 - betas
-    alpha_bar = np.cumprod(alphas).astype(np.float32)  # shape [T]
-    beta_bar = (1.0 - alpha_bar).astype(np.float32)
-    return betas, alpha_bar, beta_bar
+    return swap_rate
 
 
 # ── Forward process ─────────────────────────────────────────────────────
-
-
-def _extract_matching(perm_matrix: np.ndarray) -> dict[int, int]:
-    """Extract matching dict {node: partner} from a symmetric permutation matrix."""
-    N = perm_matrix.shape[0]
-    matching = {}
-    for i in range(N):
-        j = int(np.argmax(perm_matrix[i]))
-        matching[i] = j
-    return matching
-
-
-def _matching_to_matrix(matching: dict[int, int], N: int) -> np.ndarray:
-    """Convert matching dict back to a binary symmetric permutation matrix."""
-    mat = np.zeros((N, N), dtype=np.float32)
-    for i, j in matching.items():
-        mat[i, j] = 1.0
-    return mat
 
 
 def apply_transpositions(
@@ -90,69 +61,39 @@ def apply_transpositions(
     rewires them to (a,d) and (b,c).  The result is still a valid
     symmetric fixed-point-free involution (perfect matching).
     """
-    N = perm_matrix.shape[0]
-    matching = _extract_matching(perm_matrix)
-
     for _ in range(n_swaps):
-        # Pick node a at random, find its partner b
-        a = rng.integers(0, N)
-        b = matching[a]
-
-        # Pick a second node c that is not a or b
-        candidates = [i for i in range(N) if i != a and i != b]
-        c = candidates[rng.integers(0, len(candidates))]
-        d = matching[c]
-
-        # Swap: (a,b) + (c,d) → (a,d) + (b,c)
-        matching[a] = d
-        matching[d] = a
-        matching[b] = c
-        matching[c] = b
-
-    return _matching_to_matrix(matching, N)
+        order = np.arange(perm_matrix.shape[0])
+        s_ids = rng.choice(perm_matrix.shape[0], size=2, replace=False)
+        order[s_ids[0]], order[s_ids[1]] = (order[s_ids[1]], order[s_ids[0]])
+        perm_matrix = perm_matrix[order, :][:, order]
+    return perm_matrix
 
 
 def q_sample(
     x0: np.ndarray,
-    beta_bar_t: np.ndarray,
-    n_nodes: int,
+    swap_rate_t: np.ndarray,
     rng: np.random.Generator,
 ) -> np.ndarray:
     """Corrupt gluing matrices by applying random transpositions.
 
-    For each sample in the batch, applies k = round(beta_bar_t * n_pairs)
-    transpositions where n_pairs = n_nodes // 2.
+    For each sample in the batch, applies k = round(swap_rate_t * n_pairs)
 
     Args:
         x0: [B, N, N] clean gluing matrices (binary symmetric permutation).
-        beta_bar_t: [B] noise levels in [0, 1].
-        n_nodes: N = 12 * n_tet.
+        swap_rate_t: [B] swap rates.
         rng: numpy random Generator for reproducibility.
 
     Returns:
         x_t: [B, N, N] corrupted gluing matrices (still binary permutations).
     """
     B = x0.shape[0]
-    n_pairs = n_nodes // 2
     x_t = np.empty_like(x0)
 
     for b in range(B):
-        n_swaps = max(0, int(round(beta_bar_t[b] * n_pairs)))
+        n_swaps = rng.poisson(swap_rate_t[b])
         x_t[b] = apply_transpositions(x0[b], n_swaps, rng)
 
     return x_t
-
-
-def random_matching(n_nodes: int, rng: np.random.Generator) -> np.ndarray:
-    """Generate a uniformly random perfect matching as a permutation matrix."""
-    nodes = list(range(n_nodes))
-    rng.shuffle(nodes)
-    matching = {}
-    for i in range(0, n_nodes, 2):
-        a, b = nodes[i], nodes[i + 1]
-        matching[a] = b
-        matching[b] = a
-    return _matching_to_matrix(matching, n_nodes)
 
 
 # ── Encoding helpers ────────────────────────────────────────────────────
@@ -214,16 +155,13 @@ def loss_fn(
         training: dropout mode.
     """
     rngs = {"dropout": dropout_key} if dropout_key is not None else {}
-    _, x0_pred = model.apply(
+    log_x0_pred, _ = model.apply(
         {"params": params}, x_t_encoded, timesteps, training=training, rngs=rngs
     )
 
-    eps = 1e-10
-    log_probs = jnp.log(x0_pred + eps)
-
     upper_mask = jnp.triu(jnp.ones((n_nodes, n_nodes)), k=1)
 
-    loss_matrix = -(x0_gluing * log_probs)
+    loss_matrix = -(x0_gluing * log_x0_pred)
 
     loss = jnp.sum(loss_matrix * upper_mask) / (n_nodes / 2)
     return loss
@@ -238,12 +176,11 @@ def train_model(
     n_tet: int,
     num_train_steps: int = 100_000,
     batch_size: int = 16,
-    d_model: int = 256,
     num_layers: int = 4,
     num_heads: int = 4,
     dropout_rate: float = 0.1,
-    proj_dim: int = 256,
-    mlp_hidden_dim: int = 256,
+    proj_dim: int = 128,
+    mlp_hidden_dim: int = 128,
     mlp_num_layers: int = 2,
     T: int = 1000,
     seed: int = 0,
@@ -252,11 +189,10 @@ def train_model(
     encoding_dim = 3 * 36 * n_tet  # 108 * n_tet
 
     dataset = Dataset(data_path, num_test_samps=1000)
-    _, alpha_bar, beta_bar = get_schedule_arrays(T)
+    swap_rate = get_swap_rate(n_nodes, T)
 
     model = DiscreteDiT(
         n_tet=n_tet,
-        d_model=d_model,
         num_layers=num_layers,
         num_heads=num_heads,
         dropout_rate=dropout_rate,
@@ -320,10 +256,10 @@ def train_model(
 
         # Sample timesteps
         timesteps_np = np.random.randint(0, T, size=(batch_size,)).astype(np.int32)
-        bbt = beta_bar[timesteps_np]  # [B]
+        srt = swap_rate[timesteps_np]  # [B]
 
         # Forward process: corrupt the gluing matrix with transpositions
-        x_t = q_sample(x0_gluing, bbt, n_nodes, rng)
+        x_t = q_sample(x0_gluing, srt, rng)
 
         # Positionally encode the noisy x_t
         x_t_encoded = encode_gluing_batch(x_t, n_tet)  # [B, N, D]
