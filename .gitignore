@@ -207,8 +207,10 @@ marimo/_lsp/
 __marimo__/
 
 data/
+data
 .vscode/
 *.zip
 
 *old.tex
 experiments/notebooks/07_testing.ipynb
+pull_rds.sh
