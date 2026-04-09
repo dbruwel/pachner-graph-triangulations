@@ -62,6 +62,7 @@ class DiT(nn.Module):
     num_heads: int = 4
     dropout_rate: float = 0.1
     proj_dim: Optional[int] = 256
+    project_out: bool = True
 
     @nn.compact
     def __call__(self, x, timesteps, training: bool = False):
@@ -86,6 +87,10 @@ class DiT(nn.Module):
             )(x, t_emb, training=training)
         x = nn.LayerNorm()(x)
         # Project back to input_dim
-        if self.proj_dim is not None and self.proj_dim != self.input_dim:
+        if (
+            (self.proj_dim is not None)
+            and (self.proj_dim != self.input_dim)
+            and self.project_out
+        ):
             x = nn.Dense(self.input_dim, name="output_proj")(x)
         return x

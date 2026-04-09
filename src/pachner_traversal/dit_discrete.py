@@ -99,6 +99,7 @@ class DiscreteDiT(nn.Module):
             num_heads=self.num_heads,
             dropout_rate=self.dropout_rate,
             proj_dim=self.proj_dim,
+            project_out=False,
         )
         self.pairwise_mlp = PairwiseMLP(
             hidden_dim=self.mlp_hidden_dim,
