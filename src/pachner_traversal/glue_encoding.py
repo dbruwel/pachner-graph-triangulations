@@ -3,6 +3,7 @@ import networkx as nx
 import numpy as np
 from regina import Perm4, Triangulation3
 from scipy.sparse.csgraph import connected_components
+import jax.numpy as jnp
 
 logger = logging.getLogger(__name__)
 
@@ -244,6 +245,62 @@ def encode(t=None, *, gluing_matrix=None, n_tet=None):
     vertex_encoding = evecs_loaded[2 * block_size :]
 
     encoding = np.hstack([glue_encoding, face_encoding, vertex_encoding])
+    return encoding
+
+
+def jax_encode(gluing_matrix: jnp.ndarray, n_tet: int) -> jnp.ndarray:
+    """Batch version of encode() for JAX.
+
+    Args:
+        gluing_matrix: [N, N] float gluing matrix.
+        n_tet: number of tetrahedra in the triangulation (N = 12 * n_tet).
+
+    Returns:
+        encodings: [N, encoding_dim] float32 positional encodings.
+    """
+    t_size = n_tet
+
+    block_size = t_size * 12
+    face_graph = jnp.array(get_face_graph(t_size))
+    vertex_graph = jnp.array(get_vertex_graph(t_size))
+
+    full_adjacency = (
+        jnp.block(
+            [
+                [
+                    gluing_matrix + gluing_matrix,
+                    gluing_matrix + face_graph,
+                    gluing_matrix + vertex_graph,
+                ],
+                [
+                    face_graph + gluing_matrix,
+                    face_graph + face_graph,
+                    face_graph + vertex_graph,
+                ],
+                [
+                    vertex_graph + gluing_matrix,
+                    vertex_graph + face_graph,
+                    vertex_graph + vertex_graph,
+                ],
+            ]
+        )
+        / 2
+    )
+
+    D_m12 = jnp.diag(1 / jnp.sqrt(full_adjacency.sum(axis=0)))
+    full_laplacian = jnp.eye(full_adjacency.shape[0]) - D_m12 @ full_adjacency @ D_m12
+
+    evals, evecs = jnp.linalg.eigh(full_laplacian)
+    evals = evals[::-1]
+    evals = jnp.clip(evals, 0, None)
+    evecs = evecs[:, ::-1]
+    evecs_loaded = evecs @ jnp.diag(jnp.sqrt(evals))
+
+    glue_encoding = evecs_loaded[: 1 * block_size]
+    face_encoding = evecs_loaded[block_size : 2 * block_size]
+    vertex_encoding = evecs_loaded[2 * block_size :]
+
+    encoding = jnp.hstack([glue_encoding, face_encoding, vertex_encoding])
     return encoding
 
 

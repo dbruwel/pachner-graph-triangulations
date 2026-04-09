@@ -28,7 +28,7 @@ from flax.training import train_state
 from regina import Triangulation3
 
 from pachner_traversal.data_io_dehydration import Dataset
-from pachner_traversal.glue_encoding import encode, tri_to_gluing, gluing_to_tri
+from pachner_traversal.glue_encoding import encode, tri_to_gluing, jax_encode
 from pachner_traversal.dit_discrete import DiscreteDiT
 
 logger = logging.getLogger(__name__)
@@ -118,6 +118,24 @@ def encode_gluing_batch(gluing_matrices: np.ndarray, n_tet: int) -> np.ndarray:
     return np.stack(results, axis=0)
 
 
+def jax_encode_gluing_batch(gluing_matrices: jnp.ndarray, n_tet: int) -> jnp.ndarray:
+    """Encode a batch of gluing matrices using spectral positional encoding.
+
+    Args:
+        gluing_matrices: [B, N, N] float gluing matrices (may be soft).
+        n_tet: number of tetrahedra.
+
+    Returns:
+        encodings: [B, N, encoding_dim] float32 positional encodings.
+    """
+    B = gluing_matrices.shape[0]
+    results = []
+    for i in range(B):
+        enc = jax_encode(gluing_matrix=gluing_matrices[i], n_tet=n_tet)
+        results.append(enc)
+    return jnp.stack(results, axis=0)
+
+
 def sigs_to_gluings(sigs: list[str]) -> np.ndarray:
     """Convert iso-signatures to gluing matrices."""
     matrices = []
@@ -176,7 +194,7 @@ def train_model(
     save_path: pathlib.Path,
     n_tet: int,
     num_train_steps: int = 100_000,
-    batch_size: int = 16,
+    batch_size: int = 32,
     num_layers: int = 4,
     num_heads: int = 4,
     dropout_rate: float = 0.1,
@@ -226,18 +244,9 @@ def train_model(
     rng = np.random.default_rng(seed)
 
     @jax.jit
-    def train_step(params, x0_gluing, x_t_encoded, timesteps, dropout_key):
-        l = loss_fn(
-            params,
-            model,
-            x0_gluing,
-            x_t_encoded,
-            timesteps,
-            n_nodes,
-            dropout_key=dropout_key,
-            training=True,
-        )
-        g = jax.grad(loss_fn)(
+    def train_step(params, x0_gluing, x_t, timesteps, dropout_key):
+        x_t_encoded = jax_encode_gluing_batch(x_t, n_tet)
+        l, g = jax.value_and_grad(loss_fn)(
             params,
             model,
             x0_gluing,
@@ -255,6 +264,7 @@ def train_model(
         idx = dataset.samp_batch_idx(batch_size)
         sigs = dataset.read_lines(idx)
         x0_gluing = sigs_to_gluings(sigs)  # [B, N, N]
+        logger.info(f"Batch loaded. Size {x0_gluing.shape}.")
 
         # Sample timesteps
         timesteps_np = np.random.randint(0, T, size=(batch_size,)).astype(np.int32)
@@ -266,17 +276,18 @@ def train_model(
 
         logger.info("Encoding noisy gluing matrices...")
         # Positionally encode the noisy x_t
-        x_t_encoded = encode_gluing_batch(x_t, n_tet)  # [B, N, D]
+        # x_t_encoded = encode_gluing_batch(x_t, n_tet)  # [B, N, D]
 
         logger.info("Performing training step...")
         # To JAX
         x0_gluing_j = jnp.array(x0_gluing)
-        x_t_encoded_j = jnp.array(x_t_encoded)
+        x_t_j = jnp.array(x_t)
+        # x_t_encoded_j = jnp.array(x_t_encoded)
         timesteps_j = jnp.array(timesteps_np)
 
         step_dropout_key, dropout_key = jax.random.split(state.dropout_key)
         l, grads = train_step(
-            state.params, x0_gluing_j, x_t_encoded_j, timesteps_j, step_dropout_key
+            state.params, x0_gluing_j, x_t_j, timesteps_j, step_dropout_key
         )
         state = state.apply_gradients(grads=grads)
         state = state.replace(dropout_key=dropout_key)
