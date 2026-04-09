@@ -128,12 +128,9 @@ def jax_encode_gluing_batch(gluing_matrices: jnp.ndarray, n_tet: int) -> jnp.nda
     Returns:
         encodings: [B, N, encoding_dim] float32 positional encodings.
     """
-    B = gluing_matrices.shape[0]
-    results = []
-    for i in range(B):
-        enc = jax_encode(gluing_matrix=gluing_matrices[i], n_tet=n_tet)
-        results.append(enc)
-    return jnp.stack(results, axis=0)
+    batched_jax_encode = jax.vmap(jax_encode, in_axes=(0, None))
+    results = batched_jax_encode(gluing_matrices, n_tet)
+    return results
 
 
 def sigs_to_gluings(sigs: list[str]) -> np.ndarray:
@@ -186,6 +183,14 @@ def loss_fn(
     return loss
 
 
+# ── Helpers ────────────────────────────────────────────────────────────
+
+
+def write_loss(file_path, step, loss):
+    with open(file_path, "a") as f:
+        f.write(f"{step},{loss}\n")
+
+
 # ── Training ────────────────────────────────────────────────────────────
 
 
@@ -194,7 +199,7 @@ def train_model(
     save_path: pathlib.Path,
     n_tet: int,
     num_train_steps: int = 100_000,
-    batch_size: int = 32,
+    batch_size: int = 64,
     num_layers: int = 4,
     num_heads: int = 4,
     dropout_rate: float = 0.1,
@@ -260,25 +265,21 @@ def train_model(
 
     for step in range(num_train_steps):
         # Sample batch of iso-signatures → gluing matrices
-        logger.info("Loading data batch...")
         idx = dataset.samp_batch_idx(batch_size)
+        if len(idx) < batch_size:
+            missing = batch_size - len(idx)
+            new_idx = np.random.choice(idx, size=missing, replace=True)
+            idx = np.concatenate([idx, new_idx])
         sigs = dataset.read_lines(idx)
         x0_gluing = sigs_to_gluings(sigs)  # [B, N, N]
-        logger.info(f"Batch loaded. Size {x0_gluing.shape}.")
 
         # Sample timesteps
         timesteps_np = np.random.randint(0, T, size=(batch_size,)).astype(np.int32)
         srt = swap_rate[timesteps_np]  # [B]
 
-        logger.info("Corrupting gluing matrices with forward process...")
         # Forward process: corrupt the gluing matrix with transpositions
         x_t = q_sample(x0_gluing, srt, rng)
 
-        logger.info("Encoding noisy gluing matrices...")
-        # Positionally encode the noisy x_t
-        # x_t_encoded = encode_gluing_batch(x_t, n_tet)  # [B, N, D]
-
-        logger.info("Performing training step...")
         # To JAX
         x0_gluing_j = jnp.array(x0_gluing)
         x_t_j = jnp.array(x_t)
@@ -292,10 +293,11 @@ def train_model(
         state = state.apply_gradients(grads=grads)
         state = state.replace(dropout_key=dropout_key)
 
-        logger.info(f"Step {step+1}/{num_train_steps}, Loss: {float(l):.6f}")
-
         if (step + 1) % 500 == 0 or (step + 1) == num_train_steps:
             logger.info(f"Step {step+1}/{num_train_steps}, Loss: {float(l):.6f}")
+
+            write_loss(save_path / "train_losses.csv", step + 1, float(l))
+
             with open(save_path / "params.pkl", "wb") as f:
                 pickle.dump(state.params, f)
 
