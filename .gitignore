@@ -213,4 +213,5 @@ data
 
 *old.tex
 experiments/notebooks/07_testing.ipynb
+experiments/notebooks/00_dev.ipynb
 pull_rds.sh

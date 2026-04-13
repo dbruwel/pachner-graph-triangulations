@@ -208,6 +208,22 @@ class Potential:
         return agg_score, p_knotted, count_unknotted, all_knotted
 
 
+def check_all_unknotted(iso: str) -> bool:
+    tri = regina.engine.Triangulation3.fromIsoSig(iso)
+    edges = tri.countEdges()
+
+    for edge_index in range(edges):
+        tri = regina.engine.Triangulation3.fromIsoSig(iso)
+        edge = tri.edge(edge_index)
+
+        tri.pinchEdge(edge)
+
+        if is_knotted(tri):
+            return False
+
+    return True
+
+
 def calc_composite_potential(iso):
     scores_alex_norm = []
     scores_alex_deg = []
