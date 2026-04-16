@@ -1,11 +1,16 @@
 import logging
 import multiprocessing
+import time
 from datetime import datetime
+from pathlib import Path
 
+import numpy as np
+import pandas as pd
 from regina import Triangulation3
 
 from pachner_traversal.mcmc import iterate
-from pachner_traversal.potential_functions import check_all_unknotted, is_knotted
+from pachner_traversal.utils import results_path
+from pachner_traversal.potential_functions import check_all_unknotted, check_all_knotted
 
 logger = logging.getLogger(__name__)
 
@@ -22,20 +27,6 @@ def check_contains_dunce_hat(
     return False
 
 
-def check_dunce_hat_and_knotted(iso: str) -> bool:
-    t = Triangulation3(iso)
-    faces = [f for f in t.faces(2)]
-    for face in faces:
-        if face.type() == face.DUNCEHAT:
-            edge_id = face.edge(0).index()
-            knot = Triangulation3(iso)
-            knot.pinchEdge(knot.edges()[edge_id])
-            if is_knotted(knot):
-                return True
-
-    return False
-
-
 def sample_chain(
     seed: str,
     gamma_: float,
@@ -44,6 +35,7 @@ def sample_chain(
     chain_id: int,
 ):
     isos = [seed]
+    all_knotted_list = []
 
     for itt in range(itts):
         if (itt % 1_000 == 0) or (itt < 100 and itt % 10 == 0):
@@ -55,23 +47,15 @@ def sample_chain(
 
         proposed_iso = iterate(current_iso, gamma_, steps=steps)
         if not proposed_iso in isos:
-            # Code to check for a dunce hat where all edges are not knotted
-            # Run cheap check first
-            # contains_dunce_hat = check_contains_dunce_hat(proposed_iso)
-            # if contains_dunce_hat:
-            #     all_unknotted = check_all_unknotted(proposed_iso)
-            #     if all_unknotted:
-            #         logger.info("Found all unknotted with dunce hat!")
-            #         logger.info(f"IsoSig: {proposed_iso}")
-
-            # Code to check for a duncehat where dunce hat edges are knotted
-            dunce_hat_and_knotted = check_dunce_hat_and_knotted(proposed_iso)
-            if dunce_hat_and_knotted:
-                logger.info("Found dunce hat and knotted!")
-                logger.info(f"IsoSig: {proposed_iso}")
+            all_knotted = check_all_knotted(proposed_iso)
+            if all_knotted:
+                logger.error(f"Chain {chain_id}: Found all knotted!")
+                logger.error(f"Chain {chain_id}: IsoSig: {proposed_iso}")
+                all_knotted_list.append(proposed_iso)
+                raise ValueError("Found all knotted!")
         isos.append(proposed_iso)
 
-    return []
+    return all_knotted_list
 
 
 def run_chains(
@@ -95,18 +79,20 @@ def run_chains(
             for chain_id in range(num_chains)
         ]
 
-        isos_lists = pool.starmap(sample_chain, args)
+        all_knotted_list = pool.starmap(sample_chain, args)
 
-    return isos_lists
+    return all_knotted_list
 
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
 
-    run_chains(
-        num_chains=1,
+    all_knotted_list = run_chains(
+        num_chains=7,
         seed="cMcabbgqs",
         gamma_=1 / 10,
-        itts=10_000,
-        steps=100,
+        itts=10_000_000,
+        steps=1,
     )
+
+    print(all_knotted_list)

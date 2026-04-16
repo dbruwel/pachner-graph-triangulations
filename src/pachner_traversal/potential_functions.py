@@ -20,7 +20,7 @@ class Score:
 
     @staticmethod
     def potential(
-        tri: regina.engine.Triangulation3, edge: regina.engine.Face3_1
+        tri: regina.engine.Triangulation3, edge: regina.engine.Edge3
     ) -> float:
         raise NotImplementedError
 
@@ -32,7 +32,7 @@ class NormAlexanderPolynomial(Score):
 
     @staticmethod
     def potential(
-        tri: regina.engine.Triangulation3, edge: regina.engine.Face3_1
+        tri: regina.engine.Triangulation3, edge: regina.engine.Edge3
     ) -> float:
         m = Manifold(tri)
         coeffs = m.alexander_polynomial().coefficients()
@@ -47,7 +47,7 @@ class DegreeAlexanderPolynomial(Score):
 
     @staticmethod
     def potential(
-        tri: regina.engine.Triangulation3, edge: regina.engine.Face3_1
+        tri: regina.engine.Triangulation3, edge: regina.engine.Edge3
     ) -> float:
         m = Manifold(tri)
         alex_poly = m.alexander_polynomial()
@@ -62,7 +62,7 @@ class DeterminantAlexanderPolynomial(Score):
 
     @staticmethod
     def potential(
-        tri: regina.engine.Triangulation3, edge: regina.engine.Face3_1
+        tri: regina.engine.Triangulation3, edge: regina.engine.Edge3
     ) -> float:
         m = Manifold(tri)
         alex_poly = m.alexander_polynomial()
@@ -77,7 +77,7 @@ class AverageEdgeDegree(Score):
 
     @staticmethod
     def potential(
-        tri: regina.engine.Triangulation3, edge: regina.engine.Face3_1
+        tri: regina.engine.Triangulation3, edge: regina.engine.Edge3
     ) -> float:
         score = edge.degree()
         return score
@@ -91,7 +91,7 @@ class VarianceEdgeDegree(Score):
 
     @staticmethod
     def potential(
-        tri: regina.engine.Triangulation3, edge: regina.engine.Face3_1
+        tri: regina.engine.Triangulation3, edge: regina.engine.Edge3
     ) -> float:
         score = edge.degree()
         return score
@@ -104,7 +104,7 @@ class NumGenerators(Score):
 
     @staticmethod
     def potential(
-        tri: regina.engine.Triangulation3, edge: regina.engine.Face3_1
+        tri: regina.engine.Triangulation3, edge: regina.engine.Edge3
     ) -> float:
         fg = tri.fundamentalGroup()
         score = fg.countGenerators()
@@ -118,7 +118,7 @@ class KnottedFrac(Score):
 
     @staticmethod
     def potential(
-        tri: regina.engine.Triangulation3, edge: regina.engine.Face3_1
+        tri: regina.engine.Triangulation3, edge: regina.engine.Edge3
     ) -> float:
         return 1
 
@@ -224,6 +224,22 @@ def check_all_unknotted(iso: str) -> bool:
     return True
 
 
+def check_all_knotted(iso: str) -> bool:
+    tri = regina.engine.Triangulation3.fromIsoSig(iso)
+    edges = tri.countEdges()
+
+    for edge_index in range(edges):
+        tri = regina.engine.Triangulation3.fromIsoSig(iso)
+        edge = tri.edge(edge_index)
+
+        tri.pinchEdge(edge)
+
+        if not is_knotted(tri):
+            return False
+
+    return True
+
+
 def calc_composite_potential(iso):
     scores_alex_norm = []
     scores_alex_deg = []
@@ -234,11 +250,11 @@ def calc_composite_potential(iso):
     knotted = []
 
     edges = regina.engine.Triangulation3.fromIsoSig(iso).countEdges()
-    all_knoted = True
+    all_knotted = True
 
     for i in range(edges):
         tri = regina.engine.Triangulation3.fromIsoSig(iso)
-        edge = tri.edge(i)
+        edge: regina.engine.Edge3 = tri.edge(i)
         score_edge_var = VarianceEdgeDegree.potential(tri, edge)
 
         tri.pinchEdge(edge)
@@ -259,7 +275,7 @@ def calc_composite_potential(iso):
                 score_alex_det = DeterminantAlexanderPolynomial.base_score
                 score_num_gen = NumGenerators.base_score
                 knotted.append(0)
-                all_knoted = False
+                all_knotted = False
         except Exception as e:
             import pdb
 
@@ -289,7 +305,7 @@ def calc_composite_potential(iso):
         agg_score_num_gen,
         p_knotted,
         count_unknotted,
-        all_knoted,
+        all_knotted,
     )
 
 

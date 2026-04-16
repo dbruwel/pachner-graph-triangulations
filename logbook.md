@@ -76,3 +76,14 @@ This model did not train for the full 50,000 itterations, but stopped at 12,000.
 ## [2025-12-18] Meeting ideas
 - Get MCMC working for graph encodings - using possibly only a dipole move. In Regina ideally.
 - Possibly start working on graph diffusion model on "graph encoded manifold (GEM)"
+
+## [2025-04-16] MCMC, DMT, and knottedness on Dunce Hats and unknotted triangulations.
+We want to have a think about a few basic questions experimentally.
+1. Can we have a triangulation witha a dunce hat, where all edges are unknotted?
+2. Can we have a triangulation with a dunce hat where the edge of the duncehat is knotted (the rest don't matter)
+3. If we have a triangulation with no knots in it, will there be a non-perfect Morse Matching?
+
+For the first question, the answer is yes - e.g. `AMLzLvLLzMMPLvQQQPcabcdhjkpkoontnrryvytxuvyzzzoacvdnnabccwlcnbowobscfjxta` and a huge set of other options too.
+For the second question, initial searches suggest that the edge always has to be unknotted. After running 10_000 itterations of MCMC no examples of no knotted edges were found. This is likely due to contractibility of the Dunce Hat.
+For the third question, the answer seems to be yes, there are many. E.g. `CLwPvALLPAAALALMzPPkacedggijmmlonnoptsrwwvyAyBzBBbgtvmmofqnngjjfgdscagcaaceccc`. That being said, most of the MCMC samples have non-perfect morse matchings according to the code I have, so it could just be the case that the code for checking for a perfect matching isn't very good :/
+

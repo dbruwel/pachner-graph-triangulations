@@ -5,33 +5,20 @@ from datetime import datetime
 from regina import Triangulation3
 
 from pachner_traversal.mcmc import iterate
-from pachner_traversal.potential_functions import check_all_unknotted, is_knotted
+from pachner_traversal.potential_functions import check_all_unknotted
+from pachner_traversal.dmt import estimate_critical_count
 
 logger = logging.getLogger(__name__)
 
 
-def check_contains_dunce_hat(
-    iso: str,
-) -> bool:
-    t = Triangulation3(iso)
-    faces = [f for f in t.faces(2)]
-    for face in faces:
-        if face.type() == face.DUNCEHAT:
+def check_perfect_critical(iso: str, base_itts=10, total_itts=10) -> bool:
+    min_critical = float("inf")
+    for _ in range(total_itts):
+        critical = estimate_critical_count(iso, itts=base_itts)
+        if critical == 2:
             return True
-
-    return False
-
-
-def check_dunce_hat_and_knotted(iso: str) -> bool:
-    t = Triangulation3(iso)
-    faces = [f for f in t.faces(2)]
-    for face in faces:
-        if face.type() == face.DUNCEHAT:
-            edge_id = face.edge(0).index()
-            knot = Triangulation3(iso)
-            knot.pinchEdge(knot.edges()[edge_id])
-            if is_knotted(knot):
-                return True
+        if critical < min_critical:
+            min_critical = critical
 
     return False
 
@@ -55,20 +42,16 @@ def sample_chain(
 
         proposed_iso = iterate(current_iso, gamma_, steps=steps)
         if not proposed_iso in isos:
-            # Code to check for a dunce hat where all edges are not knotted
-            # Run cheap check first
-            # contains_dunce_hat = check_contains_dunce_hat(proposed_iso)
-            # if contains_dunce_hat:
-            #     all_unknotted = check_all_unknotted(proposed_iso)
-            #     if all_unknotted:
-            #         logger.info("Found all unknotted with dunce hat!")
-            #         logger.info(f"IsoSig: {proposed_iso}")
+            all_unknotted = check_all_unknotted(proposed_iso)
+            if all_unknotted:
+                perfect_critical = check_perfect_critical(proposed_iso)
+                if not perfect_critical:
+                    logger.info("Found triangulation with non-perfect critical count!")
+                    logger.info(f"IsoSig: {proposed_iso}")
+                else:
+                    logger.info("Found triangulation with perfect critical count!")
+                    logger.info(f"IsoSig: {proposed_iso}")
 
-            # Code to check for a duncehat where dunce hat edges are knotted
-            dunce_hat_and_knotted = check_dunce_hat_and_knotted(proposed_iso)
-            if dunce_hat_and_knotted:
-                logger.info("Found dunce hat and knotted!")
-                logger.info(f"IsoSig: {proposed_iso}")
         isos.append(proposed_iso)
 
     return []
