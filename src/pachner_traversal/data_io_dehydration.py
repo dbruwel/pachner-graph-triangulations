@@ -125,9 +125,13 @@ class Dataset:
 
     def read_lines(self, indices):
         with h5py.File(self.hdf5_file, "r") as hf:
+            unique_indices, inverse_map = np.unique(indices, return_inverse=True)
+            sorted_indices = np.sort(unique_indices)
+
             dset = hf["isos"]
-            lines = dset[indices]  # type: ignore
-            return [line.decode("utf-8") for line in lines]  # type: ignore
+            unique_lines = dset[sorted_indices]  # type: ignore
+            restored_lines = unique_lines[inverse_map]  # type: ignore
+            return [line.decode("utf-8") for line in restored_lines]  # type: ignore
 
     def setup_train_test(self):
         self.test_idx = np.random.choice(
