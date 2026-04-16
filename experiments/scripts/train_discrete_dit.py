@@ -270,6 +270,7 @@ def train_model(
             missing = batch_size - len(idx)
             new_idx = np.random.choice(idx, size=missing, replace=True)
             idx = np.concatenate([idx, new_idx])
+            idx = np.sort(idx)
         sigs = dataset.read_lines(idx)
         x0_gluing = sigs_to_gluings(sigs)  # [B, N, N]
 
