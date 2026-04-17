@@ -197,11 +197,13 @@ def generate(
     )
 
     # Start from uniformly random matchings (fully noisy)
-    x_t = np.stack([random_matching(n_nodes, rng) for _ in range(n_samples)], axis=0)
+    x_t_np = np.stack([random_matching(n_nodes, rng) for _ in range(n_samples)], axis=0)
 
     for t_idx in range(T - 1, 0, -1):
         # Encode noisy x_t with spectral positional encoding
-        x_t_encoded = jax_encode_gluing_batch(x_t, n_tet)
+        x_t_encoded = jax_encode_gluing_batch(
+            jnp.array(x_t_np, dtype=np.float32), n_tet
+        )
         x_t_encoded_j = jnp.array(x_t_encoded)
         timesteps_j = jnp.full((n_samples,), t_idx, dtype=jnp.int32)
 
@@ -216,19 +218,21 @@ def generate(
         srt_prev = float(swap_rate[t_idx - 1])
 
         log_post = compute_posterior_logits(
-            x_t,
+            x_t_np,
             x0_pred_np,
             np.array([srt] * n_samples),
             np.array([srt_prev] * n_samples),
         )
 
         for i in range(n_samples):
-            x_t[i] = gumbel_soft_to_hard_matching(log_post[i], rng, gumbel_temperature)
+            x_t_np[i] = gumbel_soft_to_hard_matching(
+                log_post[i], rng, gumbel_temperature
+            )
 
         logger.info(f"Sampling step {T - t_idx}/{T}")
 
     # Final prediction at t=1 → t=0: predict and solve assignment (no Gumbel)
-    x_t_encoded = jax_encode_gluing_batch(x_t, n_tet)
+    x_t_encoded = jax_encode_gluing_batch(jnp.array(x_t_np, dtype=np.float32), n_tet)
     x_t_encoded_j = jnp.array(x_t_encoded)
     timesteps_j = jnp.zeros((n_samples,), dtype=jnp.int32)
     logits, x0_pred = model.apply(
