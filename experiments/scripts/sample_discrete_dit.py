@@ -159,7 +159,7 @@ def compute_posterior_logits(
 def generate(
     params,
     n_tet: int,
-    n_samples: int = 64,
+    n_samples: int = 8,
     num_layers: int = 4,
     num_heads: int = 4,
     dropout_rate: float = 0.0,
