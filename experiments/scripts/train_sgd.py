@@ -195,7 +195,8 @@ def sample_model(
     subkey = jax.random.PRNGKey(42)
 
     samps_str = []
-    for _ in range(gen_its):
+    for i in range(gen_its):
+        logger.info(f"Generating samples... Iteration {i + 1}/{gen_its}")
         subkey = jax.random.split(subkey, 1)[0]
         samps = generate_samples(state, samps_to_gen, seq_len, subkey, bos_id)
         samps_str = samps_str + encoder.decode(np.array(samps))
@@ -233,7 +234,7 @@ if __name__ == "__main__":
         save_path = pathlib.Path(path_str)
 
         tic = time.time()
-        sample_model(file_path, save_path, samps_to_gen=10, gen_its=1)
+        sample_model(file_path, save_path, samps_to_gen=1000, gen_its=100)
         toc = time.time()
 
         print(f"Sampling time: {toc - tic:.2f} seconds")
