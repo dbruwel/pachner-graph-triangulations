@@ -228,8 +228,8 @@ if __name__ == "__main__":
 
     if sample:
         path_str = (
-            "/home/dbruwel/main/honours/pachner_graph_triangulations/data/"
-            "results/sgd_models_dehydration/spheres_512emb_6block_4head_13tet/20260403_1406"
+            data_path
+            / "results/sgd_models_dehydration/spheres_512emb_6block_4head_13tet/20260403_1406"
         )
         save_path = pathlib.Path(path_str)
 
