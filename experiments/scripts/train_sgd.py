@@ -1,6 +1,7 @@
 import logging
 import pathlib
 import pickle
+import time
 from functools import partial
 
 import flax
@@ -10,8 +11,14 @@ import numpy as np
 import optax
 import pandas as pd
 from flax.core import freeze
+
 from pachner_traversal.data_io_dehydration import Dataset, Encoder
-from pachner_traversal.transformer import MinimalTrainState, Transformer, train_step
+from pachner_traversal.transformer import (
+    MinimalTrainState,
+    Transformer,
+    generate_samples,
+    train_step,
+)
 from pachner_traversal.utils import data_path, results_path
 
 logger = logging.getLogger(__name__)
@@ -138,18 +145,95 @@ def train_model(
         pickle.dump(state.params, file)
 
 
+def sample_model(
+    file_path: pathlib.Path,
+    save_path: pathlib.Path,
+    num_test_samps: int = 1_000,
+    gen_its: int = 10,
+    samps_to_gen: int = 1_000,
+) -> None:
+    dataset = Dataset(file_path, num_test_samps)
+    encoder = Encoder(dataset)
+
+    vocab_size = len(encoder.char_to_id)
+    d_model = 512  # Dimension of embeddings and model
+    num_layers = 6  # Number of transformer blocks
+    num_heads = 4  # Number of attention heads
+    seq_len = dataset.max_len + 1  # Sequence length
+    learning_rate = 0.0005
+
+    key = jax.random.PRNGKey(0)
+    main_key, params_key, dropout_key = jax.random.split(key, 3)
+
+    model = Transformer(
+        vocab_size=vocab_size,
+        d_model=d_model,
+        block_size=seq_len,
+        num_layers=num_layers,
+        num_heads=num_heads,
+    )
+
+    with open(save_path / "params.pkl", "rb") as file:
+        params = pickle.load(file)
+
+    state = MinimalTrainState.create(
+        params=params,
+        apply_fn=model.apply,
+        dropout_key=dropout_key,
+        learning_rate=learning_rate,
+        m_tm1=flax.core.freeze(  # type: ignore
+            jax.tree_util.tree_map(jnp.zeros_like, params)
+        ),
+        v_tm1=flax.core.freeze(  # type: ignore
+            jax.tree_util.tree_map(jnp.zeros_like, params)
+        ),
+        t=0,
+        tx=optax.adamw(learning_rate=learning_rate, weight_decay=0.01),
+    )
+
+    bos_id = encoder.char_to_id["[BOS]"]
+    subkey = jax.random.PRNGKey(42)
+
+    samps_str = []
+    for _ in range(gen_its):
+        subkey = jax.random.split(subkey, 1)[0]
+        samps = generate_samples(state, samps_to_gen, seq_len, subkey, bos_id)
+        samps_str = samps_str + encoder.decode(np.array(samps))
+
+    with open(save_path / "generated_samples.txt", "w") as f:
+        for samp in samps_str:
+            f.write(samp + "\n")
+
+
 if __name__ == "__main__":
-    import time
+    train = False
+    sample = True
 
     logging.basicConfig(level=logging.INFO)
 
     processed_data_path = data_path / "input_data" / "dehydration" / "processed"
-
     file_path = processed_data_path / "d_training_spheres_13.hdf5"
-    save_path = results_path("sgd_models_dehydration/spheres_512emb_6block_4head_13tet")
 
-    tic = time.time()
-    train_model(file_path, save_path)
-    toc = time.time()
+    if train:
+        save_path = results_path(
+            "sgd_models_dehydration/spheres_512emb_6block_4head_13tet"
+        )
 
-    print(f"Training time: {toc - tic:.2f} seconds")
+        tic = time.time()
+        train_model(file_path, save_path)
+        toc = time.time()
+
+        print(f"Training time: {toc - tic:.2f} seconds")
+
+    if sample:
+        path_str = (
+            "/home/dbruwel/main/honours/pachner_graph_triangulations/data/"
+            "results/sgd_models_dehydration/spheres_512emb_6block_4head_13tet/20260403_1406"
+        )
+        save_path = pathlib.Path(path_str)
+
+        tic = time.time()
+        sample_model(file_path, save_path, samps_to_gen=10, gen_its=1)
+        toc = time.time()
+
+        print(f"Sampling time: {toc - tic:.2f} seconds")
