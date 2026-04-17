@@ -259,7 +259,7 @@ if __name__ == "__main__":
     from pachner_traversal.utils import data_path
 
     N_TET = 13
-    N_SAMPLES = 64
+    N_SAMPLES = 8
 
     model_path = (
         data_path / "results" / "discrete_dit_models" / "sphere_13tet" / "20260417_1100"
