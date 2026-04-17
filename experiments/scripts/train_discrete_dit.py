@@ -263,6 +263,12 @@ def train_model(
         )
         return l, g
 
+    test_set = False
+    test_x0_gluing_j = None
+    test_x_t_j = None
+    test_timesteps_j = None
+    test_step_dropout_key = None
+
     for step in range(num_train_steps):
         # Sample batch of iso-signatures → gluing matrices
         idx = dataset.samp_batch_idx(batch_size)
@@ -288,6 +294,14 @@ def train_model(
         timesteps_j = jnp.array(timesteps_np)
 
         step_dropout_key, dropout_key = jax.random.split(state.dropout_key)
+
+        if not test_set:
+            test_x0_gluing_j = x0_gluing_j
+            test_x_t_j = x_t_j
+            test_timesteps_j = timesteps_j
+            test_step_dropout_key = step_dropout_key
+            test_set = True
+
         l, grads = train_step(
             state.params, x0_gluing_j, x_t_j, timesteps_j, step_dropout_key
         )
@@ -296,6 +310,15 @@ def train_model(
 
         if (step + 1) % 500 == 0 or (step + 1) == num_train_steps:
             logger.info(f"Step {step+1}/{num_train_steps}, Loss: {float(l):.6f}")
+            if test_set:
+                test_l, _ = train_step(
+                    state.params,
+                    test_x0_gluing_j,
+                    test_x_t_j,
+                    test_timesteps_j,
+                    test_step_dropout_key,
+                )
+                write_loss(save_path / "test_losses.csv", step + 1, float(test_l))
 
             write_loss(save_path / "train_losses.csv", step + 1, float(l))
 
