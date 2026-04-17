@@ -201,7 +201,7 @@ def generate(
 
     for t_idx in range(T - 1, 0, -1):
         # Encode noisy x_t with spectral positional encoding
-        x_t_encoded = encode_gluing_batch(x_t, n_tet)
+        x_t_encoded = jax_encode_gluing_batch(x_t, n_tet)
         x_t_encoded_j = jnp.array(x_t_encoded)
         timesteps_j = jnp.full((n_samples,), t_idx, dtype=jnp.int32)
 
@@ -228,7 +228,7 @@ def generate(
         logger.info(f"Sampling step {T - t_idx}/{T}")
 
     # Final prediction at t=1 → t=0: predict and solve assignment (no Gumbel)
-    x_t_encoded = encode_gluing_batch(x_t, n_tet)
+    x_t_encoded = jax_encode_gluing_batch(x_t, n_tet)
     x_t_encoded_j = jnp.array(x_t_encoded)
     timesteps_j = jnp.zeros((n_samples,), dtype=jnp.int32)
     logits, x0_pred = model.apply(
