@@ -8,12 +8,15 @@ and reconstructs triangulations from the generated gluing matrices.
 import logging
 import pathlib
 import pickle
-import numpy as np
+
+import jax
 import jax.numpy as jnp
+import matplotlib.pyplot as plt
+import numpy as np
 from scipy.optimize import linear_sum_assignment
 
-from pachner_traversal.glue_encoding import encode, gluing_to_tri
 from pachner_traversal.dit_discrete import DiscreteDiT
+from pachner_traversal.glue_encoding import encode, gluing_to_tri, jax_encode
 
 logger = logging.getLogger(__name__)
 
@@ -21,23 +24,12 @@ logger = logging.getLogger(__name__)
 # ── Diffusion schedule ──────────────────────────────────────────────────
 
 
-def get_beta_schedule(T: int, s: float = 0.008) -> np.ndarray:
-    """Cosine schedule (Nichol & Dhariwal 2021), clipped."""
-    steps = np.arange(T + 1, dtype=np.float64)
-    t = steps / T
-    alphas_cumprod = np.cos((t + s) / (1 + s) * np.pi / 2) ** 2
-    alphas_cumprod = alphas_cumprod / alphas_cumprod[0]
-    betas = 1 - (alphas_cumprod[1:] / alphas_cumprod[:-1])
-    betas = np.clip(betas, 1e-5, 0.999)
-    return betas.astype(np.float32)
+def get_swap_rate(n_nodes: int, T: int) -> np.ndarray:
+    """Compute the swap rate at each time step."""
+    alpha = (np.pi / 2 - np.pow(n_nodes, -0.5)) / T
+    swap_rate = -n_nodes * np.log(np.cos(alpha * np.arange(T)))
 
-
-def get_schedule_arrays(T: int):
-    betas = get_beta_schedule(T)
-    alphas = 1.0 - betas
-    alpha_bar = np.cumprod(alphas).astype(np.float32)
-    beta_bar = (1.0 - alpha_bar).astype(np.float32)
-    return betas, alpha_bar, beta_bar
+    return swap_rate
 
 
 # ── Matching helpers ────────────────────────────────────────────────────
@@ -65,6 +57,21 @@ def encode_gluing_batch(gluing_matrices: np.ndarray, n_tet: int) -> np.ndarray:
         enc = encode(gluing_matrix=gluing_matrices[i], n_tet=n_tet).astype(np.float32)
         results.append(enc)
     return np.stack(results, axis=0)
+
+
+def jax_encode_gluing_batch(gluing_matrices: jnp.ndarray, n_tet: int) -> jnp.ndarray:
+    """Encode a batch of gluing matrices using spectral positional encoding.
+
+    Args:
+        gluing_matrices: [B, N, N] float gluing matrices (may be soft).
+        n_tet: number of tetrahedra.
+
+    Returns:
+        encodings: [B, N, encoding_dim] float32 positional encodings.
+    """
+    batched_jax_encode = jax.vmap(jax_encode, in_axes=(0, None))
+    results = batched_jax_encode(gluing_matrices, n_tet)
+    return results
 
 
 # ── Rounding helpers ────────────────────────────────────────────────────
@@ -109,30 +116,41 @@ def gumbel_soft_to_hard_matching(
 def compute_posterior_logits(
     x_t: np.ndarray,
     x0_pred: np.ndarray,
-    beta_bar_t: float,
-    beta_bar_t_prev: float,
-    n_nodes: int,
+    lambda_t: np.ndarray,
+    lambda_t_minus_1: np.ndarray,
+    eps: float = 1e-8,
 ) -> np.ndarray:
-    """Compute discrete posterior log-probabilities for x_{t-1}.
-
-    P(x_{t-1} | x_t, x0_hat) ∝ Q_t(x_t | x_{t-1}) * Q_bar_{t-1}(x_{t-1} | x0_hat)
     """
-    alpha_bar_t = 1.0 - beta_bar_t
-    alpha_bar_t_prev = 1.0 - beta_bar_t_prev
-    beta_t = 1.0 - alpha_bar_t / max(alpha_bar_t_prev, 1e-8)
-    beta_t = np.clip(beta_t, 0.0, 1.0)
+    Computes the log-space logits for the discrete categorical posterior.
 
-    uniform = 1.0 / n_nodes
+    Args:
+        x_t: [B, N, N] current noisy matrices (exact binary permutations).
+        x0_pred: [B, N, N] predicted clean matrices (continuous probabilities).
+        lambda_t: [B] swap rates at the current time step t.
+        lambda_t_minus_1: [B] swap rates at the target time step t-1.
+        eps: small constant for numerical stability.
 
-    likelihood = (1.0 - beta_t) * x_t + beta_t * uniform
-    prior = (1.0 - beta_bar_t_prev) * x0_pred + beta_bar_t_prev * uniform
+    Returns:
+        logits_t_minus_1: [B, N, N] unnormalized log probabilities.
+    """
+    B, N, _ = x_t.shape
 
-    log_posterior = np.log(np.clip(likelihood * prior, 1e-12, None))
+    lam_t = lambda_t[:, None, None]
+    lam_t_prev = lambda_t_minus_1[:, None, None]
 
-    np.fill_diagonal(log_posterior, -1e9)
-    log_posterior = (log_posterior + log_posterior.T) / 2
+    alpha_t_prev = np.exp(-2.0 * lam_t_prev / N)
+    alpha_t_given_t_prev = np.exp(-2.0 * (lam_t - lam_t_prev) / N)
 
-    return log_posterior
+    prior = x0_pred * alpha_t_prev + (1.0 - alpha_t_prev) / N
+
+    p_stay = alpha_t_given_t_prev + (1.0 - alpha_t_given_t_prev) / N
+    p_move = 1.0 - p_stay
+
+    likelihood = (x_t * p_stay) + ((1.0 - x_t) * p_move)
+
+    logits_t_minus_1 = np.log(likelihood + eps) + np.log(prior + eps)
+
+    return logits_t_minus_1
 
 
 # ── Generation ──────────────────────────────────────────────────────────
@@ -141,16 +159,15 @@ def compute_posterior_logits(
 def generate(
     params,
     n_tet: int,
-    n_samples: int = 1,
-    d_model: int = 256,
+    n_samples: int = 64,
     num_layers: int = 4,
     num_heads: int = 4,
     dropout_rate: float = 0.0,
-    proj_dim: int = 256,
-    mlp_hidden_dim: int = 256,
+    proj_dim: int = 128,
+    mlp_hidden_dim: int = 128,
     mlp_num_layers: int = 2,
-    T: int = 1000,
-    seed: int = 42,
+    T: int = 100,
+    seed: int = 0,
     gumbel_temperature: float = 1.0,
 ):
     """Generate gluing matrices by iterative denoising from pure noise.
@@ -165,13 +182,12 @@ def generate(
     Returns a list of Regina Triangulation3 objects (or None on failure).
     """
     n_nodes = 12 * n_tet
-    _, alpha_bar, beta_bar = get_schedule_arrays(T)
+    swap_rate = get_swap_rate(n_nodes, T)
 
     rng = np.random.default_rng(seed)
 
     model = DiscreteDiT(
         n_tet=n_tet,
-        d_model=d_model,
         num_layers=num_layers,
         num_heads=num_heads,
         dropout_rate=dropout_rate,
@@ -196,17 +212,20 @@ def generate(
         x0_pred_np = np.array(x0_pred)
 
         # Posterior sampling for each sample
-        bbt = float(beta_bar[t_idx])
-        bbt_prev = float(beta_bar[t_idx - 1])
+        srt = float(swap_rate[t_idx])
+        srt_prev = float(swap_rate[t_idx - 1])
+
+        log_post = compute_posterior_logits(
+            x_t,
+            x0_pred_np,
+            np.array([srt] * n_samples),
+            np.array([srt_prev] * n_samples),
+        )
 
         for i in range(n_samples):
-            log_post = compute_posterior_logits(
-                x_t[i], x0_pred_np[i], bbt, bbt_prev, n_nodes
-            )
-            x_t[i] = gumbel_soft_to_hard_matching(log_post, rng, gumbel_temperature)
+            x_t[i] = gumbel_soft_to_hard_matching(log_post[i], rng, gumbel_temperature)
 
-        if (T - t_idx) % 100 == 0:
-            logger.info(f"Sampling step {T - t_idx}/{T}")
+        logger.info(f"Sampling step {T - t_idx}/{T}")
 
     # Final prediction at t=1 → t=0: predict and solve assignment (no Gumbel)
     x_t_encoded = encode_gluing_batch(x_t, n_tet)
@@ -237,13 +256,15 @@ if __name__ == "__main__":
     import time
 
     logging.basicConfig(level=logging.INFO)
-    from pachner_traversal.utils import results_path
+    from pachner_traversal.utils import data_path
 
     N_TET = 13
-    N_SAMPLES = 10
+    N_SAMPLES = 64
 
-    model_path = results_path(f"discrete_dit_models/sphere_{N_TET}tet")
-    params_file = model_path / "params_final.pkl"
+    model_path = (
+        data_path / "results" / "discrete_dit_models" / "sphere_13tet" / "20260417_1100"
+    )
+    params_file = model_path / "params.pkl"
 
     with open(params_file, "rb") as f:
         params = pickle.load(f)
