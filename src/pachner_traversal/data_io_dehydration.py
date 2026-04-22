@@ -213,15 +213,20 @@ class Encoder:
 if __name__ == "__main__":
     from pachner_traversal.utils import data_path
 
-    input_path = (
-        data_path / "input_data" / "dehydration" / "raw" / "d_training_spheres_16.txt"
-    )
-    hdf5_file = (
-        data_path
-        / "input_data"
-        / "dehydration"
-        / "processed"
-        / "d_training_spheres_16.hdf5"
-    )
+    for N in [10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20]:
+        input_path = (
+            data_path
+            / "input_data"
+            / "dehydration"
+            / "raw"
+            / f"d_training_spheres_{N}.txt"
+        )
+        hdf5_file = (
+            data_path
+            / "input_data"
+            / "dehydration"
+            / "processed"
+            / f"d_training_spheres_{N}.hdf5"
+        )
 
-    convert_to_hdf5(input_path, hdf5_file)
+        convert_to_hdf5(input_path, hdf5_file)

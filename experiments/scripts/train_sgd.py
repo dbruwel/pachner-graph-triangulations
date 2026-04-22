@@ -207,34 +207,34 @@ def sample_model(
 
 
 if __name__ == "__main__":
-    train = False
+    train = True
     sample = True
 
     logging.basicConfig(level=logging.INFO)
 
-    processed_data_path = data_path / "input_data" / "dehydration" / "processed"
-    file_path = processed_data_path / "d_training_spheres_13.hdf5"
+    Ns = [10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20]
+    for N in Ns:
+        logger.info(f"\n\n=== N_TET = {N} ===")
+        processed_data_path = data_path / "input_data" / "dehydration" / "processed"
+        file_path = processed_data_path / f"d_training_spheres_{N}.hdf5"
 
-    if train:
-        save_path = results_path(
-            "sgd_models_dehydration/spheres_512emb_6block_4head_13tet"
-        )
+        save_path = data_path
 
-        tic = time.time()
-        train_model(file_path, save_path)
-        toc = time.time()
+        if train:
+            save_path = results_path(
+                f"sgd_models_dehydration/output/spheres_512emb_6block_4head_{N}tet"
+            )
+            set_path = True
 
-        print(f"Training time: {toc - tic:.2f} seconds")
+            tic = time.time()
+            train_model(file_path, save_path)
+            toc = time.time()
 
-    if sample:
-        path_str = (
-            data_path
-            / "results/sgd_models_dehydration/spheres_512emb_6block_4head_13tet/20260403_1406"
-        )
-        save_path = pathlib.Path(path_str)
+            print(f"Training time: {toc - tic:.2f} seconds")
 
-        tic = time.time()
-        sample_model(file_path, save_path, samps_to_gen=1000, gen_its=100)
-        toc = time.time()
+        if sample:
+            tic = time.time()
+            sample_model(file_path, save_path, samps_to_gen=1000, gen_its=100)
+            toc = time.time()
 
-        print(f"Sampling time: {toc - tic:.2f} seconds")
+            print(f"Sampling time: {toc - tic:.2f} seconds")
