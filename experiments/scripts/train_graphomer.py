@@ -303,7 +303,7 @@ if __name__ == "__main__":
         / "processed"
         / f"d_training_spheres_{N_TET}.hdf5"
     )
-    save_path = results_path(f"discrete_dit_models/sphere_{N_TET}tet")
+    save_path = results_path(f"graphomer_dev/sphere_{N_TET}tet")
     save_path.mkdir(parents=True, exist_ok=True)
 
     tic = time.time()
