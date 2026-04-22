@@ -1,25 +1,29 @@
 import flax.linen as nn
 import jax
 import jax.numpy as jnp
+from jax import lax
 
 
 class MicroGNN(nn.Module):
-    """The shared GNN that processes each eigenvector independently."""
-
     d_model: int
 
     @nn.compact
-    def __call__(self, v, a_hat):
-        # v: [N, 1], a_hat: [N, N]
-        # Layer 1: Project then Aggregate
+    def __call__(self, carry, v):
+        # 1. Unpack the carry into the hidden state and the static adjacency matrix
+        h_carry, a_hat = carry
+
+        # Standard GNN logic
         h = nn.Dense(self.d_model, name="gnn_1")(v)
         h = a_hat @ h
         h = nn.relu(h)
-
-        # Layer 2: Refine and Aggregate again
         h = nn.Dense(self.d_model, name="gnn_2")(h)
         h = a_hat @ h
-        return h
+
+        # Accumulate the result into the carry
+        new_h_carry = h_carry + h
+
+        # 2. Return the new hidden state alongside the unmodified a_hat
+        return (new_h_carry, a_hat), jnp.empty((0,))
 
 
 class SignNetEncoder(nn.Module):
@@ -27,48 +31,52 @@ class SignNetEncoder(nn.Module):
 
     @nn.compact
     def __call__(self, x, dist_matrix):
-        """
-        x: [B, N, K] (Eigenvectors)
-        dist_matrix: [B, N, N, c] (Distances)
-        """
         B, N, K = x.shape
 
-        # 1. Direct Adjacency from the global channel
-        adj = (dist_matrix[:, :, :, 3] == 1).astype(jnp.float32)
-        I = jnp.eye(N)[None, ...]
-        adj_hat = adj + I
+        # Prepare Adjacency
+        adj = (dist_matrix[..., -1] == 1).astype(jnp.float32)
+        adj_hat = adj + jnp.eye(N)[None, ...]  # [B, N, N]
 
-        # 2. Vectorize the MicroGNN module
-        # Inner vmap: over the K eigenvectors
-        # Outer vmap: over the B batch dimension
-        # We use the class 'MicroGNN' directly inside nn.vmap
-
-        VmappedGNN = nn.vmap(
+        # Vectorize across Batch (B)
+        BatchGNN = nn.vmap(
             MicroGNN,
             variable_axes={"params": None},
             split_rngs={"params": False},
-            in_axes=(0, None),  # type: ignore
-        )
-
-        BatchVmappedGNN = nn.vmap(
-            VmappedGNN,
-            variable_axes={"params": None},
-            split_rngs={"params": False},
+            # in_axes=(0, 0) maps over axis 0 of BOTH items in the carry tuple
+            # (h_carry and a_hat), and axis 0 of v.
             in_axes=(0, 0),  # type: ignore
+            out_axes=(0, 0),  # type: ignore
         )
 
-        # 3. Instantiate and apply the vectorized GNN
-        gnn = BatchVmappedGNN(d_model=self.d_model)
+        # Scan across Eigenvectors (2*K)
+        SequentialGNN = nn.scan(
+            BatchGNN,
+            variable_broadcast={"params": True},
+            split_rngs={"params": False},
+            # in_axes=0 ONLY applies to `x_combined` (the sequence input).
+            # The carry is handled automatically by the scan logic.
+            in_axes=0,  # type: ignore
+            out_axes=0,  # type: ignore
+        )
 
-        # Prepare x: [B, N, K] -> [B, K, N, 1]
-        x_in = jnp.transpose(x, (0, 2, 1))[..., None]
+        # Prepare Inputs
+        x_pos = jnp.transpose(x, (2, 0, 1))[..., None]  # [K, B, N, 1]
+        x_combined = jnp.concatenate([x_pos, -x_pos], axis=0)  # [2*K, B, N, 1]
 
-        # 4. Sign-Invariant Summation: phi(v) + phi(-v)
-        # Result of gnn call: [B, K, N, d_model]
-        z = gnn(x_in, adj_hat) + gnn(-x_in, adj_hat)
+        # Initialize the accumulator
+        init_carry = jnp.zeros((B, N, self.d_model), dtype=x.dtype)
 
-        # 5. Collapse K dimension: [B, N, d_model]
-        return jnp.sum(z, axis=1)
+        # Apply the Scanned GNN
+        # 3. Pack the initial state and the static adjacency matrix into a tuple
+        final_carry_tuple, _ = SequentialGNN(d_model=self.d_model)(
+            (init_carry, adj_hat), x_combined
+        )
+
+        # 4. Unpack the final state from the tuple
+        final_carry, _ = final_carry_tuple
+
+        # Output shape: [B, N, d_model]
+        return final_carry
 
 
 class SpatialBias(nn.Module):
