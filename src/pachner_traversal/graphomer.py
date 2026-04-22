@@ -3,6 +3,25 @@ import jax
 import jax.numpy as jnp
 
 
+class MicroGNN(nn.Module):
+    """The shared GNN that processes each eigenvector independently."""
+
+    d_model: int
+
+    @nn.compact
+    def __call__(self, v, a_hat):
+        # v: [N, 1], a_hat: [N, N]
+        # Layer 1: Project then Aggregate
+        h = nn.Dense(self.d_model, name="gnn_1")(v)
+        h = a_hat @ h
+        h = nn.relu(h)
+
+        # Layer 2: Refine and Aggregate again
+        h = nn.Dense(self.d_model, name="gnn_2")(h)
+        h = a_hat @ h
+        return h
+
+
 class SignNetEncoder(nn.Module):
     d_model: int
 
@@ -16,47 +35,39 @@ class SignNetEncoder(nn.Module):
 
         # 1. Direct Adjacency from the global channel
         adj = (dist_matrix[:, :, :, 3] == 1).astype(jnp.float32)
-
-        # 2. Add Self-loops (A + I)
         I = jnp.eye(N)[None, ...]
         adj_hat = adj + I
 
-        def phi(v, a_hat):
-            # v: [N, 1], a_hat: [N, N]
-            # Layer 1: Project then Aggregate
-            h = nn.Dense(self.d_model, name="gnn_1")(v)
-            h = a_hat @ h
-            h = nn.relu(h)
+        # 2. Vectorize the MicroGNN module
+        # Inner vmap: over the K eigenvectors
+        # Outer vmap: over the B batch dimension
+        # We use the class 'MicroGNN' directly inside nn.vmap
 
-            # Layer 2: Refine
-            h = nn.Dense(self.d_model, name="gnn_2")(h)
-            h = a_hat @ h
-            return h
-
-        # 3. Vectorize across Batch (B) and Eigenvectors (K)
-        eval_vmap_phi = nn.vmap(
-            phi,
+        VmappedGNN = nn.vmap(
+            MicroGNN,
+            variable_axes={"params": None},
+            split_rngs={"params": False},
             in_axes=(0, None),  # type: ignore
-            variable_axes={"params": None},
-            split_rngs={"params": False},
         )
 
-        batch_vmap_phi = nn.vmap(
-            eval_vmap_phi,
+        BatchVmappedGNN = nn.vmap(
+            VmappedGNN,
+            variable_axes={"params": None},
+            split_rngs={"params": False},
             in_axes=(0, 0),  # type: ignore
-            variable_axes={"params": None},
-            split_rngs={"params": False},
         )
 
-        # 4. Sign-Invariant Summation
-        # [B, K, N, 1] for input
+        # 3. Instantiate and apply the vectorized GNN
+        gnn = BatchVmappedGNN(d_model=self.d_model)
+
+        # Prepare x: [B, N, K] -> [B, K, N, 1]
         x_in = jnp.transpose(x, (0, 2, 1))[..., None]
 
-        # phi(v) + phi(-v)
-        z = batch_vmap_phi(x_in, adj_hat) + batch_vmap_phi(-x_in, adj_hat)
+        # 4. Sign-Invariant Summation: phi(v) + phi(-v)
+        # Result of gnn call: [B, K, N, d_model]
+        z = gnn(x_in, adj_hat) + gnn(-x_in, adj_hat)
 
-        # 5. Collapse K dimension
-        # Output shape: [B, N, d_model]
+        # 5. Collapse K dimension: [B, N, d_model]
         return jnp.sum(z, axis=1)
 
 
