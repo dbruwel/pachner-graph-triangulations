@@ -98,5 +98,5 @@ if __name__ == "__main__":
     isos_list = np.unique(isos_list)
 
     save_path.mkdir(parents=True, exist_ok=True)
-    save_file = save_path / "mcmc_samples.csv"
+    save_file = save_path / "mcmc_samples.txt"
     np.savetxt(save_file, isos_list, fmt="%s")
