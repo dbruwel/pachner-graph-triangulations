@@ -88,55 +88,71 @@ if __name__ == "__main__":
 
     save_path = data_path / "input_data" / "dehydration" / "raw" / "mcmc_samples"
 
-    isos_lists_df = run_mcmc(
-        num_chains=30,
-        gamma_=1 / 5,
-        itts=100_000,
-        steps=1,
-    )
+    for i in range(10):
+        logger.info(
+            f"Starting MCMC run {i + 1}/10 at {datetime.now().strftime('%H:%M:%S')}"
+        )
+        isos_lists_df = run_mcmc(
+            num_chains=30,
+            gamma_=1 / 5,
+            itts=1_000_000,
+            steps=1,
+        )
 
-    isos_list = isos_lists_df.to_numpy().flatten()
-    isos_list = isos_list.astype(str)
-    isos_list = np.unique(isos_list)
+        isos_list = isos_lists_df.to_numpy().flatten()
+        isos_list = isos_list.astype(str)
+        isos_list = np.unique(isos_list)
 
-    logger.info(f"Total unique samples: {len(isos_list):,}.")
-    logger.info(f"Example samples: {isos_list[-5:]}")
+        logger.info(f"Total unique samples: {len(isos_list):,}.")
+        logger.info(f"Example samples: {isos_list[-5:]}")
 
-    samps10 = isos_list[np.char.startswith(isos_list, "k")]
-    samps11 = isos_list[np.char.startswith(isos_list, "l")]
-    samps12 = isos_list[np.char.startswith(isos_list, "m")]
-    samps13 = isos_list[np.char.startswith(isos_list, "n")]
-    samps14 = isos_list[np.char.startswith(isos_list, "o")]
-    samps15 = isos_list[np.char.startswith(isos_list, "p")]
-    samps16 = isos_list[np.char.startswith(isos_list, "q")]
-    samps17 = isos_list[np.char.startswith(isos_list, "r")]
-    samps18 = isos_list[np.char.startswith(isos_list, "s")]
-    samps19 = isos_list[np.char.startswith(isos_list, "t")]
-    samps20 = isos_list[np.char.startswith(isos_list, "u")]
+        samps10 = isos_list[np.char.startswith(isos_list, "k")]
+        samps11 = isos_list[np.char.startswith(isos_list, "l")]
+        samps12 = isos_list[np.char.startswith(isos_list, "m")]
+        samps13 = isos_list[np.char.startswith(isos_list, "n")]
+        samps14 = isos_list[np.char.startswith(isos_list, "o")]
+        samps15 = isos_list[np.char.startswith(isos_list, "p")]
+        samps16 = isos_list[np.char.startswith(isos_list, "q")]
+        samps17 = isos_list[np.char.startswith(isos_list, "r")]
+        samps18 = isos_list[np.char.startswith(isos_list, "s")]
+        samps19 = isos_list[np.char.startswith(isos_list, "t")]
+        samps20 = isos_list[np.char.startswith(isos_list, "u")]
 
-    logger.info(f"{len(samps10):,} samples for N=10.")
-    np.savetxt(save_path / "samps10.txt", samps10, fmt="%s")
-    logger.info(f"{len(samps11):,} samples for N=11.")
-    np.savetxt(save_path / "samps11.txt", samps11, fmt="%s")
-    logger.info(f"{len(samps12):,} samples for N=12.")
-    np.savetxt(save_path / "samps12.txt", samps12, fmt="%s")
-    logger.info(f"{len(samps13):,} samples for N=13.")
-    np.savetxt(save_path / "samps13.txt", samps13, fmt="%s")
-    logger.info(f"{len(samps14):,} samples for N=14.")
-    np.savetxt(save_path / "samps14.txt", samps14, fmt="%s")
-    logger.info(f"{len(samps15):,} samples for N=15.")
-    np.savetxt(save_path / "samps15.txt", samps15, fmt="%s")
-    logger.info(f"{len(samps16):,} samples for N=16.")
-    np.savetxt(save_path / "samps16.txt", samps16, fmt="%s")
-    logger.info(f"{len(samps17):,} samples for N=17.")
-    np.savetxt(save_path / "samps17.txt", samps17, fmt="%s")
-    logger.info(f"{len(samps18):,} samples for N=18.")
-    np.savetxt(save_path / "samps18.txt", samps18, fmt="%s")
-    logger.info(f"{len(samps19):,} samples for N=19.")
-    np.savetxt(save_path / "samps19.txt", samps19, fmt="%s")
-    logger.info(f"{len(samps20):,} samples for N=20.")
-    np.savetxt(save_path / "samps20.txt", samps20, fmt="%s")
+        logger.info(f"{len(samps10):,} samples for N=10.")
+        with open(save_path / "samps10.txt", "a") as f:
+            np.savetxt(f, samps10, fmt="%s")
+        logger.info(f"{len(samps11):,} samples for N=11.")
+        with open(save_path / "samps11.txt", "a") as f:
+            np.savetxt(f, samps11, fmt="%s")
+        logger.info(f"{len(samps12):,} samples for N=12.")
+        with open(save_path / "samps12.txt", "a") as f:
+            np.savetxt(f, samps12, fmt="%s")
+        logger.info(f"{len(samps13):,} samples for N=13.")
+        with open(save_path / "samps13.txt", "a") as f:
+            np.savetxt(f, samps13, fmt="%s")
+        logger.info(f"{len(samps14):,} samples for N=14.")
+        with open(save_path / "samps14.txt", "a") as f:
+            np.savetxt(f, samps14, fmt="%s")
+        logger.info(f"{len(samps15):,} samples for N=15.")
+        with open(save_path / "samps15.txt", "a") as f:
+            np.savetxt(f, samps15, fmt="%s")
+        logger.info(f"{len(samps16):,} samples for N=16.")
+        with open(save_path / "samps16.txt", "a") as f:
+            np.savetxt(f, samps16, fmt="%s")
+        logger.info(f"{len(samps17):,} samples for N=17.")
+        with open(save_path / "samps17.txt", "a") as f:
+            np.savetxt(f, samps17, fmt="%s")
+        logger.info(f"{len(samps18):,} samples for N=18.")
+        with open(save_path / "samps18.txt", "a") as f:
+            np.savetxt(f, samps18, fmt="%s")
+        logger.info(f"{len(samps19):,} samples for N=19.")
+        with open(save_path / "samps19.txt", "a") as f:
+            np.savetxt(f, samps19, fmt="%s")
+        logger.info(f"{len(samps20):,} samples for N=20.")
+        with open(save_path / "samps20.txt", "a") as f:
+            np.savetxt(f, samps20, fmt="%s")
 
-    save_path.mkdir(parents=True, exist_ok=True)
-    save_file = save_path / "mcmc_samples.txt"
-    np.savetxt(save_file, isos_list, fmt="%s")
+        save_path.mkdir(parents=True, exist_ok=True)
+        save_file = save_path / "mcmc_samples.txt"
+        with open(save_path / "mcmc_samples.txt", "a") as f:
+            np.savetxt(f, isos_list, fmt="%s")
