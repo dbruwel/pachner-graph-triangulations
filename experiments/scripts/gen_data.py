@@ -89,7 +89,7 @@ if __name__ == "__main__":
     isos_lists_df = run_mcmc(
         num_chains=30,
         gamma_=1 / 10,
-        itts=1_000_000,
+        itts=100_000,
         steps=1,
     )
 
