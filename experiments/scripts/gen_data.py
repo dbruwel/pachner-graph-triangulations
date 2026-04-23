@@ -107,6 +107,7 @@ if __name__ == "__main__":
     samps19 = np.unique(isos_list[np.char.startswith(isos_list, "t")])
     samps20 = np.unique(isos_list[np.char.startswith(isos_list, "u")])
 
+    save_path.mkdir(parents=True, exist_ok=True)
     logger.info(f"{len(samps10):,} samples for N=10.")
     np.savetxt(save_path / "samps10.txt", samps10, fmt="%s")
     logger.info(f"{len(samps11):,} samples for N=11.")
