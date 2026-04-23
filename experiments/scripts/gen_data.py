@@ -90,7 +90,7 @@ if __name__ == "__main__":
 
     isos_lists_df = run_mcmc(
         num_chains=30,
-        gamma_=1 / 2,
+        gamma_=1 / 5,
         itts=100_000,
         steps=1,
     )
@@ -98,6 +98,9 @@ if __name__ == "__main__":
     isos_list = isos_lists_df.to_numpy().flatten()
     isos_list = isos_list.astype(str)
     isos_list = np.unique(isos_list)
+
+    logger.info(f"Total unique samples: {len(isos_list):,}.")
+    logger.info(f"Example samples: {isos_list[-5:]}")
 
     samps10 = isos_list[np.char.startswith(isos_list, "k")]
     samps11 = isos_list[np.char.startswith(isos_list, "l")]
