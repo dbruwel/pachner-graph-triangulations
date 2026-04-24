@@ -123,7 +123,7 @@ def train_model(
         state, loss = train_step(state, batch_input, batch_label)
 
         if (step + 1) % 10_000 == 0 or (step + 1) == num_train_steps:
-            msg = f"Step {step + 1:3d}/{num_train_steps}, Loss: {float(loss):.4f}"
+            msg = f"Step {step + 1:,3d}/{num_train_steps:,}, Loss: {float(loss):.4f}"
             logger.info(msg)
 
             test_loss = get_test_loss(
