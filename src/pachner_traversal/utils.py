@@ -4,6 +4,7 @@ from datetime import datetime
 
 import matplotlib.pyplot as plt
 import numpy as np
+import requests
 
 data_path = pathlib.Path(__file__).parent.parent.parent / "data"
 
@@ -47,3 +48,10 @@ def to_numpy(M):
             A[i, j] = M.entry(i, j).longValue()
 
     return A
+
+
+def send_ntfy(topic: str, title: str, message: str) -> None:
+    url = f"https://ntfy.sh/{topic}"
+    headers = {"Title": title, "Priority": "high", "Tags": "python,snake"}
+
+    requests.post(url, data=message.encode("utf-8"), headers=headers)

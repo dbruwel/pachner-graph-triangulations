@@ -19,7 +19,7 @@ from pachner_traversal.transformer import (
     generate_samples,
     train_step,
 )
-from pachner_traversal.utils import data_path, results_path
+from pachner_traversal.utils import data_path, send_ntfy
 
 logger = logging.getLogger(__name__)
 
@@ -122,7 +122,7 @@ def train_model(
 
         state, loss = train_step(state, batch_input, batch_label)
 
-        if (step + 1) % 500 == 0 or (step + 1) == num_train_steps:
+        if (step + 1) % 10_000 == 0 or (step + 1) == num_train_steps:
             msg = f"Step {step + 1:3d}/{num_train_steps}, Loss: {float(loss):.4f}"
             logger.info(msg)
 
@@ -211,30 +211,53 @@ if __name__ == "__main__":
     sample = True
 
     logging.basicConfig(level=logging.INFO)
+    send_ntfy(
+        "usyd-knottedness",
+        "Training Started",
+        f"Started training for SGD models on dehydration data",
+    )
 
-    Ns = [10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20]
+    Ns = [20, 19, 18, 17, 16, 15, 14, 13, 12, 11, 10]
     for N in Ns:
         logger.info(f"\n\n=== N_TET = {N} ===")
         processed_data_path = data_path / "input_data" / "dehydration" / "processed"
-        file_path = processed_data_path / f"d_training_spheres_{N}.hdf5"
+        file_path = processed_data_path / f"spheres_{N}.hdf5"
 
         save_path = data_path
 
+        train_time = 0
+        sample_time = 0
+
         if train:
-            save_path = results_path(
-                f"sgd_models_dehydration/output/spheres_512emb_6block_4head_{N}tet"
+            save_path = (
+                data_path
+                / "sgd_models_dehydration"
+                / "spheres_512emb_6block_4head_{N}tet"
             )
-            set_path = True
 
             tic = time.time()
             train_model(file_path, save_path)
             toc = time.time()
 
-            print(f"Training time: {toc - tic:.2f} seconds")
+            train_time = toc - tic
+            logger.info(f"Training time: {train_time:.2f} seconds")
 
         if sample:
             tic = time.time()
-            sample_model(file_path, save_path, samps_to_gen=1000, gen_its=100)
+            sample_model(file_path, save_path, samps_to_gen=1_000, gen_its=20)
             toc = time.time()
 
-            print(f"Sampling time: {toc - tic:.2f} seconds")
+            sample_time = toc - tic
+            logger.info(f"Sampling time: {sample_time:.2f} seconds")
+
+        send_ntfy(
+            "usyd-knottedness",
+            f"Training Finished for N={N}",
+            f"Finished training for N={N}. Training time: {train_time:.2f} seconds. Sampling time: {sample_time:.2f} seconds.",
+        )
+
+    send_ntfy(
+        "usyd-knottedness",
+        "All Training Finished",
+        f"Finished training for all N.",
+    )
