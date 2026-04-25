@@ -234,6 +234,7 @@ if __name__ == "__main__":
                 / "sgd_models_dehydration"
                 / "spheres_512emb_6block_4head_{N}tet"
             )
+            save_path.mkdir(parents=True, exist_ok=True)
 
             tic = time.time()
             train_model(file_path, save_path)
