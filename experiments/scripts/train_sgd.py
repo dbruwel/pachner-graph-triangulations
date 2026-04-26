@@ -232,7 +232,7 @@ if __name__ == "__main__":
             save_path = (
                 data_path
                 / "sgd_models_dehydration"
-                / "spheres_512emb_6block_4head_{N}tet"
+                / f"spheres_512emb_6block_4head_{N}tet"
             )
             save_path.mkdir(parents=True, exist_ok=True)
 

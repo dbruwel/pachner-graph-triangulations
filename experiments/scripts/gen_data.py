@@ -66,14 +66,11 @@ def run_chains(
 
 
 def run_mcmc(
-    num_chains: int,
-    gamma_: float,
-    itts: int,
-    steps: int,
+    num_chains: int, gamma_: float, itts: int, steps: int, seed="cMcabbgqs"
 ) -> pd.DataFrame:
     results = run_chains(
         num_chains=num_chains,
-        seed="cMcabbgqs",
+        seed=seed,
         gamma_=gamma_,
         itts=itts,
         steps=steps,
@@ -84,6 +81,18 @@ def run_mcmc(
 
 
 if __name__ == "__main__":
+    isos_lists_df = run_mcmc(
+        num_chains=30,
+        gamma_=1 / 4,
+        itts=2_000,
+        steps=1,
+        seed="jLvAzQQcfeghighiiuquanobwwr",
+    )
+
+    isos_lists_df.to_csv("temp.csv")
+
+    raise
+
     logging.basicConfig(level=logging.INFO)
 
     save_path = data_path / "input_data" / "dehydration" / "raw" / "mcmc_samples"
