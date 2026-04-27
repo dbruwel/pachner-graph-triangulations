@@ -1,6 +1,7 @@
 import logging
 import pathlib
 import pickle
+import sys
 import time
 from functools import partial
 
@@ -11,7 +12,6 @@ import numpy as np
 import optax
 import pandas as pd
 from flax.core import freeze
-
 from pachner_traversal.data_io_dehydration import Dataset, Encoder
 from pachner_traversal.transformer import (
     MinimalTrainState,
@@ -52,7 +52,11 @@ def get_sample_idx(batch_size, dataset_size):
 
 
 def train_model(
-    file_path: pathlib.Path, save_path: pathlib.Path, num_test_samps: int = 1_000
+    file_path: pathlib.Path,
+    save_path: pathlib.Path,
+    num_test_samps: int = 1_000,
+    num_train_steps=1_000_000,
+    sample=False,
 ) -> None:
     batch_size = 64
 
@@ -80,7 +84,6 @@ def train_model(
     num_heads = 4  # Number of attention heads
     seq_len = dataset.max_len + 1  # Sequence length
     learning_rate = 0.0005
-    num_train_steps = 1_000_000
     dropout_rate = 0.1
 
     key = jax.random.PRNGKey(0)
@@ -139,6 +142,11 @@ def train_model(
             with open(save_path / "params.pkl", "wb") as file:
                 pickle.dump(state.params, file)
 
+        if sample and (step + 1) % 1_000_000 == 0:
+            sample_model(
+                file_path, save_path, samps_to_gen=1_000, gen_its=5, tag=f"{step:,}"
+            )
+
     logger.info("\n Training finished.")
 
     with open(save_path / "params.pkl", "wb") as file:
@@ -151,6 +159,7 @@ def sample_model(
     num_test_samps: int = 1_000,
     gen_its: int = 10,
     samps_to_gen: int = 1_000,
+    tag: str | None = None,
 ) -> None:
     dataset = Dataset(file_path, num_test_samps)
     encoder = Encoder(dataset)
@@ -201,12 +210,17 @@ def sample_model(
         samps = generate_samples(state, samps_to_gen, seq_len, subkey, bos_id)
         samps_str = samps_str + encoder.decode(np.array(samps))
 
-    with open(save_path / "generated_samples.txt", "w") as f:
+    if tag is None:
+        samp_save_path = save_path / "generated_samples.txt"
+    else:
+        samp_save_path = save_path / f"generated_samples_{tag}.txt"
+
+    with open(samp_save_path, "w") as f:
         for samp in samps_str:
             f.write(samp + "\n")
 
 
-if __name__ == "__main__":
+def main_train_all():
     train = True
     sample = True
 
@@ -262,3 +276,57 @@ if __name__ == "__main__":
         "All Training Finished",
         f"Finished training for all N.",
     )
+
+
+def main_train_long():
+    logging.basicConfig(level=logging.INFO)
+    send_ntfy(
+        "usyd-knottedness",
+        "Long Training Started",
+        f"Started long training for SGD models on dehydration data",
+    )
+
+    processed_data_path = data_path / "input_data" / "dehydration" / "processed"
+    file_path = processed_data_path / f"spheres_10.hdf5"
+
+    train_time = 0
+    sample_time = 0
+
+    save_path = (
+        data_path
+        / "results"
+        / "sgd_models_dehydration"
+        / "long_train"
+        / "spheres_512emb_6block_4head_10tet"
+    )
+    save_path.mkdir(parents=True, exist_ok=True)
+
+    # Train
+    tic = time.time()
+    train_model(file_path, save_path, num_train_steps=10_000_000)
+    toc = time.time()
+
+    train_time = toc - tic
+    logger.info(f"Training time: {train_time:.2f} seconds")
+
+    # Sample
+    tic = time.time()
+    sample_model(file_path, save_path, samps_to_gen=1_000, gen_its=20, tag="final")
+    toc = time.time()
+
+    sample_time = toc - tic
+    logger.info(f"Sampling time: {sample_time:.2f} seconds")
+
+    # NTFY
+    send_ntfy(
+        "usyd-knottedness",
+        "Training Finished",
+        f"Finished long training.",
+    )
+
+
+if __name__ == "__main__":
+    if "long" in sys.argv:
+        main_train_long()
+    if "all" in sys.argv:
+        main_train_all()
