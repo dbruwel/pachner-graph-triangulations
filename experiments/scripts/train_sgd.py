@@ -231,7 +231,6 @@ def train_model(
             lowered = train_step.lower(state, batch_input, batch_label)
             compiled = lowered.compile()
             costs = compiled.cost_analysis()
-            breakpoint()
             if isinstance(costs, list):
                 flops_per_step = costs[0]["flops"]  # type: ignore
             elif isinstance(costs, dict):
@@ -421,6 +420,7 @@ def main_train_scale():
                 / f"spheres_{emb}emb_{block}block_{head}head_10tet"
             )
             save_path.mkdir(parents=True, exist_ok=True)
+            logger.info(f"Created directoy: {save_path.resolve()}")
 
             tic = time.time()
             train_model(
