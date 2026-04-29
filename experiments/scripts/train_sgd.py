@@ -414,13 +414,14 @@ def main_train_scale():
         if train:
             save_path = (
                 data_home
-                / "input_data"
+                / "results"
                 / "sgd_models_dehydration"
                 / "scale"
                 / f"spheres_{emb}emb_{block}block_{head}head_10tet"
             )
             save_path.mkdir(parents=True, exist_ok=True)
             logger.info(f"Created directoy: {save_path.resolve()}")
+            write_stat(save_path / "stats.txt", "size:", size)
 
             tic = time.time()
             train_model(
