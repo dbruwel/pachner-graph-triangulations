@@ -397,7 +397,7 @@ def main_train_scale():
         f"Started training for SGD models on dehydration data",
     )
 
-    sizes = ["xl", "l", "m", "s", "xs"]
+    sizes = ["l", "m", "s", "xs"]
     for size in sizes:
         emb = embs[size]
         block = blocks[size]
