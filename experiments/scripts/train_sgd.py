@@ -430,6 +430,7 @@ def main_train_scale():
                 d_model=emb,
                 num_heads=head,
                 num_layers=block,
+                batch_size=16,
                 sample=True,
                 resume=False,
             )
