@@ -232,7 +232,13 @@ def train_model(
             compiled = lowered.compile()
             costs = compiled.cost_analysis()
             breakpoint()
-            flops_per_step = costs[0]["flops"]  # type: ignore
+            if isinstance(costs, list):
+                flops_per_step = costs[0]["flops"]  # type: ignore
+            elif isinstance(costs, dict):
+                flops_per_step = costs["flops"]
+            else:
+                flops_per_step = "nan"
+            logger.info(f"flops_per_step: {flops_per_step:,}")
             write_stat(save_path / "stats.txt", "flops_per_step", f"{flops_per_step:,}")
 
         state, loss = train_step(state, batch_input, batch_label)
