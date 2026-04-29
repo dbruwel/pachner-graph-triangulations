@@ -231,6 +231,7 @@ def train_model(
             lowered = train_step.lower(state, batch_input, batch_label)
             compiled = lowered.compile()
             costs = compiled.cost_analysis()
+            breakpoint()
             flops_per_step = costs[0]["flops"]  # type: ignore
             write_stat(save_path / "stats.txt", "flops_per_step", f"{flops_per_step:,}")
 
