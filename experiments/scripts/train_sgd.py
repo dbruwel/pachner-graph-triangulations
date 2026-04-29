@@ -5,12 +5,10 @@ import sys
 import time
 from functools import partial
 
-import flax
 import jax
 import jax.numpy as jnp
 import numpy as np
 import optax
-import pandas as pd
 from flax.core import freeze
 from pachner_traversal.data_io_dehydration import Dataset, Encoder
 from pachner_traversal.transformer import (
@@ -19,11 +17,40 @@ from pachner_traversal.transformer import (
     generate_samples,
     train_step,
 )
-from pachner_traversal.utils import data_path, send_ntfy
+from pachner_traversal.utils import data_path as data_home
+from pachner_traversal.utils import send_ntfy
 
 logger = logging.getLogger(__name__)
 
 
+# simple utility
+def write_loss(save_path, step, loss):
+    with open(save_path, "a") as f:
+        f.write(f"{step},{loss}\n")
+
+
+def save_model(save_path, state):
+    with open(save_path / "params.pkl", "wb") as file:
+        pickle.dump(state.params, file)
+
+
+def load_model(save_path):
+    with open(save_path / "params.pkl", "rb") as file:
+        params = pickle.load(file)
+
+    return params
+
+
+def write_stat(stat_file_path, stat_name, stat_value):
+    with open(stat_file_path, "a") as f:
+        f.write(f"{stat_name}, {stat_value}\n")
+
+
+def get_sample_idx(batch_size, dataset_size):
+    return np.random.choice(dataset_size, size=batch_size, replace=True)
+
+
+# jax utility
 @partial(jax.jit, static_argnames=["vocab_size"])
 def get_test_loss(
     state: MinimalTrainState,
@@ -42,25 +69,112 @@ def get_test_loss(
     return test_loss
 
 
-def write_loss(file_path, step, loss):
-    with open(file_path, "a") as f:
-        f.write(f"{step},{loss}\n")
+def init_model(
+    dataset: Dataset,
+    encoder: Encoder,
+    d_model: int = 512,
+    num_layers: int = 6,
+    num_heads: int = 4,
+):
+    vocab_size = len(encoder.char_to_id)
+    seq_len = dataset.max_len + 1
+
+    key = jax.random.PRNGKey(0)
+    main_key, params_key, dropout_key = jax.random.split(key, 3)
+
+    model = Transformer(
+        vocab_size=vocab_size,
+        d_model=d_model,
+        block_size=seq_len,
+        num_layers=num_layers,
+        num_heads=num_heads,
+    )
+
+    return model, (main_key, params_key, dropout_key), (vocab_size, seq_len)
 
 
-def get_sample_idx(batch_size, dataset_size):
-    return np.random.choice(dataset_size, size=batch_size, replace=True)
+def init_train_state(model, params, dropout_key):
+    learning_rate = 0.0005
+
+    state = MinimalTrainState.create(
+        params=params,
+        apply_fn=model.apply,
+        dropout_key=dropout_key,
+        learning_rate=learning_rate,
+        m_tm1=freeze(jax.tree_util.tree_map(jnp.zeros_like, params)),
+        v_tm1=freeze(jax.tree_util.tree_map(jnp.zeros_like, params)),
+        t=0,
+        tx=optax.adamw(learning_rate=learning_rate, weight_decay=0.01),
+    )
+
+    return state
+
+
+# critical functions
+def sample_model(
+    data_path: pathlib.Path,
+    save_path: pathlib.Path,
+    d_model: int = 512,
+    num_layers: int = 6,
+    num_heads: int = 4,
+    num_test_samps: int = 1_000,
+    gen_its: int = 10,
+    samps_to_gen: int = 1_000,
+    tag: str | None = None,
+) -> None:
+    # setup model
+    dataset = Dataset(data_path, num_test_samps)
+    encoder = Encoder(dataset)
+
+    params = load_model(save_path)
+
+    model, keys, meta = init_model(
+        dataset,
+        encoder,
+        d_model=d_model,
+        num_layers=num_layers,
+        num_heads=num_heads,
+    )
+    _, _, dropout_key = keys
+    _, seq_len = meta
+
+    state = init_train_state(model, params, dropout_key)
+
+    # generate samples
+    bos_id = encoder.char_to_id["[BOS]"]
+    subkey = jax.random.PRNGKey(42)
+
+    samps_str = []
+    for i in range(gen_its):
+        logger.info(f"Generating samples... Iteration {i + 1}/{gen_its}")
+        subkey = jax.random.split(subkey, 1)[0]
+        samps = generate_samples(state, samps_to_gen, seq_len, subkey, bos_id)
+        samps_str = samps_str + encoder.decode(np.array(samps))
+
+    # save samps
+    fname = f"generated_samples_{tag}.txt" if tag else "generated_samples.txt"
+    samp_save_path = save_path / fname
+
+    with open(samp_save_path, "w") as f:
+        for samp in samps_str:
+            f.write(samp + "\n")
 
 
 def train_model(
-    file_path: pathlib.Path,
+    data_path: pathlib.Path,
     save_path: pathlib.Path,
+    d_model: int = 512,
+    num_layers: int = 6,
+    num_heads: int = 4,
+    batch_size=64,
     num_test_samps: int = 1_000,
     num_train_steps=1_000_000,
     sample=False,
+    resume=True,
 ) -> None:
-    batch_size = 64
 
-    dataset = Dataset(file_path, num_test_samps)
+    # data
+    dataset = Dataset(data_path, num_test_samps)
     encoder = Encoder(dataset)
 
     all_data_str = dataset.read_all_data()
@@ -75,53 +189,50 @@ def train_model(
     train_input = all_data_input[train_idx]
     train_label = all_data_label[train_idx]
 
-    sample_idx = get_sample_idx(batch_size, len(train_idx))
-    sample_batch_input = train_input[sample_idx]
-
-    vocab_size = len(encoder.char_to_id)
-    d_model = 512  # Dimension of embeddings and model
-    num_layers = 6  # Number of transformer blocks
-    num_heads = 4  # Number of attention heads
-    seq_len = dataset.max_len + 1  # Sequence length
-    learning_rate = 0.0005
-    dropout_rate = 0.1
-
-    key = jax.random.PRNGKey(0)
-    _, params_key, dropout_key = jax.random.split(key, 3)
-
-    model = Transformer(
-        vocab_size=vocab_size,
+    # setup model
+    model, keys, meta = init_model(
+        dataset,
+        encoder,
         d_model=d_model,
-        block_size=seq_len,
         num_layers=num_layers,
         num_heads=num_heads,
-        dropout_rate=dropout_rate,
     )
+    _, params_key, dropout_key = keys
+    vocab_size, _ = meta
 
-    params = model.init({"params": params_key}, sample_batch_input, training=True)[
-        "params"
-    ]
+    if (save_path / "params.pkl").exists() and resume:
+        params = load_model(save_path)
+        # TODO: also load what step we are up to, and update the below steps list :)
+        steps = range(num_train_steps)
+    else:
+        blank_idx = get_sample_idx(batch_size, len(train_idx))
+        blank_batch_input = train_input[blank_idx]
 
-    logger.info(
-        f"Model initialized. Parameter count: {sum(x.size for x in jax.tree_util.tree_leaves(params))}"
-    )
+        key_data = {"params": params_key}
+        blank_model = model.init(key_data, blank_batch_input, training=True)
+        params = blank_model["params"]
 
-    state = MinimalTrainState.create(
-        params=params,
-        apply_fn=model.apply,
-        dropout_key=dropout_key,
-        learning_rate=learning_rate,
-        m_tm1=freeze(jax.tree_util.tree_map(jnp.zeros_like, params)),
-        v_tm1=freeze(jax.tree_util.tree_map(jnp.zeros_like, params)),
-        t=0,
-        tx=optax.adamw(learning_rate=learning_rate, weight_decay=0.01, b2=0.99),
-    )
+        n_params = sum(x.size for x in jax.tree_util.tree_leaves(params))
+        write_stat(save_path / "stats.txt", "n_params", f"{n_params:,}")
+        logger.info(f"Model initialized. Parameter count: {n_params}")
 
+        steps = range(num_train_steps)
+
+    state = init_train_state(model, params, dropout_key)
+
+    # training
     logger.info("\n--- Starting Training ---")
-    for step in range(num_train_steps):
+    for step in steps:
         sample_idx = get_sample_idx(batch_size, len(train_idx))
         batch_input = train_input[sample_idx]
         batch_label = train_label[sample_idx]
+
+        if step == 0:
+            lowered = train_step.lower(state, batch_input, batch_label)
+            compiled = lowered.compile()
+            costs = compiled.cost_analysis()
+            flops_per_step = costs[0]["flops"]  # type: ignore
+            write_stat(save_path / "stats.txt", "flops_per_step", f"{flops_per_step:,}")
 
         state, loss = train_step(state, batch_input, batch_label)
 
@@ -138,86 +249,26 @@ def train_model(
 
             write_loss(save_path / "train_losses.csv", step + 1, float(loss))
             write_loss(save_path / "test_losses.csv", step + 1, float(test_loss))
+            save_model(save_path, state)
 
-            with open(save_path / "params.pkl", "wb") as file:
-                pickle.dump(state.params, file)
-
-        if sample and (step + 1) % 1_000_000 == 0:
+        if sample and (step + 1) % 100_000 == 0:
             sample_model(
-                file_path, save_path, samps_to_gen=1_000, gen_its=5, tag=f"{step:,}"
+                data_path,
+                save_path,
+                d_model=d_model,
+                num_layers=num_layers,
+                num_heads=num_heads,
+                samps_to_gen=1_000,
+                gen_its=5,
+                tag=f"{step:,}",
             )
 
     logger.info("\n Training finished.")
 
-    with open(save_path / "params.pkl", "wb") as file:
-        pickle.dump(state.params, file)
+    save_model(save_path, state)
 
 
-def sample_model(
-    file_path: pathlib.Path,
-    save_path: pathlib.Path,
-    num_test_samps: int = 1_000,
-    gen_its: int = 10,
-    samps_to_gen: int = 1_000,
-    tag: str | None = None,
-) -> None:
-    dataset = Dataset(file_path, num_test_samps)
-    encoder = Encoder(dataset)
-
-    vocab_size = len(encoder.char_to_id)
-    d_model = 512  # Dimension of embeddings and model
-    num_layers = 6  # Number of transformer blocks
-    num_heads = 4  # Number of attention heads
-    seq_len = dataset.max_len + 1  # Sequence length
-    learning_rate = 0.0005
-
-    key = jax.random.PRNGKey(0)
-    main_key, params_key, dropout_key = jax.random.split(key, 3)
-
-    model = Transformer(
-        vocab_size=vocab_size,
-        d_model=d_model,
-        block_size=seq_len,
-        num_layers=num_layers,
-        num_heads=num_heads,
-    )
-
-    with open(save_path / "params.pkl", "rb") as file:
-        params = pickle.load(file)
-
-    state = MinimalTrainState.create(
-        params=params,
-        apply_fn=model.apply,
-        dropout_key=dropout_key,
-        learning_rate=learning_rate,
-        m_tm1=flax.core.freeze(  # type: ignore
-            jax.tree_util.tree_map(jnp.zeros_like, params)
-        ),
-        v_tm1=flax.core.freeze(  # type: ignore
-            jax.tree_util.tree_map(jnp.zeros_like, params)
-        ),
-        t=0,
-        tx=optax.adamw(learning_rate=learning_rate, weight_decay=0.01),
-    )
-
-    bos_id = encoder.char_to_id["[BOS]"]
-    subkey = jax.random.PRNGKey(42)
-
-    samps_str = []
-    for i in range(gen_its):
-        logger.info(f"Generating samples... Iteration {i + 1}/{gen_its}")
-        subkey = jax.random.split(subkey, 1)[0]
-        samps = generate_samples(state, samps_to_gen, seq_len, subkey, bos_id)
-        samps_str = samps_str + encoder.decode(np.array(samps))
-
-    if tag is None:
-        samp_save_path = save_path / "generated_samples.txt"
-    else:
-        samp_save_path = save_path / f"generated_samples_{tag}.txt"
-
-    with open(samp_save_path, "w") as f:
-        for samp in samps_str:
-            f.write(samp + "\n")
+# ---- MAINS ----
 
 
 def main_train_all():
@@ -234,24 +285,24 @@ def main_train_all():
     Ns = [20, 19, 18, 17, 16, 15, 14, 13, 12, 11, 10]
     for N in Ns:
         logger.info(f"\n\n=== N_TET = {N} ===")
-        processed_data_path = data_path / "input_data" / "dehydration" / "processed"
-        file_path = processed_data_path / f"spheres_{N}.hdf5"
+        processed_data_home = data_home / "input_data" / "dehydration" / "processed"
+        data_path = processed_data_home / f"spheres_{N}.hdf5"
 
-        save_path = data_path
+        save_path = data_home
 
         train_time = 0
         sample_time = 0
 
         if train:
             save_path = (
-                data_path
+                data_home
                 / "sgd_models_dehydration"
                 / f"spheres_512emb_6block_4head_{N}tet"
             )
             save_path.mkdir(parents=True, exist_ok=True)
 
             tic = time.time()
-            train_model(file_path, save_path)
+            train_model(data_path, save_path)
             toc = time.time()
 
             train_time = toc - tic
@@ -259,7 +310,7 @@ def main_train_all():
 
         if sample:
             tic = time.time()
-            sample_model(file_path, save_path, samps_to_gen=1_000, gen_its=20)
+            sample_model(data_path, save_path, samps_to_gen=1_000, gen_its=20)
             toc = time.time()
 
             sample_time = toc - tic
@@ -286,14 +337,14 @@ def main_train_long():
         f"Started long training for SGD models on dehydration data",
     )
 
-    processed_data_path = data_path / "input_data" / "dehydration" / "processed"
-    file_path = processed_data_path / f"spheres_10.hdf5"
+    processed_data_path = data_home / "input_data" / "dehydration" / "processed"
+    data_path = processed_data_path / f"spheres_10.hdf5"
 
     train_time = 0
     sample_time = 0
 
     save_path = (
-        data_path
+        data_home
         / "results"
         / "sgd_models_dehydration"
         / "long_train"
@@ -303,7 +354,7 @@ def main_train_long():
 
     # Train
     tic = time.time()
-    train_model(file_path, save_path, num_train_steps=10_000_000)
+    train_model(data_path, save_path, num_train_steps=10_000_000, sample=True)
     toc = time.time()
 
     train_time = toc - tic
@@ -311,7 +362,7 @@ def main_train_long():
 
     # Sample
     tic = time.time()
-    sample_model(file_path, save_path, samps_to_gen=1_000, gen_its=20, tag="final")
+    sample_model(data_path, save_path, samps_to_gen=1_000, gen_its=20, tag="final")
     toc = time.time()
 
     sample_time = toc - tic
@@ -325,8 +376,93 @@ def main_train_long():
     )
 
 
+def main_train_scale():
+    train = True
+    sample = True
+
+    embs = {"xs": 256, "s": 512, "m": 768, "l": 1024, "xl": 1536}
+    blocks = {"xs": 4, "s": 6, "m": 12, "l": 24, "xl": 32}
+    heads = {"xs": 4, "s": 4, "m": 6, "l": 8, "xl": 12}
+
+    logging.basicConfig(level=logging.INFO)
+    send_ntfy(
+        "usyd-knottedness",
+        "Scale Training Started",
+        f"Started training for SGD models on dehydration data",
+    )
+
+    sizes = ["xl", "l", "m", "s", "xs"]
+    for size in sizes:
+        emb = embs[size]
+        block = blocks[size]
+        head = heads[size]
+
+        processed_data_home = data_home / "input_data" / "dehydration" / "processed"
+        data_path = processed_data_home / "spheres_10.hdf5"
+
+        save_path = data_home
+
+        train_time = 0
+        sample_time = 0
+
+        if train:
+            save_path = (
+                data_home
+                / "input_data"
+                / "sgd_models_dehydration"
+                / "scale"
+                / f"spheres_{emb}emb_{block}block_{head}head_10tet"
+            )
+            save_path.mkdir(parents=True, exist_ok=True)
+
+            tic = time.time()
+            train_model(
+                data_path,
+                save_path,
+                d_model=emb,
+                num_heads=head,
+                num_layers=block,
+                sample=True,
+                resume=False,
+            )
+            toc = time.time()
+
+            train_time = toc - tic
+            logger.info(f"Training time: {train_time:.2f} seconds")
+
+        if sample:
+            tic = time.time()
+            sample_model(
+                data_path,
+                save_path,
+                d_model=emb,
+                num_heads=head,
+                num_layers=block,
+                samps_to_gen=1_000,
+                gen_its=20,
+            )
+            toc = time.time()
+
+            sample_time = toc - tic
+            logger.info(f"Sampling time: {sample_time:.2f} seconds")
+
+        send_ntfy(
+            "usyd-knottedness",
+            f"Training Finished for size={size}",
+            f"Finished training for size={size}. Training time: {train_time:.2f} seconds. Sampling time: {sample_time:.2f} seconds.",
+        )
+
+    send_ntfy(
+        "usyd-knottedness",
+        "All Scale Training Finished",
+        f"Finished training for all scales.",
+    )
+
+
 if __name__ == "__main__":
     if "long" in sys.argv:
         main_train_long()
     if "all" in sys.argv:
         main_train_all()
+    if "scale" in sys.argv:
+        main_train_scale()
