@@ -1,4 +1,6 @@
+import csv
 import logging
+import os
 import pathlib
 import pickle
 import sys
@@ -48,6 +50,20 @@ def write_stat(stat_file_path, stat_name, stat_value):
 
 def get_sample_idx(batch_size, dataset_size):
     return np.random.choice(dataset_size, size=batch_size, replace=True)
+
+
+def get_last_csv_row(filepath):
+    with open(filepath, "rb") as f:
+        try:
+            f.seek(-2, os.SEEK_END)
+            while f.read(1) != b"\n":
+                f.seek(-2, os.SEEK_CUR)
+        except OSError:
+            f.seek(0)
+
+        last_line = f.readline().decode("utf-8")
+
+    return next(csv.reader([last_line]))
 
 
 # jax utility
@@ -202,8 +218,8 @@ def train_model(
 
     if (save_path / "params.pkl").exists() and resume:
         params = load_model(save_path)
-        # TODO: also load what step we are up to, and update the below steps list :)
-        steps = range(num_train_steps)
+        last_step = int(get_last_csv_row(save_path / "train_losses.csv")[0])
+        steps = range(last_step, num_train_steps)
     else:
         blank_idx = get_sample_idx(batch_size, len(train_idx))
         blank_batch_input = train_input[blank_idx]
@@ -266,7 +282,7 @@ def train_model(
                 num_heads=num_heads,
                 samps_to_gen=1_000,
                 gen_its=5,
-                tag=f"{step:,}",
+                tag=f"{step+1:,}",
             )
 
     logger.info("\n Training finished.")
@@ -387,6 +403,13 @@ def main_train_scale():
     embs = {"xs": 256, "s": 512, "m": 768, "l": 1024, "xl": 1536}
     blocks = {"xs": 4, "s": 6, "m": 12, "l": 24, "xl": 32}
     heads = {"xs": 4, "s": 4, "m": 6, "l": 8, "xl": 12}
+    itts = {
+        "xs": 20_000_000,
+        "s": 5_000_000,
+        "m": 2_000_000,
+        "l": 2_000_000,
+        "xl": 1_000_000,
+    }
 
     logging.basicConfig(level=logging.INFO)
     send_ntfy(
@@ -395,7 +418,7 @@ def main_train_scale():
         f"Started training for SGD models on dehydration data",
     )
 
-    sizes = ["l", "m", "s", "xs"]
+    sizes = ["xs", "s", "m", "l"]
     for size in sizes:
         emb = embs[size]
         block = blocks[size]
@@ -422,6 +445,7 @@ def main_train_scale():
             write_stat(save_path / "stats.txt", "size:", size)
 
             tic = time.time()
+
             train_model(
                 data_path,
                 save_path,
@@ -429,8 +453,9 @@ def main_train_scale():
                 num_heads=head,
                 num_layers=block,
                 batch_size=16,
+                num_train_steps=itts[size],
                 sample=True,
-                resume=False,
+                resume=True,
             )
             toc = time.time()
 
