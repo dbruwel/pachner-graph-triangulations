@@ -219,6 +219,7 @@ def train_model(
     if (save_path / "params.pkl").exists() and resume:
         params = load_model(save_path)
         last_step = int(get_last_csv_row(save_path / "train_losses.csv")[0])
+        logger.info(f"Training resume from {last_step:,}")
         steps = range(last_step, num_train_steps)
     else:
         blank_idx = get_sample_idx(batch_size, len(train_idx))
