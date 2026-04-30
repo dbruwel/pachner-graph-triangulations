@@ -1,16 +1,19 @@
 import logging
 import pathlib
 import pickle
-import numpy as np
+import time
+
 import jax
 import jax.numpy as jnp
+import numpy as np
 import optax
 from flax.core import freeze
 from flax.training import train_state
-from regina import Triangulation3
 from pachner_traversal.data_io_dehydration import Dataset
-from pachner_traversal.glue_encoding import encode
 from pachner_traversal.dit import DiT
+from pachner_traversal.glue_encoding import encode
+from pachner_traversal.utils import create_results_path, data_root
+from regina import Triangulation3
 
 logger = logging.getLogger(__name__)
 
@@ -95,7 +98,7 @@ def train_model(
     model = DiT(
         input_dim=input_dim,
         seq_len=seq_len,
-        d_model=d_model,
+        proj_dim=d_model,
         num_layers=num_layers,
         num_heads=num_heads,
         dropout_rate=dropout_rate,
@@ -161,11 +164,8 @@ def train_model(
         pickle.dump(state.params, f)
 
 
-if __name__ == "__main__":
-    import time
-
+def main():
     logging.basicConfig(level=logging.INFO)
-    from pachner_traversal.utils import data_root, create_results_path
 
     hdf5_path = (
         data_root
@@ -180,3 +180,7 @@ if __name__ == "__main__":
     train_model(hdf5_path, save_path)
     toc = time.time()
     print(f"Training time: {toc - tic:.2f} seconds")
+
+
+if __name__ == "__main__":
+    main()

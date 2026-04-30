@@ -274,10 +274,8 @@ def train_model(
     save_model(save_path, state)
 
 
-# ---- MAINS ----
-
-
-def main_train_all():
+# main
+def main_train_tet():
     train = True
     sample = True
 
@@ -471,7 +469,7 @@ def main_train_scale():
 if __name__ == "__main__":
     if "long" in sys.argv:
         main_train_long()
-    if "all" in sys.argv:
-        main_train_all()
+    if "tet" in sys.argv:
+        main_train_tet()
     if "scale" in sys.argv:
         main_train_scale()

@@ -3,21 +3,23 @@
 import logging
 import pathlib
 import pickle
-import numpy as np
+import time
+
 import jax
 import jax.numpy as jnp
+import numpy as np
 import optax
 from flax.training import train_state
-from regina import Triangulation3
-
 from pachner_traversal.data_io_dehydration import Dataset
 from pachner_traversal.glue_encoding import (
-    tri_to_gluing,
-    jax_encode,
     get_face_graph,
     get_vertex_graph,
+    jax_encode,
+    tri_to_gluing,
 )
 from pachner_traversal.graphomer import EdgeReconstructionGraphomer
+from pachner_traversal.utils import create_results_path, data_root
+from regina import Triangulation3
 
 logger = logging.getLogger(__name__)
 print(jax.devices())
@@ -27,9 +29,7 @@ class DiscreteTrainState(train_state.TrainState):
     dropout_key: jax.Array
 
 
-# -- Forward process -----------------------------------------------------
-
-
+# forward process
 def q_sample(
     x0: np.ndarray,
     n_remove: np.ndarray,
@@ -67,9 +67,7 @@ def q_sample(
     return x_t, x_removed
 
 
-# -- Encoding helpers ----------------------------------------------------
-
-
+# encoding helpers
 def jax_encode_gluing_batch(gluing_matrices: jnp.ndarray, n_tet: int) -> jnp.ndarray:
     """Encode a batch of gluing matrices using spectral positional encoding.
 
@@ -94,9 +92,7 @@ def sigs_to_gluings(sigs: list[str]) -> np.ndarray:
     return np.stack(matrices, axis=0)
 
 
-# -- Loss ----------------------------------------------------------------
-
-
+# loss
 def loss_fn(
     params,
     model,
@@ -129,9 +125,7 @@ def loss_fn(
     return loss.sum()
 
 
-# -- Helpers ------------------------------------------------------------
-
-
+# helpers
 def write_loss(file_path, step, loss):
     with open(file_path, "a") as f:
         f.write(f"{step},{loss}\n")
@@ -159,9 +153,7 @@ def get_shortest_path_distance_matrix(adj_matrix: jnp.ndarray) -> jnp.ndarray:
 batched_shortest_path = jax.vmap(get_shortest_path_distance_matrix, in_axes=0)
 
 
-# -- Training ------------------------------------------------------------
-
-
+# training
 def train_model(
     data_path: pathlib.Path,
     save_path: pathlib.Path,
@@ -286,13 +278,9 @@ def train_model(
         pickle.dump(state.params, f)
 
 
-# -- Main ----------------------------------------------------------------
-
-if __name__ == "__main__":
-    import time
-
+# main
+def main():
     logging.basicConfig(level=logging.INFO)
-    from pachner_traversal.utils import data_root, create_results_path
 
     N_TET = 13
 
@@ -310,3 +298,7 @@ if __name__ == "__main__":
     train_model(hdf5_path, save_path, n_tet=N_TET)
     toc = time.time()
     print(f"Training time: {toc - tic:.2f} seconds")
+
+
+if __name__ == "__main__":
+    main()

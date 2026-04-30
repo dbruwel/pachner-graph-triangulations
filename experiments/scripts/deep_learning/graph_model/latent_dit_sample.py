@@ -1,12 +1,11 @@
+import pathlib
+import pickle
+import sys
+
 import jax
 import jax.numpy as jnp
 import numpy as np
-import pickle
-from pathlib import Path
-import sys
-import pathlib
 
-sys.path.append(str(pathlib.Path(__file__).parent))
 from pachner_traversal.dit import DiT
 
 
@@ -18,7 +17,7 @@ def sample_dit(
     rng_seed: int = 0,
     eta: float = 0.0,
 ):
-    # Cosine schedule (match training)
+    # cosine schedule (match training)
     T = num_steps
     steps = np.arange(T + 1, dtype=np.float64)
     t = steps / T
@@ -54,17 +53,17 @@ def sample_dit(
     return x
 
 
-if __name__ == "__main__":
-    import sys
-    import pathlib
-
-    # Example usage: python sample_dit.py /path/to/params.pkl /path/to/output.npy
+def main():
     params_path = sys.argv[1]
     output_path = sys.argv[2]
-    # Model config (should match training)
-    model = DiT(input_dim=1296, seq_len=144, d_model=256, num_layers=4, num_heads=4)
+
+    model = DiT(input_dim=1296, seq_len=144, proj_dim=256, num_layers=4, num_heads=4)
     with open(params_path, "rb") as f:
         params = pickle.load(f)
     samples = sample_dit(params, model, num_steps=1000, shape=(8, 144, 1296))
     np.save(output_path, np.array(samples))
     print(f"Saved samples to {output_path}")
+
+
+if __name__ == "__main__":
+    main()

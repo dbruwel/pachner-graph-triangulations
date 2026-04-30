@@ -6,24 +6,21 @@ and reconstructs triangulations from the generated gluing matrices.
 """
 
 import logging
-import pathlib
 import pickle
+import time
 
 import jax
 import jax.numpy as jnp
-import matplotlib.pyplot as plt
 import numpy as np
-from scipy.optimize import linear_sum_assignment
-
 from pachner_traversal.dit_discrete import DiscreteDiT
 from pachner_traversal.glue_encoding import encode, gluing_to_tri, jax_encode
+from pachner_traversal.utils import data_root
+from scipy.optimize import linear_sum_assignment
 
 logger = logging.getLogger(__name__)
 
 
-# ── Diffusion schedule ──────────────────────────────────────────────────
-
-
+# diffusion schedule
 def get_swap_rate(n_nodes: int, T: int) -> np.ndarray:
     """Compute the swap rate at each time step."""
     alpha = (np.pi / 2 - np.pow(n_nodes, -0.5)) / T
@@ -32,9 +29,7 @@ def get_swap_rate(n_nodes: int, T: int) -> np.ndarray:
     return swap_rate
 
 
-# ── Matching helpers ────────────────────────────────────────────────────
-
-
+# matching helpers
 def random_matching(n_nodes: int, rng: np.random.Generator) -> np.ndarray:
     """Generate a uniformly random perfect matching as a permutation matrix."""
     perm = rng.choice(n_nodes, size=n_nodes, replace=False)
@@ -74,9 +69,7 @@ def jax_encode_gluing_batch(gluing_matrices: jnp.ndarray, n_tet: int) -> jnp.nda
     return results
 
 
-# ── Rounding helpers ────────────────────────────────────────────────────
-
-
+# rounding helpers
 def soft_to_hard_matching(soft_matrix: np.ndarray) -> np.ndarray:
     """Convert a soft doubly-stochastic matrix to a hard perfect matching.
 
@@ -110,9 +103,7 @@ def gumbel_soft_to_hard_matching(
     return soft_to_hard_matching(perturbed)
 
 
-# ── Posterior sampling ──────────────────────────────────────────────────
-
-
+# posterior sampling
 def compute_posterior_logits(
     x_t: np.ndarray,
     x0_pred: np.ndarray,
@@ -153,9 +144,7 @@ def compute_posterior_logits(
     return logits_t_minus_1
 
 
-# ── Generation ──────────────────────────────────────────────────────────
-
-
+# generation
 def generate(
     params,
     n_tet: int,
@@ -254,13 +243,9 @@ def generate(
     return triangulations
 
 
-# ── Main ────────────────────────────────────────────────────────────────
-
-if __name__ == "__main__":
-    import time
-
+# main
+def main():
     logging.basicConfig(level=logging.INFO)
-    from pachner_traversal.utils import data_root
 
     N_TET = 13
     N_SAMPLES = 8
@@ -286,3 +271,7 @@ if __name__ == "__main__":
             print(f"Sample {i}: FAILED")
 
     print(f"Generation time: {toc - tic:.2f} seconds")
+
+
+if __name__ == "__main__":
+    main()

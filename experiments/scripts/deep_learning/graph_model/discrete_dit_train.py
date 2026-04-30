@@ -20,28 +20,27 @@ At generation time we predict x0_hat, then re-corrupt it to level t-1.
 import logging
 import pathlib
 import pickle
-import numpy as np
+import time
+
 import jax
 import jax.numpy as jnp
+import numpy as np
 import optax
 from flax.training import train_state
+from pachner_traversal.data_io_dehydration import Dataset
+from pachner_traversal.dit_discrete import DiscreteDiT
+from pachner_traversal.glue_encoding import encode, jax_encode, tri_to_gluing
+from pachner_traversal.utils import create_results_path, data_root
 from regina import Triangulation3
 
-from pachner_traversal.data_io_dehydration import Dataset
-from pachner_traversal.glue_encoding import encode, tri_to_gluing, jax_encode
-from pachner_traversal.dit_discrete import DiscreteDiT
-
 logger = logging.getLogger(__name__)
-print(jax.devices())
 
 
 class DiscreteTrainState(train_state.TrainState):
     dropout_key: jax.Array
 
 
-# ── Diffusion schedule ──────────────────────────────────────────────────
-
-
+# diffusion schedule
 def get_swap_rate(n_nodes: int, T: int) -> np.ndarray:
     """Compute the swap rate at each time step."""
     alpha = (np.pi / 2 - np.pow(n_nodes, -0.5)) / T
@@ -50,9 +49,7 @@ def get_swap_rate(n_nodes: int, T: int) -> np.ndarray:
     return swap_rate
 
 
-# ── Forward process ─────────────────────────────────────────────────────
-
-
+# forward process
 def apply_transpositions(
     perm_matrix: np.ndarray, n_swaps: int, rng: np.random.Generator
 ) -> np.ndarray:
@@ -97,9 +94,7 @@ def q_sample(
     return x_t
 
 
-# ── Encoding helpers ────────────────────────────────────────────────────
-
-
+# encoding helpers
 def encode_gluing_batch(gluing_matrices: np.ndarray, n_tet: int) -> np.ndarray:
     """Encode a batch of gluing matrices using spectral positional encoding.
 
@@ -142,9 +137,7 @@ def sigs_to_gluings(sigs: list[str]) -> np.ndarray:
     return np.stack(matrices, axis=0)
 
 
-# ── Loss ────────────────────────────────────────────────────────────────
-
-
+# loss
 def loss_fn(
     params,
     model,
@@ -183,17 +176,13 @@ def loss_fn(
     return loss
 
 
-# ── Helpers ────────────────────────────────────────────────────────────
-
-
+# helpers
 def write_loss(file_path, step, loss):
     with open(file_path, "a") as f:
         f.write(f"{step},{loss}\n")
 
 
-# ── Training ────────────────────────────────────────────────────────────
-
-
+# training
 def train_model(
     data_path: pathlib.Path,
     save_path: pathlib.Path,
@@ -330,13 +319,9 @@ def train_model(
         pickle.dump(state.params, f)
 
 
-# ── Main ────────────────────────────────────────────────────────────────
-
-if __name__ == "__main__":
-    import time
-
+# main
+def main():
     logging.basicConfig(level=logging.INFO)
-    from pachner_traversal.utils import data_root, create_results_path
 
     N_TET = 13
 
@@ -354,3 +339,7 @@ if __name__ == "__main__":
     train_model(hdf5_path, save_path, n_tet=N_TET)
     toc = time.time()
     print(f"Training time: {toc - tic:.2f} seconds")
+
+
+if __name__ == "__main__":
+    main()
