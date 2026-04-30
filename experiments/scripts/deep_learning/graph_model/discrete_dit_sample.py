@@ -260,13 +260,13 @@ if __name__ == "__main__":
     import time
 
     logging.basicConfig(level=logging.INFO)
-    from pachner_traversal.utils import data_path
+    from pachner_traversal.utils import data_root
 
     N_TET = 13
     N_SAMPLES = 8
 
     model_path = (
-        data_path / "results" / "discrete_dit_models" / "sphere_13tet" / "20260417_1100"
+        data_root / "results" / "discrete_dit_models" / "sphere_13tet" / "20260417_1100"
     )
     params_file = model_path / "params.pkl"
 

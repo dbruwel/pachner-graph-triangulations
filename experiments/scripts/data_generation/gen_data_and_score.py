@@ -1,88 +1,15 @@
 import logging
-import multiprocessing
 import time
-from datetime import datetime
 from pathlib import Path
 
 import numpy as np
 import pandas as pd
 
-from pachner_traversal.mcmc import iterate
+from pachner_traversal.mcmc import run_chains
 from pachner_traversal.potential_functions import calc_composite_potential
-from pachner_traversal.utils import results_path
+from pachner_traversal.utils import create_results_path, data_root
 
 logger = logging.getLogger(__name__)
-
-
-def sample_chain(
-    seed: str,
-    gamma_: float,
-    itts: int,
-    steps: int,
-    chain_id: int,
-):
-    isos = [seed]
-
-    for itt in range(itts):
-        if (itt % 1_000 == 0) or (itt < 100 and itt % 10 == 0):
-            if chain_id == 0:
-                logger.info(
-                    f"Chain {chain_id}: iteration {itt:,.0f}/{itts:,.0f} at {datetime.now().strftime('%H:%M:%S')}"
-                )
-        current_iso = isos[-1]
-
-        proposed_iso = iterate(current_iso, gamma_, steps=steps)
-        isos.append(proposed_iso)
-
-    return isos
-
-
-def run_chains(
-    num_chains: int,
-    seed: str,
-    gamma_: float,
-    itts: int,
-    steps: int,
-) -> list[list[str]]:
-    logger.info(f"Running {num_chains:,.0f} chains with {itts:,.0f} iterations each.")
-
-    with multiprocessing.Pool(processes=num_chains) as pool:
-        args = [
-            (
-                seed,
-                gamma_,
-                itts,
-                steps,
-                chain_id,
-            )
-            for chain_id in range(num_chains)
-        ]
-
-        isos_lists = pool.starmap(sample_chain, args)
-
-    return isos_lists
-
-
-def run_mcmc(
-    res_path: Path,
-    num_chains: int,
-    gamma_: float,
-    itts: int,
-    steps: int,
-) -> tuple[pd.DataFrame, Path]:
-    results = run_chains(
-        num_chains=num_chains,
-        seed="cMcabbgqs",
-        gamma_=gamma_,
-        itts=itts,
-        steps=steps,
-    )
-
-    path = results_path(res_path)
-
-    isos_lists_df = pd.DataFrame(results).T
-    isos_lists_df.to_csv(path / "isos_lists.csv", index=False)
-    return isos_lists_df, path
 
 
 def get_score(
@@ -98,9 +25,7 @@ def get_score(
         )
     else:
         try:
-            existing_scores = pd.read_csv(
-                save_path / "composite_scores.csv", index_col="iso"
-            )
+            existing_scores = pd.read_csv(save_path, index_col="iso")
             unique_isos = np.setdiff1d(unique_isos, existing_scores.index)
             logger.info(
                 f"Found {len(existing_scores)} existing scores. Remaining: {len(unique_isos)}"
@@ -129,39 +54,46 @@ def get_score(
             ],
         )
         if start == 0 and restart:
-            scores.to_csv(save_path / f"composite_scores.csv", index_label="iso")
+            scores.to_csv(save_path, index_label="iso")
         else:
-            scores.to_csv(save_path / f"composite_scores.csv", mode="a", header=False)
+            scores.to_csv(save_path, mode="a", header=False)
+
+
+# main function
+def main():
+    logging.basicConfig(level=logging.INFO)
+    generate_data = False
+    score_data = True
+
+    if generate_data:
+        save_path = create_results_path(Path("mcmc") / "generic_samples")
+        num_chains = 7
+        gamma_ = 1 / 10
+        itts = 10_000
+        steps = 100
+
+        results = run_chains(
+            num_chains=num_chains,
+            seed="cMcabbgqs",
+            gamma_=gamma_,
+            itts=itts,
+            steps=steps,
+        )
+
+        isos_lists_df = pd.DataFrame(results).T
+        isos_lists_df.to_csv(save_path / "isos_lists.csv", index=False)
+        logger.info(f"Saved MCMC samples to {save_path}")
+
+    if score_data:
+        save_path = data_root / "results" / "mcmc" / "generic_samples" / "20251004_1845"
+        isos_lists_df = pd.read_csv(save_path / "isos_lists.csv")
+
+        start_time = time.time()
+        get_score(save_path / "composite_scores.csv", isos_lists_df, restart=False)
+        end_time = time.time()
+
+        logger.info(f"Time taken: {end_time - start_time:.2f} seconds")
 
 
 if __name__ == "__main__":
-    logging.basicConfig(level=logging.INFO)
-
-    # save_path = Path("mcmc") / "generic_samples"
-
-    # isos_lists_df, path = run_mcmc(
-    #     save_path,
-    #     num_chains=7,
-    #     gamma_=1 / 10,
-    #     itts=10_000,
-    #     steps=100,
-    # )
-    # logger.info(f"Saved MCMC samples to {path}")
-
-    path = (
-        Path("~")
-        / "main"
-        / "honours"
-        / "pachner_graph_triangulations"
-        / "data"
-        / "results"
-        / "mcmc"
-        / "generic_samples"
-        / "20251004_1845"
-    )
-    isos_lists_df = pd.read_csv(path / "isos_lists.csv")
-
-    start_time = time.time()
-    get_score(path, isos_lists_df, restart=False)
-    end_time = time.time()
-    logger.info(f"Time taken: {end_time - start_time:.2f} seconds")
+    main()

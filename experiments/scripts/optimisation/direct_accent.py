@@ -7,7 +7,7 @@ import pandas as pd
 
 import pachner_traversal.potential_functions as potentials
 from pachner_traversal.direct_ascent import run_accent
-from pachner_traversal.utils import results_path
+from pachner_traversal.utils import create_results_path
 
 logging.basicConfig(level=logging.DEBUG)
 
@@ -41,7 +41,7 @@ def run_direct_accent(
         [isos_list[6] for isos_list in isos_lists], columns=["beta"]
     )
 
-    path = results_path(res_path)
+    path = create_results_path(res_path)
 
     df_isos.to_csv(path / "isos.csv", index=False)
     df_scores.to_csv(path / "scores.csv", index=False)

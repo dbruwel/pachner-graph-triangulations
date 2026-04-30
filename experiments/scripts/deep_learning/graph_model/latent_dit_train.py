@@ -165,16 +165,16 @@ if __name__ == "__main__":
     import time
 
     logging.basicConfig(level=logging.INFO)
-    from pachner_traversal.utils import data_path, results_path
+    from pachner_traversal.utils import data_root, create_results_path
 
     hdf5_path = (
-        data_path
+        data_root
         / "input_data"
         / "dehydration"
         / "processed"
         / "d_training_spheres_13.hdf5"
     )
-    save_path = results_path("dit_models/sphere_13tet")
+    save_path = create_results_path("dit_models/sphere_13tet")
     save_path.mkdir(parents=True, exist_ok=True)
     tic = time.time()
     train_model(hdf5_path, save_path)

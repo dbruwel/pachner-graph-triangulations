@@ -2,6 +2,11 @@ import math
 import random
 
 from regina.engine import Triangulation3
+import logging
+import multiprocessing
+from datetime import datetime
+
+logger = logging.getLogger(__name__)
 
 
 def neighbours(iso: str, f: list[int], a: int) -> dict:
@@ -167,3 +172,55 @@ def mcmc3d(
             with open(name, "a") as fl:
                 fl.write(iso + "\n")
     return True
+
+
+###
+
+
+def sample_chain(
+    seed: str,
+    gamma_: float,
+    itts: int,
+    steps: int,
+    chain_id: int,
+):
+    isos = [seed]
+
+    for itt in range(itts):
+        if (itt % 1_000 == 0) or (itt < 100 and itt % 10 == 0):
+            if chain_id == 0:
+                logger.info(
+                    f"Chain {chain_id}: iteration {itt:,.0f}/{itts:,.0f} at {datetime.now().strftime('%H:%M:%S')}"
+                )
+        current_iso = isos[-1]
+
+        proposed_iso = iterate(current_iso, gamma_, steps=steps)
+        isos.append(proposed_iso)
+
+    return isos
+
+
+def run_chains(
+    num_chains: int,
+    seed: str,
+    gamma_: float,
+    itts: int,
+    steps: int,
+) -> list[list[str]]:
+    logger.info(f"Running {num_chains:,.0f} chains with {itts:,.0f} iterations each.")
+
+    with multiprocessing.Pool(processes=num_chains) as pool:
+        args = [
+            (
+                seed,
+                gamma_,
+                itts,
+                steps,
+                chain_id,
+            )
+            for chain_id in range(num_chains)
+        ]
+
+        isos_lists = pool.starmap(sample_chain, args)
+
+    return isos_lists

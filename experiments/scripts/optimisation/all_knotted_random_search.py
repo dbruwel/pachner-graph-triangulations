@@ -9,7 +9,7 @@ import pandas as pd
 from regina import Triangulation3
 
 from pachner_traversal.mcmc import iterate
-from pachner_traversal.utils import results_path
+from pachner_traversal.utils import create_results_path
 from pachner_traversal.potential_functions import check_all_unknotted, check_all_knotted
 
 logger = logging.getLogger(__name__)

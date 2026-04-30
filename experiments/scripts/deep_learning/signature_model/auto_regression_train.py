@@ -17,7 +17,7 @@ from pachner_traversal.transformer import (
     generate_samples,
     train_step,
 )
-from pachner_traversal.utils import data_path as data_home
+from pachner_traversal.utils import data_root as data_home
 from pachner_traversal.utils import send_ntfy
 
 logger = logging.getLogger(__name__)

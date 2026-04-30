@@ -6,11 +6,25 @@ import matplotlib.pyplot as plt
 import numpy as np
 import requests
 
-data_path = pathlib.Path(__file__).parent.parent.parent / "data"
+data_root = pathlib.Path(__file__).parent.parent.parent / "data"
+
+leading_chars = {
+    10: "k",
+    11: "l",
+    12: "m",
+    13: "n",
+    14: "o",
+    15: "p",
+    16: "q",
+    17: "r",
+    18: "s",
+    19: "t",
+    20: "u",
+}
 
 
-def results_path(res_name: str | pathlib.Path) -> pathlib.Path:
-    res_path = data_path / "results" / res_name
+def create_results_path(res_name: str | pathlib.Path) -> pathlib.Path:
+    res_path = data_root / "results" / res_name
 
     path = res_path / datetime.now().strftime("%Y%m%d_%H%M")
     path.mkdir(parents=True, exist_ok=True)

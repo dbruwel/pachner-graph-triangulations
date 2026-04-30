@@ -7,7 +7,7 @@ import pandas as pd
 
 import pachner_traversal.potential_functions as potentials
 from pachner_traversal.simulated_annealing import run_chains
-from pachner_traversal.utils import results_path
+from pachner_traversal.utils import create_results_path
 
 
 def run_sim_annealing(
@@ -16,7 +16,7 @@ def run_sim_annealing(
         [str], tuple[float | np.floating[Any], float | np.floating[Any], int, bool]
     ],
 ) -> None:
-    path = results_path(res_path)
+    path = create_results_path(res_path)
 
     res = run_chains(
         beta=1.0,

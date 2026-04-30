@@ -211,14 +211,14 @@ class Encoder:
 
 
 if __name__ == "__main__":
-    from pachner_traversal.utils import data_path
+    from pachner_traversal.utils import data_root
 
     for N in [10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20]:
         input_path = (
-            data_path / "input_data" / "dehydration" / "raw" / f"spheres_{N}.txt"
+            data_root / "input_data" / "dehydration" / "raw" / f"spheres_{N}.txt"
         )
         hdf5_file = (
-            data_path / "input_data" / "dehydration" / "processed" / f"spheres_{N}.hdf5"
+            data_root / "input_data" / "dehydration" / "processed" / f"spheres_{N}.hdf5"
         )
 
         convert_to_hdf5(input_path, hdf5_file)

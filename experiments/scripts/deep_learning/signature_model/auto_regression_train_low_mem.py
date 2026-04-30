@@ -12,7 +12,7 @@ from flax.core import freeze
 
 from pachner_traversal.data_io_dehydration import Dataset, Encoder
 from pachner_traversal.transformer import MinimalTrainState, Transformer, train_step
-from pachner_traversal.utils import results_path, data_path
+from pachner_traversal.utils import create_results_path, data_root
 
 logger = logging.getLogger(__name__)
 
@@ -122,9 +122,11 @@ def train_model(
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
 
-    processed_data_path = data_path / "input_data" / "dehydration" / "processed"
+    processed_data_path = data_root / "input_data" / "dehydration" / "processed"
 
     file_path = processed_data_path / "d_training_spheres_13.hdf5"
-    save_path = results_path("sgd_models_dehydration/spheres_256emb_6block_8head_13tet")
+    save_path = create_results_path(
+        "sgd_models_dehydration/spheres_256emb_6block_8head_13tet"
+    )
 
     train_model(file_path, save_path)
