@@ -1,30 +1,11 @@
 import logging
 import multiprocessing
-import time
 from datetime import datetime
-from pathlib import Path
-
-import numpy as np
-import pandas as pd
-from regina import Triangulation3
 
 from pachner_traversal.mcmc import iterate
-from pachner_traversal.utils import create_results_path
-from pachner_traversal.potential_functions import check_all_unknotted, check_all_knotted
+from pachner_traversal.potential_functions import check_all_knotted
 
 logger = logging.getLogger(__name__)
-
-
-def check_contains_dunce_hat(
-    iso: str,
-) -> bool:
-    t = Triangulation3(iso)
-    faces = [f for f in t.faces(2)]
-    for face in faces:
-        if face.type() == face.DUNCEHAT:
-            return True
-
-    return False
 
 
 def sample_chain(
@@ -84,15 +65,24 @@ def run_chains(
     return all_knotted_list
 
 
-if __name__ == "__main__":
+def main():
     logging.basicConfig(level=logging.INFO)
+    num_chains = 7
+    seed = "cMcabbgqs"
+    gamma_ = 1 / 10
+    itts = 10_000_000
+    steps = 1
 
     all_knotted_list = run_chains(
-        num_chains=7,
-        seed="cMcabbgqs",
-        gamma_=1 / 10,
-        itts=10_000_000,
-        steps=1,
+        num_chains=num_chains,
+        seed=seed,
+        gamma_=gamma_,
+        itts=itts,
+        steps=steps,
     )
 
-    print(all_knotted_list)
+    logger.info(all_knotted_list)
+
+
+if __name__ == "__main__":
+    main()

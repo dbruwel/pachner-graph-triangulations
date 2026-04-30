@@ -9,6 +9,8 @@ import pachner_traversal.potential_functions as potentials
 from pachner_traversal.simulated_annealing import run_chains
 from pachner_traversal.utils import create_results_path
 
+logger = logging.getLogger(__name__)
+
 
 def run_sim_annealing(
     res_path: Path,
@@ -53,9 +55,8 @@ def run_sim_annealing(
     acceptances_df.to_csv(f"{path}/acceptances.csv", index=False)
 
 
-if __name__ == "__main__":
+def main():
     logging.basicConfig(level=logging.INFO)
-    logger = logging.getLogger(__name__)
 
     logger.info("Degree of Alexander polynomial potential")
     run_sim_annealing(
@@ -65,18 +66,18 @@ if __name__ == "__main__":
         ).calc_potential,
     )
 
-    # logger.info("")
-    # logger.info("")
-    # logger.info("Determinant of Alexander polynomial potential")
-    # run_sim_annealing(
-    #     Path("sim_annealing") / "determinant_alexander_polynomial",
-    #     potentials.Potential(
-    #         potentials.DeterminantAlexanderPolynomial, max_size=30
-    #     ).calc_potential,
-    # )
+    logger.info("")
+    logger.info("")
+    logger.info("Determinant of Alexander polynomial potential")
+    run_sim_annealing(
+        Path("sim_annealing") / "determinant_alexander_polynomial",
+        potentials.Potential(
+            potentials.DeterminantAlexanderPolynomial, max_size=30
+        ).calc_potential,
+    )
 
-    # logger.info("")
-    # logger.info("")
+    logger.info("")
+    logger.info("")
     logger.info("Norm of Alexander polynomial potential")
     run_sim_annealing(
         Path("sim_annealing") / "norm_alexander_polynomial",
@@ -85,18 +86,22 @@ if __name__ == "__main__":
         ).calc_potential,
     )
 
-    # logger.info("")
-    # logger.info("")
-    # logger.info("Number of generators potential")
-    # run_sim_annealing(
-    #     Path("sim_annealing") / "number_of_generators",
-    #     potentials.Potential(potentials.NumGenerators, max_size=30).calc_potential,
-    # )
+    logger.info("")
+    logger.info("")
+    logger.info("Number of generators potential")
+    run_sim_annealing(
+        Path("sim_annealing") / "number_of_generators",
+        potentials.Potential(potentials.NumGenerators, max_size=30).calc_potential,
+    )
 
-    # logger.info("")
-    # logger.info("")
-    # logger.info("Variance of edge degree potential")
-    # run_sim_annealing(
-    #     Path("sim_annealing") / "variance_edge_degree",
-    #     potentials.Potential(potentials.VarianceEdgeDegree, max_size=30).calc_potential,
-    # )
+    logger.info("")
+    logger.info("")
+    logger.info("Variance of edge degree potential")
+    run_sim_annealing(
+        Path("sim_annealing") / "variance_edge_degree",
+        potentials.Potential(potentials.VarianceEdgeDegree, max_size=30).calc_potential,
+    )
+
+
+if __name__ == "__main__":
+    main()

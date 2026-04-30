@@ -9,8 +9,6 @@ import pachner_traversal.potential_functions as potentials
 from pachner_traversal.direct_ascent import run_accent
 from pachner_traversal.utils import create_results_path
 
-logging.basicConfig(level=logging.DEBUG)
-
 
 def run_direct_accent(
     res_path: Path,
@@ -52,13 +50,14 @@ def run_direct_accent(
     df_betas.to_csv(path / "betas.csv", index=False)
 
 
-if __name__ == "__main__":
-    # run_direct_accent(
-    #     Path("direct_ascent") / "degree_alexander_polynomial",
-    #     potentials.Potential(
-    #         potentials.DegreeAlexanderPolynomial, max_size=None
-    #     ).calc_potential,
-    # )
+def main():
+    logging.basicConfig(level=logging.DEBUG)
+    run_direct_accent(
+        Path("direct_ascent") / "degree_alexander_polynomial",
+        potentials.Potential(
+            potentials.DegreeAlexanderPolynomial, max_size=None
+        ).calc_potential,
+    )
 
     run_direct_accent(
         Path("direct_ascent") / "determinant_alexander_polynomial",
@@ -85,3 +84,7 @@ if __name__ == "__main__":
             potentials.VarianceEdgeDegree, max_size=None
         ).calc_potential,
     )
+
+
+if __name__ == "__main__":
+    main()

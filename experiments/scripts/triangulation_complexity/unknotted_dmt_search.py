@@ -2,8 +2,6 @@ import logging
 import multiprocessing
 from datetime import datetime
 
-from regina import Triangulation3
-
 from pachner_traversal.mcmc import iterate
 from pachner_traversal.potential_functions import check_all_unknotted
 from pachner_traversal.dmt import estimate_critical_count
@@ -83,13 +81,22 @@ def run_chains(
     return isos_lists
 
 
-if __name__ == "__main__":
+def main():
     logging.basicConfig(level=logging.INFO)
+    num_chains = 1
+    seed = "cMcabbgqs"
+    gamma_ = 1 / 10
+    itts = 10_000
+    steps = 100
 
     run_chains(
-        num_chains=1,
-        seed="cMcabbgqs",
-        gamma_=1 / 10,
-        itts=10_000,
-        steps=100,
+        num_chains=num_chains,
+        seed=seed,
+        gamma_=gamma_,
+        itts=itts,
+        steps=steps,
     )
+
+
+if __name__ == "__main__":
+    main()
