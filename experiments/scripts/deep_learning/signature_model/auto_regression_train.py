@@ -456,7 +456,7 @@ def main_train_scale():
                 batch_size=16,
                 num_train_steps=1,
                 sample=True,
-                resume=True,
+                resume=False,
             )
             toc = time.time()
 
