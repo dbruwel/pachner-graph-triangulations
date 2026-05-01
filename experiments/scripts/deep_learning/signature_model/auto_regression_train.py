@@ -454,7 +454,7 @@ def main_train_scale():
                 num_heads=head,
                 num_layers=block,
                 batch_size=16,
-                num_train_steps=itts[size],
+                num_train_steps=1,
                 sample=True,
                 resume=True,
             )
