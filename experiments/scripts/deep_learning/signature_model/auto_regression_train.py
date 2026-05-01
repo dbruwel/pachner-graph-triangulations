@@ -399,7 +399,7 @@ def main_train_long():
 
 def main_train_scale():
     train = True
-    sample = False
+    sample = True
 
     embs = {"xs": 256, "s": 512, "m": 768, "l": 1024, "xl": 1536}
     blocks = {"xs": 4, "s": 6, "m": 12, "l": 24, "xl": 32}
@@ -454,9 +454,9 @@ def main_train_scale():
                 num_heads=head,
                 num_layers=block,
                 batch_size=16,
-                num_train_steps=1,
+                num_train_steps=itts[size],
                 sample=True,
-                resume=False,
+                resume=True,
             )
             toc = time.time()
 

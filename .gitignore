@@ -214,3 +214,4 @@ data
 *old.tex
 experiments/notebooks/dev.ipynb
 pull_rds.sh
+push_rds.sh
