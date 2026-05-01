@@ -399,7 +399,7 @@ def main_train_long():
 
 def main_train_scale():
     train = True
-    sample = True
+    sample = False
 
     embs = {"xs": 256, "s": 512, "m": 768, "l": 1024, "xl": 1536}
     blocks = {"xs": 4, "s": 6, "m": 12, "l": 24, "xl": 32}
