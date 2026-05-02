@@ -21,7 +21,7 @@ def main():
     tic = time.time()
     ved = [
         Potential(VarianceEdgeDegree).calc_potential(
-            Triangulation3.rehydrate(iso).isoSig()
+            Triangulation3.rehydrate(iso).isoSig(), 1
         )[0]
         for iso in isos[:100]
     ]

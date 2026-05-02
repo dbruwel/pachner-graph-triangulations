@@ -160,7 +160,7 @@ class Potential:
         self.potential = potential
 
     def calc_potential(
-        self, iso: str
+        self, iso: str, num_processes=None
     ) -> tuple[float | np.floating, float | np.floating, int, bool]:
         scores = []
         knotted = []
@@ -171,7 +171,8 @@ class Potential:
         if (not self.max_size is None) and (tetrahedra > self.max_size):
             return -np.inf, 0.0, 0, False
 
-        num_processes = multiprocessing.cpu_count()
+        if num_processes is None:
+            num_processes = multiprocessing.cpu_count()
         chunk_size = math.ceil(edges / num_processes)
 
         tasks = []
