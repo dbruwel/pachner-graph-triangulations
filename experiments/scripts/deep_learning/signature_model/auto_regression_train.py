@@ -257,6 +257,7 @@ def train_model(
     # training
     logger.info("\n--- Starting Training ---")
     for step in steps:
+        print(step)
         inputs_10k = []
         labels_10k = []
 
@@ -267,9 +268,11 @@ def train_model(
 
         jnp_inputs = jnp.stack(inputs_10k)
         jnp_labels = jnp.stack(labels_10k)
+        print("stacked")
 
         # Run 10,000 steps entirely on the GPU in one shot
         state, loss = train_1k_steps(state, jnp_inputs, jnp_labels)
+        print("done 100 ;)")
         # sample_idx = get_sample_idx(batch_size, len(train_idx))
         # batch_input = train_input[sample_idx]
         # batch_label = train_label[sample_idx]
