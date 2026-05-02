@@ -4,7 +4,11 @@ import h5py
 import numpy as np
 from concurrent.futures import ProcessPoolExecutor
 
-from pachner_traversal.potential_functions import Potential, VarianceEdgeDegree
+from pachner_traversal.potential_functions import (
+    Potential,
+    VarianceEdgeDegree,
+    DeterminantAlexanderPolynomial,
+)
 from pachner_traversal.utils import data_root
 from regina import Triangulation3
 
@@ -13,14 +17,30 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-def compute_potential(iso: str) -> float | np.floating:
+def compute_potential_var(iso: str) -> float | np.floating:
     iso_sig = Triangulation3.rehydrate(iso).isoSig()
     potential_val = Potential(VarianceEdgeDegree).calc_potential(iso_sig, 1)[0]
     return potential_val
 
 
+def compute_potential_det(iso: str) -> float | np.floating:
+    iso_sig = Triangulation3.rehydrate(iso).isoSig()
+    potential_val = Potential(DeterminantAlexanderPolynomial).calc_potential(
+        iso_sig, 1
+    )[0]
+    return potential_val
+
+
 def main():
     logging.basicConfig(level=logging.INFO)
+    dataset_name = "det_alexander"  # edge_degree_variance, det_alexander
+
+    if dataset_name == "edge_degree_variance":
+        compute_potential = compute_potential_var
+    elif dataset_name == "det_alexander":
+        compute_potential = compute_potential_det
+    else:
+        raise TypeError(f"invalid option {dataset_name}")
 
     data_path = (
         data_root / "input_data" / "dehydration" / "processed" / "spheres_10.hdf5"
@@ -53,8 +73,6 @@ def main():
     logger.info("saving")
 
     with h5py.File(data_path, "r+") as f:
-        dataset_name = "edge_degree_variance"
-
         if dataset_name in f:
             logger.info(f"overwriting")
             del f[dataset_name]
