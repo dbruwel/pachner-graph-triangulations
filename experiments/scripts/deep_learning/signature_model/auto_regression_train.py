@@ -177,7 +177,7 @@ def sample_model(
 
 
 @jax.jit
-def train_1k_steps(
+def train_10k_steps(
     state: MinimalTrainState, batches_input: jax.Array, batches_labels: jax.Array
 ):
 
@@ -237,7 +237,7 @@ def train_model(
         params = load_model(save_path)
         last_step = int(get_last_csv_row(save_path / "train_losses.csv")[0])
         logger.info(f"Training resume from {last_step:,}")
-        steps = range(last_step, num_train_steps, 1_000)
+        steps = range(last_step, num_train_steps, 10_000)
     else:
         blank_idx = get_sample_idx(batch_size, len(train_idx))
         blank_batch_input = train_input[blank_idx]
@@ -250,7 +250,7 @@ def train_model(
         write_stat(save_path / "stats.txt", "n_params", f"{n_params:,}")
         logger.info(f"Model initialized. Parameter count: {n_params}")
 
-        steps = range(0, num_train_steps, 1_000)
+        steps = range(0, num_train_steps, 10_000)
 
     state = init_train_state(model, params, dropout_key)
 
@@ -261,26 +261,25 @@ def train_model(
         inputs_10k = []
         labels_10k = []
 
-        for _ in range(1_000):
+        for _ in range(10_000):
             sample_idx = get_sample_idx(batch_size, len(train_idx))
             inputs_10k.append(train_input[sample_idx])
             labels_10k.append(train_label[sample_idx])
 
         jnp_inputs = jnp.stack(inputs_10k)
         jnp_labels = jnp.stack(labels_10k)
-        print("stacked")
 
         # Run 1,000 steps entirely on the GPU in one shot
-        state, loss = train_1k_steps(state, jnp_inputs, jnp_labels)
-        print("done 1,000 ;)")
+        state, loss = train_10k_steps(state, jnp_inputs, jnp_labels)
+        print("done 10,000 ;)")
         # sample_idx = get_sample_idx(batch_size, len(train_idx))
         # batch_input = train_input[sample_idx]
         # batch_label = train_label[sample_idx]
 
         # state, loss = train_step_auto_regression(state, batch_input, batch_label)
 
-        if (step + 1_000) % 10_000 == 0 or (step + 1_000) == num_train_steps:
-            msg = f"Step {step + 1:,}/{num_train_steps:,}, Loss: {float(loss):.4f}"
+        if (step + 10_000) % 10_000 == 0 or (step + 10_000) == num_train_steps:
+            msg = f"Step {step + 10_000:,}/{num_train_steps:,}, Loss: {float(loss):.4f}"
             logger.info(msg)
 
             test_loss = get_test_loss(
@@ -290,11 +289,11 @@ def train_model(
                 vocab_size,
             )
 
-            write_loss(save_path / "train_losses.csv", step + 1, float(loss))
-            write_loss(save_path / "test_losses.csv", step + 1, float(test_loss))
+            write_loss(save_path / "train_losses.csv", step + 10_000, float(loss))
+            write_loss(save_path / "test_losses.csv", step + 10_000, float(test_loss))
             save_model(save_path, state)
 
-        if sample and (step + 1_000) % 100_000 == 0:
+        if sample and (step + 10_000) % 100_000 == 0:
             sample_model(
                 data_path,
                 save_path,
@@ -302,8 +301,8 @@ def train_model(
                 num_layers=num_layers,
                 num_heads=num_heads,
                 samps_to_gen=1_000,
-                gen_its=5,
-                tag=f"{step+1:,}",
+                gen_its=1,
+                tag=f"{step+10_000:,}",
             )
 
     logger.info("\n Training finished.")
