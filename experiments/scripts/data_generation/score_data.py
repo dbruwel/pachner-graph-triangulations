@@ -33,7 +33,7 @@ def compute_potential_det(iso: str) -> float | np.floating:
 
 def main():
     logging.basicConfig(level=logging.INFO)
-    dataset_name = "det_alexander"  # edge_degree_variance, det_alexander
+    dataset_name = "edge_degree_variance"  # edge_degree_variance, det_alexander
 
     if dataset_name == "edge_degree_variance":
         compute_potential = compute_potential_var
@@ -52,7 +52,7 @@ def main():
         isos = np.array(data[:])  # type: ignore
         isos = [iso.decode("utf-8") for iso in isos]
 
-    isos_to_process = isos[:1000]
+    isos_to_process = isos
 
     num_cores = int(os.environ.get("SLURM_CPUS_PER_TASK", os.cpu_count() or 1))
     num_cores = min(100, num_cores)
