@@ -176,6 +176,23 @@ def sample_model(
             f.write(samp + "\n")
 
 
+@jax.jit
+def train_10k_steps(
+    state: MinimalTrainState, batches_input: jax.Array, batches_labels: jax.Array
+):
+
+    def scan_body(current_state, carry):
+        b_input, b_label = carry
+        new_state, loss = train_step_auto_regression(current_state, b_input, b_label)
+        return new_state, loss
+
+    final_state, losses = jax.lax.scan(
+        scan_body, state, (batches_input, batches_labels)
+    )
+
+    return final_state, jnp.mean(losses)
+
+
 def train_model(
     data_path: pathlib.Path,
     save_path: pathlib.Path,
@@ -220,7 +237,7 @@ def train_model(
         params = load_model(save_path)
         last_step = int(get_last_csv_row(save_path / "train_losses.csv")[0])
         logger.info(f"Training resume from {last_step:,}")
-        steps = range(last_step, num_train_steps)
+        steps = range(last_step, num_train_steps, 10_000)
     else:
         blank_idx = get_sample_idx(batch_size, len(train_idx))
         blank_batch_input = train_input[blank_idx]
@@ -233,18 +250,31 @@ def train_model(
         write_stat(save_path / "stats.txt", "n_params", f"{n_params:,}")
         logger.info(f"Model initialized. Parameter count: {n_params}")
 
-        steps = range(num_train_steps)
+        steps = range(0, num_train_steps, 10_000)
 
     state = init_train_state(model, params, dropout_key)
 
     # training
     logger.info("\n--- Starting Training ---")
     for step in steps:
-        sample_idx = get_sample_idx(batch_size, len(train_idx))
-        batch_input = train_input[sample_idx]
-        batch_label = train_label[sample_idx]
+        inputs_10k = []
+        labels_10k = []
 
-        state, loss = train_step_auto_regression(state, batch_input, batch_label)
+        for _ in range(10_000):
+            sample_idx = get_sample_idx(batch_size, len(train_idx))
+            inputs_10k.append(train_input[sample_idx])
+            labels_10k.append(train_label[sample_idx])
+
+        jnp_inputs = jnp.stack(inputs_10k)
+        jnp_labels = jnp.stack(labels_10k)
+
+        # Run 10,000 steps entirely on the GPU in one shot
+        state, loss = train_10k_steps(state, jnp_inputs, jnp_labels)
+        # sample_idx = get_sample_idx(batch_size, len(train_idx))
+        # batch_input = train_input[sample_idx]
+        # batch_label = train_label[sample_idx]
+
+        # state, loss = train_step_auto_regression(state, batch_input, batch_label)
 
         if (step + 1) % 10_000 == 0 or (step + 1) == num_train_steps:
             msg = f"Step {step + 1:,}/{num_train_steps:,}, Loss: {float(loss):.4f}"
@@ -388,15 +418,15 @@ def main_train_scale():
     train = True
     sample = True
 
-    embs = {"xs": 256, "s": 512, "m": 768, "l": 1024, "xl": 1536}
-    blocks = {"xs": 4, "s": 6, "m": 12, "l": 24, "xl": 32}
-    heads = {"xs": 4, "s": 4, "m": 6, "l": 8, "xl": 12}
+    embs = {"xs": 256, "s": 384, "m": 512, "l": 768, "xl": 1024}
+    blocks = {"xs": 4, "s": 6, "m": 12, "l": 16, "xl": 24}
+    heads = {"xs": 4, "s": 6, "m": 8, "l": 12, "xl": 16}
     itts = {
-        "xs": 20_000_000,
-        "s": 5_000_000,
-        "m": 2_000_000,
-        "l": 2_000_000,
-        "xl": 1_000_000,
+        "xs": 500_000,
+        "s": 1_500_000,
+        "m": 5_000_000,
+        "l": 12_500_000,
+        "xl": 12_500_000,
     }
 
     logging.basicConfig(level=logging.INFO)
@@ -406,7 +436,7 @@ def main_train_scale():
         f"Started training for SGD models on dehydration data",
     )
 
-    sizes = ["xs", "s", "m", "l"]
+    sizes = ["xs"]
     for size in sizes:
         emb = embs[size]
         block = blocks[size]
@@ -425,6 +455,7 @@ def main_train_scale():
                 data_home
                 / "results"
                 / "sgd_models_dehydration"
+                / "archive"
                 / "scale"
                 / f"spheres_{emb}emb_{block}block_{head}head_10tet"
             )

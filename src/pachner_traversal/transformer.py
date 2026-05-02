@@ -24,14 +24,6 @@ class MinimalTrainState(train_state.TrainState):
     weight_decay: float = 0.01
 
 
-def gelu(x: jax.Array) -> jax.Array:
-    return (
-        0.5
-        * x
-        * (1.0 + jnp.tanh(jnp.sqrt(2.0 / jnp.pi) * (x + 0.044715 * jnp.power(x, 3.0))))
-    )
-
-
 class CausalSelfAttention(nn.Module):
     d_model: int  # n_embd
     num_heads: int  # n_head
@@ -46,7 +38,13 @@ class CausalSelfAttention(nn.Module):
         assert C % self.num_heads == 0
         head_size = C // self.num_heads
 
-        qkv = nn.Dense(features=3 * C, name="c_attn", kernel_init=normal(0.02))(x)
+        qkv = nn.Dense(
+            features=3 * C,
+            name="c_attn",
+            kernel_init=normal(0.02),
+            dtype=jnp.bfloat16,
+            param_dtype=jnp.float32,
+        )(x)
 
         q, k, v = jnp.split(qkv, 3, axis=-1)
 
@@ -59,7 +57,13 @@ class CausalSelfAttention(nn.Module):
 
         y = nn.dot_product_attention(q, k, v, mask=causal_mask, broadcast_dropout=False)
         y = y.reshape(B, T, C)
-        y = nn.Dense(features=self.d_model, name="c_proj", kernel_init=normal(0.02))(y)
+        y = nn.Dense(
+            features=self.d_model,
+            name="c_proj",
+            kernel_init=normal(0.02),
+            dtype=jnp.bfloat16,
+            param_dtype=jnp.float32,
+        )(y)
 
         return y
 
@@ -73,11 +77,16 @@ class Block(nn.Module):
     def __call__(self, x: jax.Array, training: bool = False) -> jax.Array:
         attn_output = CausalSelfAttention(
             d_model=self.d_model, num_heads=self.num_heads, name="attn"
-        )(nn.LayerNorm(name="ln_1")(x), training=training)
+        )(
+            nn.LayerNorm(name="ln_1", dtype=jnp.bfloat16, param_dtype=jnp.float32)(x),
+            training=training,
+        )
         x = x + attn_output
         x = nn.Dropout(rate=self.dropout_rate, deterministic=not training)(x)
 
-        mlp_output = self.mlp(nn.LayerNorm(name="ln_2")(x))
+        mlp_output = self.mlp(
+            nn.LayerNorm(name="ln_2", dtype=jnp.bfloat16, param_dtype=jnp.float32)(x)
+        )
         x = x + mlp_output
         x = nn.Dropout(rate=self.dropout_rate, deterministic=not training)(x)
 
@@ -85,11 +94,18 @@ class Block(nn.Module):
 
     def mlp(self, x: jax.Array) -> jax.Array:
         d_ff = 4 * self.d_model
-        c_fc = nn.Dense(features=d_ff, name="c_fc")
-        c_proj = nn.Dense(features=self.d_model, name="c_proj")
+        c_fc = nn.Dense(
+            features=d_ff, name="c_fc", dtype=jnp.bfloat16, param_dtype=jnp.float32
+        )
+        c_proj = nn.Dense(
+            features=self.d_model,
+            name="c_proj",
+            dtype=jnp.bfloat16,
+            param_dtype=jnp.float32,
+        )
 
         x = c_fc(x)
-        x = gelu(x)
+        x = jax.nn.gelu(x, approximate=True)
         x = c_proj(x)
         return x
 
@@ -108,16 +124,23 @@ class Transformer(nn.Module):
         assert (
             T <= self.block_size
         ), f"Cannot forward sequence of length {T}, block size is only {self.block_size}"
-
         # Token embedding
         wte = nn.Embed(
-            num_embeddings=self.vocab_size, features=self.d_model, name="wte"
+            num_embeddings=self.vocab_size,
+            features=self.d_model,
+            name="wte",
+            dtype=jnp.bfloat16,
+            param_dtype=jnp.float32,
         )
         tok_emb = wte(idx)
 
         # Learned positional embedding
         wpe = nn.Embed(
-            num_embeddings=self.block_size, features=self.d_model, name="wpe"
+            num_embeddings=self.block_size,
+            features=self.d_model,
+            name="wpe",
+            dtype=jnp.bfloat16,
+            param_dtype=jnp.float32,
         )
         pos = jnp.arange(0, T)
         pos_emb = wpe(pos)
@@ -133,9 +156,15 @@ class Transformer(nn.Module):
             )
 
         # --- Final Layers ---
-        x = nn.LayerNorm(name="ln_f")(x)
+        x = nn.LayerNorm(name="ln_f", dtype=jnp.bfloat16, param_dtype=jnp.float32)(x)
 
-        logits = nn.Dense(features=self.vocab_size, use_bias=False, name="lm_head")(x)
+        logits = nn.Dense(
+            features=self.vocab_size,
+            use_bias=False,
+            name="lm_head",
+            dtype=jnp.bfloat16,
+            param_dtype=jnp.float32,
+        )(x)
 
         return logits
 
@@ -184,9 +213,10 @@ def train_step_auto_regression(
             training=True,
             rngs={"dropout": dropout_key},
         )
+        logits_fp32 = logits.astype(jnp.float32)
 
         loss = optax.softmax_cross_entropy_with_integer_labels(
-            logits=logits, labels=batch_labels
+            logits=logits_fp32, labels=batch_labels
         ).mean()
         return loss
 
@@ -212,8 +242,9 @@ def train_step_scalar_regression(
             training=True,
             rngs={"dropout": dropout_key},
         )
+        logits_fp32 = logits.astype(jnp.float32)
 
-        loss = optax.squared_error(logits, batch_labels).mean()
+        loss = optax.squared_error(logits_fp32, batch_labels).mean()
         return loss
 
     grad_fn = jax.value_and_grad(loss_fn)
@@ -243,8 +274,9 @@ def generate_samples(
             samples,
             training=False,
         )
+        pred_fp32 = pred.astype(jnp.float32)
 
-        pred_next_token = pred[:, i, :]
+        pred_next_token = pred_fp32[:, i, :]
         sampled_token = jax.random.categorical(subkey, pred_next_token, axis=-1)
         samples = samples.at[:, i + 1].set(sampled_token)
 
