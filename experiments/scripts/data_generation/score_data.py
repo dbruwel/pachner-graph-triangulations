@@ -32,7 +32,7 @@ def main():
         isos = np.array(data[:])  # type: ignore
         isos = [iso.decode("utf-8") for iso in isos]
 
-    isos_to_process = isos
+    isos_to_process = isos[:1000]
 
     num_cores = int(os.environ.get("SLURM_CPUS_PER_TASK", os.cpu_count() or 1))
     num_cores = min(100, num_cores)
