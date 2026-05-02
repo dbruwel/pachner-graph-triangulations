@@ -15,9 +15,8 @@ from flax.core import freeze
 from pachner_traversal.data_io_dehydration import Dataset, Encoder
 from pachner_traversal.transformer import (
     MinimalTrainState,
-    Transformer,
-    generate_samples,
-    train_step_auto_regression,
+    ScalarTransformer,
+    train_step_scalar_regression,
 )
 from pachner_traversal.utils import data_root as data_home
 from pachner_traversal.utils import send_ntfy
@@ -67,21 +66,18 @@ def get_last_csv_row(filepath):
 
 
 # jax utility
-@partial(jax.jit, static_argnames=["vocab_size"])
+@partial(jax.jit)
 def get_test_loss(
     state: MinimalTrainState,
     test_batch_input: jax.Array,
     test_batch_label: jax.Array,
-    vocab_size: int,
 ) -> jax.Array:
-    test_logits = state.apply_fn(
+    logits = state.apply_fn(
         {"params": state.params},
         test_batch_input,
         training=False,
     )
-
-    test_one_hot_labels = jax.nn.one_hot(test_batch_label, num_classes=vocab_size)
-    test_loss = optax.softmax_cross_entropy(test_logits, test_one_hot_labels).mean()
+    test_loss = optax.squared_error(logits, test_batch_label).mean()
     return test_loss
 
 
@@ -98,7 +94,7 @@ def init_model(
     key = jax.random.PRNGKey(0)
     main_key, params_key, dropout_key = jax.random.split(key, 3)
 
-    model = Transformer(
+    model = ScalarTransformer(
         vocab_size=vocab_size,
         d_model=d_model,
         block_size=seq_len,
@@ -127,55 +123,6 @@ def init_train_state(model, params, dropout_key):
 
 
 # critical functions
-def sample_model(
-    data_path: pathlib.Path,
-    save_path: pathlib.Path,
-    d_model: int = 512,
-    num_layers: int = 6,
-    num_heads: int = 4,
-    num_test_samps: int = 1_000,
-    gen_its: int = 10,
-    samps_to_gen: int = 1_000,
-    tag: str | None = None,
-) -> None:
-    # setup model
-    dataset = Dataset(data_path, num_test_samps)
-    encoder = Encoder(dataset)
-
-    params = load_model(save_path)
-
-    model, keys, meta = init_model(
-        dataset,
-        encoder,
-        d_model=d_model,
-        num_layers=num_layers,
-        num_heads=num_heads,
-    )
-    _, _, dropout_key = keys
-    _, seq_len = meta
-
-    state = init_train_state(model, params, dropout_key)
-
-    # generate samples
-    bos_id = encoder.char_to_id["[BOS]"]
-    subkey = jax.random.PRNGKey(42)
-
-    samps_str = []
-    for i in range(gen_its):
-        logger.info(f"Generating samples... Iteration {i + 1}/{gen_its}")
-        subkey = jax.random.split(subkey, 1)[0]
-        samps = generate_samples(state, samps_to_gen, seq_len, subkey, bos_id)
-        samps_str = samps_str + encoder.decode(np.array(samps))
-
-    # save samps
-    fname = f"generated_samples_{tag}.txt" if tag else "generated_samples.txt"
-    samp_save_path = save_path / fname
-
-    with open(samp_save_path, "w") as f:
-        for samp in samps_str:
-            f.write(samp + "\n")
-
-
 def train_model(
     data_path: pathlib.Path,
     save_path: pathlib.Path,
@@ -185,16 +132,18 @@ def train_model(
     batch_size=64,
     num_test_samps: int = 1_000,
     num_train_steps=1_000_000,
-    sample=False,
     resume=True,
 ) -> None:
 
     # data
+    # TODO: change target label
     dataset = Dataset(data_path, num_test_samps)
     encoder = Encoder(dataset)
 
     all_data_str = dataset.read_all_data()
-    all_data_input, all_data_label = encoder.encode(all_data_str)
+    all_data_input, _ = encoder.encode(all_data_str)
+
+    all_data_label = np.ones(len(all_data_input))
 
     test_input = all_data_input[dataset.test_idx]
     test_label = all_data_label[dataset.test_idx]
@@ -244,7 +193,7 @@ def train_model(
         batch_input = train_input[sample_idx]
         batch_label = train_label[sample_idx]
 
-        state, loss = train_step_auto_regression(state, batch_input, batch_label)
+        state, loss = train_step_scalar_regression(state, batch_input, batch_label)
 
         if (step + 1) % 10_000 == 0 or (step + 1) == num_train_steps:
             msg = f"Step {step + 1:,}/{num_train_steps:,}, Loss: {float(loss):.4f}"
@@ -254,24 +203,11 @@ def train_model(
                 state,
                 test_input,
                 test_label,
-                vocab_size,
             )
 
             write_loss(save_path / "train_losses.csv", step + 1, float(loss))
             write_loss(save_path / "test_losses.csv", step + 1, float(test_loss))
             save_model(save_path, state)
-
-        if sample and (step + 1) % 100_000 == 0:
-            sample_model(
-                data_path,
-                save_path,
-                d_model=d_model,
-                num_layers=num_layers,
-                num_heads=num_heads,
-                samps_to_gen=1_000,
-                gen_its=5,
-                tag=f"{step+1:,}",
-            )
 
     logger.info("\n Training finished.")
 
@@ -279,9 +215,55 @@ def train_model(
 
 
 # main
+def main_train_simple():
+    N = 10
+
+    logging.basicConfig(level=logging.INFO)
+    send_ntfy(
+        "usyd-knottedness",
+        "Training Started",
+        f"Started simple training",
+    )
+
+    logger.info(f"\n\n=== N_TET = {N} ===")
+    processed_data_home = data_home / "input_data" / "dehydration" / "processed"
+    data_path = processed_data_home / f"spheres_{N}.hdf5"
+
+    save_path = (
+        data_home
+        / "results"
+        / "sgd_models_dehydration"
+        / "scalar_simple"
+        / f"spheres_512emb_6block_4head_{N}tet"
+    )
+    save_path.mkdir(parents=True, exist_ok=True)
+
+    tic = time.time()
+    train_model(
+        data_path,
+        save_path,
+        d_model=64,
+        num_layers=4,
+        num_heads=4,
+        batch_size=16,
+        num_test_samps=1_000,
+        num_train_steps=10_000,
+        resume=True,
+    )
+    toc = time.time()
+
+    train_time = toc - tic
+    logger.info(f"Training time: {train_time:.2f} seconds")
+
+    send_ntfy(
+        "usyd-knottedness",
+        f"Training Finished for N={N}",
+        f"Finished training for N={N}. Training time: {train_time:.2f} seconds.",
+    )
+
+
 def main_train_tet():
     train = True
-    sample = True
 
     logging.basicConfig(level=logging.INFO)
     send_ntfy(
@@ -299,7 +281,6 @@ def main_train_tet():
         save_path = data_home
 
         train_time = 0
-        sample_time = 0
 
         if train:
             save_path = (
@@ -316,18 +297,10 @@ def main_train_tet():
             train_time = toc - tic
             logger.info(f"Training time: {train_time:.2f} seconds")
 
-        if sample:
-            tic = time.time()
-            sample_model(data_path, save_path, samps_to_gen=1_000, gen_its=20)
-            toc = time.time()
-
-            sample_time = toc - tic
-            logger.info(f"Sampling time: {sample_time:.2f} seconds")
-
         send_ntfy(
             "usyd-knottedness",
             f"Training Finished for N={N}",
-            f"Finished training for N={N}. Training time: {train_time:.2f} seconds. Sampling time: {sample_time:.2f} seconds.",
+            f"Finished training for N={N}. Training time: {train_time:.2f} seconds.",
         )
 
     send_ntfy(
@@ -349,7 +322,6 @@ def main_train_long():
     data_path = processed_data_path / f"spheres_10.hdf5"
 
     train_time = 0
-    sample_time = 0
 
     save_path = (
         data_home
@@ -362,19 +334,11 @@ def main_train_long():
 
     # Train
     tic = time.time()
-    train_model(data_path, save_path, num_train_steps=10_000_000, sample=True)
+    train_model(data_path, save_path, num_train_steps=10_000_000)
     toc = time.time()
 
     train_time = toc - tic
     logger.info(f"Training time: {train_time:.2f} seconds")
-
-    # Sample
-    tic = time.time()
-    sample_model(data_path, save_path, samps_to_gen=1_000, gen_its=20, tag="final")
-    toc = time.time()
-
-    sample_time = toc - tic
-    logger.info(f"Sampling time: {sample_time:.2f} seconds")
 
     # NTFY
     send_ntfy(
@@ -386,7 +350,6 @@ def main_train_long():
 
 def main_train_scale():
     train = True
-    sample = True
 
     embs = {"xs": 256, "s": 512, "m": 768, "l": 1024, "xl": 1536}
     blocks = {"xs": 4, "s": 6, "m": 12, "l": 24, "xl": 32}
@@ -418,7 +381,6 @@ def main_train_scale():
         save_path = data_home
 
         train_time = 0
-        sample_time = 0
 
         if train:
             save_path = (
@@ -442,7 +404,6 @@ def main_train_scale():
                 num_layers=block,
                 batch_size=16,
                 num_train_steps=itts[size],
-                sample=True,
                 resume=True,
             )
             toc = time.time()
@@ -450,26 +411,10 @@ def main_train_scale():
             train_time = toc - tic
             logger.info(f"Training time: {train_time:.2f} seconds")
 
-        if sample:
-            tic = time.time()
-            sample_model(
-                data_path,
-                save_path,
-                d_model=emb,
-                num_heads=head,
-                num_layers=block,
-                samps_to_gen=1_000,
-                gen_its=20,
-            )
-            toc = time.time()
-
-            sample_time = toc - tic
-            logger.info(f"Sampling time: {sample_time:.2f} seconds")
-
         send_ntfy(
             "usyd-knottedness",
             f"Training Finished for size={size}",
-            f"Finished training for size={size}. Training time: {train_time:.2f} seconds. Sampling time: {sample_time:.2f} seconds.",
+            f"Finished training for size={size}. Training time: {train_time:.2f} seconds.",
         )
 
     send_ntfy(
@@ -486,3 +431,5 @@ if __name__ == "__main__":
         main_train_tet()
     if "scale" in sys.argv:
         main_train_scale()
+    if "simple" in sys.argv:
+        main_train_simple()

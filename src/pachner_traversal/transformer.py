@@ -140,8 +140,39 @@ class Transformer(nn.Module):
         return logits
 
 
+class ScalarTransformer(nn.Module):
+    vocab_size: int
+    d_model: int  # n_embd
+    block_size: int  # max sequence length
+    num_layers: int  # n_layer
+    num_heads: int  # n_head
+    dropout_rate: float = 0.1
+
+    @nn.compact
+    def __call__(self, idx: jax.Array, training: bool = False) -> jax.Array:
+        # (B, T, C)
+        x = Transformer(
+            vocab_size=self.vocab_size,
+            d_model=self.d_model,
+            block_size=self.block_size,
+            num_layers=self.num_layers,
+            num_heads=self.num_heads,
+            dropout_rate=self.dropout_rate,
+        )(idx, training=training)
+
+        x = nn.LayerNorm(name="pre_pool_ln")(x)  # (B, T, C)
+        logits = nn.Dense(1, name="attn_logits")(x)  # (B, T, 1)
+        weights = nn.softmax(logits, axis=1)  # (B, T, 1)
+        pooled = jnp.sum(x * weights, axis=1)  # (B, C)
+        pooled = nn.LayerNorm(name="post_pool_ln")(pooled)
+        pooled = nn.relu(nn.Dense(x.shape[-1], name="hidden_projection")(pooled))
+        out = nn.Dense(1, name="final_projection")(pooled)  # (B, 1)
+
+        return out.squeeze(-1)  # (B)
+
+
 @jax.jit
-def train_step(
+def train_step_auto_regression(
     state: MinimalTrainState, batch_input: jax.Array, batch_labels: jax.Array
 ) -> tuple[MinimalTrainState, jax.Array]:
     dropout_key, new_dropout_key = jax.random.split(state.dropout_key)
@@ -157,6 +188,32 @@ def train_step(
         loss = optax.softmax_cross_entropy_with_integer_labels(
             logits=logits, labels=batch_labels
         ).mean()
+        return loss
+
+    grad_fn = jax.value_and_grad(loss_fn)
+    loss, grads = grad_fn(state.params)
+
+    new_state = state.apply_gradients(grads=grads)
+    new_state = new_state.replace(dropout_key=new_dropout_key)
+
+    return new_state, loss
+
+
+@jax.jit
+def train_step_scalar_regression(
+    state: MinimalTrainState, batch_input: jax.Array, batch_labels: jax.Array
+) -> tuple[MinimalTrainState, jax.Array]:
+    dropout_key, new_dropout_key = jax.random.split(state.dropout_key)
+
+    def loss_fn(params):
+        logits = state.apply_fn(
+            {"params": params},
+            batch_input,
+            training=True,
+            rngs={"dropout": dropout_key},
+        )
+
+        loss = optax.squared_error(logits, batch_labels).mean()
         return loss
 
     grad_fn = jax.value_and_grad(loss_fn)
