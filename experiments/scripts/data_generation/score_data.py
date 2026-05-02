@@ -33,7 +33,7 @@ def compute_potential_det(iso: str) -> float | np.floating:
 
 def main():
     logging.basicConfig(level=logging.INFO)
-    dataset_name = "edge_degree_variance"  # edge_degree_variance, det_alexander
+    dataset_name = "det_alexander"  # edge_degree_variance, det_alexander
 
     if dataset_name == "edge_degree_variance":
         compute_potential = compute_potential_var
