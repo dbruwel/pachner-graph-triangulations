@@ -271,7 +271,12 @@ def train_model(
         jnp_labels = jnp.stack(labels_10k)
 
         # Run 1,000 steps entirely on the GPU in one shot
+        jax.profiler.start_trace("/enna/nobackup/danielb/data/results/jax-trace")
         state, loss = train_10k_steps(state, jnp_inputs, jnp_labels)
+        loss.block_until_ready()
+        jax.profiler.stop_trace()
+        print("[INFO] Profiler trace saved! Exiting script to check TensorBoard.")
+        exit()
         print("done 10,000 ;)")
         # sample_idx = get_sample_idx(batch_size, len(train_idx))
         # batch_input = train_input[sample_idx]
