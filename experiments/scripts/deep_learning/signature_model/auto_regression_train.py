@@ -258,7 +258,6 @@ def train_model(
     # training
     logger.info("\n--- Starting Training ---")
     for step in steps:
-        print(step)
         inputs_10k = []
         labels_10k = []
 
@@ -271,18 +270,16 @@ def train_model(
         jnp_labels = jnp.stack(labels_10k)
 
         # Run 1,000 steps entirely on the GPU in one shot
-        jax.profiler.start_trace("/enna/nobackup/danielb/data/results/jax-trace")
-        state, loss = train_10k_steps(state, jnp_inputs, jnp_labels)
-        loss.block_until_ready()
-        jax.profiler.stop_trace()
-        print("[INFO] Profiler trace saved! Exiting script to check TensorBoard.")
-        exit()
-        print("done 10,000 ;)")
-        # sample_idx = get_sample_idx(batch_size, len(train_idx))
-        # batch_input = train_input[sample_idx]
-        # batch_label = train_label[sample_idx]
+        if step == 10_000:
+            jax.profiler.start_trace("/enna/nobackup/danielb/data/results/jax-trace")
 
-        # state, loss = train_step_auto_regression(state, batch_input, batch_label)
+        state, loss = train_10k_steps(state, jnp_inputs, jnp_labels)
+        if step == 0:
+            jax.block_until_ready(state)
+        state.params.block_until_ready()
+        if step == 20_000:
+            jax.profiler.stop_trace()
+            exit()
 
         if (step + sweep) % sweep == 0 or (step + sweep) == num_train_steps:
             msg = f"Step {step + sweep:,}/{num_train_steps:,}, Loss: {float(loss):.4f}"
@@ -480,9 +477,7 @@ def main_train_scale():
                 num_heads=head,
                 num_layers=block,
                 batch_size=16,
-                # num_train_steps=itts[size],
-                num_train_steps=200,
-                sweep=100,
+                num_train_steps=itts[size],
                 sample=True,
                 resume=False,
             )
