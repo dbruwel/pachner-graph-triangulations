@@ -276,7 +276,7 @@ def train_model(
         state, loss = train_10k_steps(state, jnp_inputs, jnp_labels)
         if step == 0:
             jax.block_until_ready(state)
-        state.params.block_until_ready()
+        loss.block_until_ready()
         if step == 20_000:
             jax.profiler.stop_trace()
             exit()
