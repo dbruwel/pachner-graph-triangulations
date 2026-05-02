@@ -8,6 +8,10 @@ from pachner_traversal.potential_functions import Potential, VarianceEdgeDegree
 from pachner_traversal.utils import data_root
 from regina import Triangulation3
 
+import logging
+
+logger = logging.getLogger(__name__)
+
 
 def compute_potential(iso: str) -> float | np.floating:
     iso_sig = Triangulation3.rehydrate(iso).isoSig()
@@ -16,21 +20,23 @@ def compute_potential(iso: str) -> float | np.floating:
 
 
 def main():
+    logging.basicConfig(level=logging.INFO)
+
     data_path = (
         data_root / "input_data" / "dehydration" / "processed" / "spheres_10.hdf5"
     )
 
-    print("Loading data...")
+    logger.info("loading data")
     with h5py.File(data_path, "r") as f:
         data = f["isos"]
         isos = np.array(data[:])  # type: ignore
         isos = [iso.decode("utf-8") for iso in isos]
 
-    isos_to_process = isos[:1_000]
+    isos_to_process = isos
 
     num_cores = int(os.environ.get("SLURM_CPUS_PER_TASK", os.cpu_count() or 1))
     num_cores = min(100, num_cores)
-    print(f"Spinning up {num_cores} workers...")
+    logger.info(f"number of workers: {num_cores}")
 
     tic = time.time()
 
@@ -42,8 +48,18 @@ def main():
     toc = time.time()
     time_taken = toc - tic
 
-    print(f"Processed {len(isos_to_process)} items.")
-    print(f"Time taken: {time_taken:,.2f} seconds")
+    logger.info(f"processed {len(isos_to_process)} items in {time_taken:,.2f} seconds.")
+
+    logger.info("saving")
+
+    with h5py.File(data_path, "r+") as f:
+        dataset_name = "edge_degree_variance"
+
+        if dataset_name in f:
+            logger.info(f"overwriting")
+            del f[dataset_name]
+
+        f.create_dataset(dataset_name, data=ved, compression="gzip", compression_opts=4)
 
 
 if __name__ == "__main__":
