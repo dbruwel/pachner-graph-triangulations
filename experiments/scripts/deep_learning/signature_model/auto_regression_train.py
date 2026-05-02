@@ -270,16 +270,7 @@ def train_model(
         jnp_labels = jnp.stack(labels_10k)
 
         # Run 1,000 steps entirely on the GPU in one shot
-        if step == sweep:
-            jax.profiler.start_trace("/enna/nobackup/danielb/data/results/jax-trace")
-
         state, loss = train_10k_steps(state, jnp_inputs, jnp_labels)
-        if step == 0:
-            jax.block_until_ready(state)
-        loss.block_until_ready()
-        if step == 3 * sweep:
-            jax.profiler.stop_trace()
-            exit()
 
         if (step + sweep) % sweep == 0 or (step + sweep) == num_train_steps:
             msg = f"Step {step + sweep:,}/{num_train_steps:,}, Loss: {float(loss):.4f}"
@@ -478,7 +469,6 @@ def main_train_scale():
                 num_layers=block,
                 batch_size=16,
                 num_train_steps=itts[size],
-                sweep=1_000,
                 sample=True,
                 resume=False,
             )
