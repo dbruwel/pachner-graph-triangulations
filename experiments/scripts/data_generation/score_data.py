@@ -17,6 +17,7 @@ def main():
         isos = np.array(data[:])  # type: ignore
         isos = np.array([iso.decode("utf-8") for iso in isos])
 
+    print("starting")
     tic = time.time()
     ved = [
         Potential(VarianceEdgeDegree).calc_potential(
