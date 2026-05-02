@@ -17,7 +17,7 @@ def main():
         isos = np.array(data[:])  # type: ignore
         isos = np.array([iso.decode("utf-8") for iso in isos])
 
-    print("starting")
+    print(isos)
     tic = time.time()
     ved = [
         Potential(VarianceEdgeDegree).calc_potential(
@@ -29,7 +29,7 @@ def main():
     toc = time.time()
     time_taken = toc - tic
 
-    print(f"Time taken: {time_taken:,.0f}")
+    print(f"Time taken: {time_taken:,.2f}")
 
 
 if __name__ == "__main__":
