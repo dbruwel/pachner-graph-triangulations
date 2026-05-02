@@ -202,6 +202,7 @@ def train_model(
     batch_size=64,
     num_test_samps: int = 1_000,
     num_train_steps=1_000_000,
+    sweep: int = 10_000,
     sample=False,
     resume=True,
 ) -> None:
@@ -237,7 +238,7 @@ def train_model(
         params = load_model(save_path)
         last_step = int(get_last_csv_row(save_path / "train_losses.csv")[0])
         logger.info(f"Training resume from {last_step:,}")
-        steps = range(last_step, num_train_steps, 10_000)
+        steps = range(last_step, num_train_steps, sweep)
     else:
         blank_idx = get_sample_idx(batch_size, len(train_idx))
         blank_batch_input = train_input[blank_idx]
@@ -250,7 +251,7 @@ def train_model(
         write_stat(save_path / "stats.txt", "n_params", f"{n_params:,}")
         logger.info(f"Model initialized. Parameter count: {n_params}")
 
-        steps = range(0, num_train_steps, 10_000)
+        steps = range(0, num_train_steps, sweep)
 
     state = init_train_state(model, params, dropout_key)
 
@@ -261,7 +262,7 @@ def train_model(
         inputs_10k = []
         labels_10k = []
 
-        for _ in range(10_000):
+        for _ in range(sweep):
             sample_idx = get_sample_idx(batch_size, len(train_idx))
             inputs_10k.append(train_input[sample_idx])
             labels_10k.append(train_label[sample_idx])
@@ -278,8 +279,8 @@ def train_model(
 
         # state, loss = train_step_auto_regression(state, batch_input, batch_label)
 
-        if (step + 10_000) % 10_000 == 0 or (step + 10_000) == num_train_steps:
-            msg = f"Step {step + 10_000:,}/{num_train_steps:,}, Loss: {float(loss):.4f}"
+        if (step + sweep) % sweep == 0 or (step + sweep) == num_train_steps:
+            msg = f"Step {step + sweep:,}/{num_train_steps:,}, Loss: {float(loss):.4f}"
             logger.info(msg)
 
             test_loss = get_test_loss(
@@ -289,11 +290,11 @@ def train_model(
                 vocab_size,
             )
 
-            write_loss(save_path / "train_losses.csv", step + 10_000, float(loss))
-            write_loss(save_path / "test_losses.csv", step + 10_000, float(test_loss))
+            write_loss(save_path / "train_losses.csv", step + sweep, float(loss))
+            write_loss(save_path / "test_losses.csv", step + sweep, float(test_loss))
             save_model(save_path, state)
 
-        if sample and (step + 10_000) % 100_000 == 0:
+        if sample and (step + sweep) % 100_000 == 0:
             sample_model(
                 data_path,
                 save_path,
@@ -302,7 +303,7 @@ def train_model(
                 num_heads=num_heads,
                 samps_to_gen=1_000,
                 gen_its=1,
-                tag=f"{step+10_000:,}",
+                tag=f"{step+sweep:,}",
             )
 
     logger.info("\n Training finished.")
@@ -474,7 +475,9 @@ def main_train_scale():
                 num_heads=head,
                 num_layers=block,
                 batch_size=16,
-                num_train_steps=itts[size],
+                # num_train_steps=itts[size],
+                num_train_steps=200,
+                sweep=100,
                 sample=True,
                 resume=False,
             )
