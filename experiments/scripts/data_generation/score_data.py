@@ -26,10 +26,10 @@ def main():
         isos = np.array(data[:])  # type: ignore
         isos = [iso.decode("utf-8") for iso in isos]
 
-    isos_to_process = isos[:100]
+    isos_to_process = isos[:1_000]
 
     num_cores = int(os.environ.get("SLURM_CPUS_PER_TASK", os.cpu_count() or 1))
-    num_cores = min(10, num_cores)
+    num_cores = min(100, num_cores)
     print(f"Spinning up {num_cores} workers...")
 
     tic = time.time()
