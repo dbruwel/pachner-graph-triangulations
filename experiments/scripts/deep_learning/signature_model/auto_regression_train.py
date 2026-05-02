@@ -177,7 +177,7 @@ def sample_model(
 
 
 @jax.jit
-def train_10k_steps(
+def train_1k_steps(
     state: MinimalTrainState, batches_input: jax.Array, batches_labels: jax.Array
 ):
 
@@ -237,7 +237,7 @@ def train_model(
         params = load_model(save_path)
         last_step = int(get_last_csv_row(save_path / "train_losses.csv")[0])
         logger.info(f"Training resume from {last_step:,}")
-        steps = range(last_step, num_train_steps, 10_000)
+        steps = range(last_step, num_train_steps, 100)
     else:
         blank_idx = get_sample_idx(batch_size, len(train_idx))
         blank_batch_input = train_input[blank_idx]
@@ -250,7 +250,7 @@ def train_model(
         write_stat(save_path / "stats.txt", "n_params", f"{n_params:,}")
         logger.info(f"Model initialized. Parameter count: {n_params}")
 
-        steps = range(0, num_train_steps, 10_000)
+        steps = range(0, num_train_steps, 100)
 
     state = init_train_state(model, params, dropout_key)
 
@@ -260,7 +260,7 @@ def train_model(
         inputs_10k = []
         labels_10k = []
 
-        for _ in range(10_000):
+        for _ in range(100):
             sample_idx = get_sample_idx(batch_size, len(train_idx))
             inputs_10k.append(train_input[sample_idx])
             labels_10k.append(train_label[sample_idx])
@@ -269,7 +269,7 @@ def train_model(
         jnp_labels = jnp.stack(labels_10k)
 
         # Run 10,000 steps entirely on the GPU in one shot
-        state, loss = train_10k_steps(state, jnp_inputs, jnp_labels)
+        state, loss = train_1k_steps(state, jnp_inputs, jnp_labels)
         # sample_idx = get_sample_idx(batch_size, len(train_idx))
         # batch_input = train_input[sample_idx]
         # batch_label = train_label[sample_idx]
@@ -474,7 +474,7 @@ def main_train_scale():
                 batch_size=16,
                 num_train_steps=itts[size],
                 sample=True,
-                resume=True,
+                resume=False,
             )
             toc = time.time()
 
