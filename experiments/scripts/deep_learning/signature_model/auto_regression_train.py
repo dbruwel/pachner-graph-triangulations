@@ -1,6 +1,4 @@
-import csv
 import logging
-import os
 import pathlib
 import sys
 import time
@@ -17,10 +15,12 @@ from pachner_traversal.transformer import (
     generate_samples,
     init_train_state,
     train_step_auto_regression,
+    train_sweep_steps,
+    init_model,
+    init_params,
 )
 from pachner_traversal.utils import data_root as data_home
 from pachner_traversal.utils import (
-    get_last_csv_row,
     get_sample_idx,
     load_model,
     save_model,
@@ -51,30 +51,6 @@ def get_test_loss(
     return test_loss
 
 
-def init_model(
-    dataset: Dataset,
-    encoder: Encoder,
-    d_model: int = 512,
-    num_layers: int = 6,
-    num_heads: int = 4,
-):
-    vocab_size = len(encoder.char_to_id)
-    seq_len = dataset.max_len + 1
-
-    key = jax.random.PRNGKey(0)
-    main_key, params_key, dropout_key = jax.random.split(key, 3)
-
-    model = Transformer(
-        vocab_size=vocab_size,
-        d_model=d_model,
-        block_size=seq_len,
-        num_layers=num_layers,
-        num_heads=num_heads,
-    )
-
-    return model, (main_key, params_key, dropout_key), (vocab_size, seq_len)
-
-
 # critical functions
 def sample_model(
     data_path: pathlib.Path,
@@ -94,6 +70,7 @@ def sample_model(
     params = load_model(save_path)
 
     model, keys, meta = init_model(
+        Transformer,
         dataset,
         encoder,
         d_model=d_model,
@@ -123,23 +100,6 @@ def sample_model(
     with open(samp_save_path, "w") as f:
         for samp in samps_str:
             f.write(samp + "\n")
-
-
-@jax.jit
-def train_10k_steps(
-    state: MinimalTrainState, batches_input: jax.Array, batches_labels: jax.Array
-):
-
-    def scan_body(current_state, carry):
-        b_input, b_label = carry
-        new_state, loss = train_step_auto_regression(current_state, b_input, b_label)
-        return new_state, loss
-
-    final_state, losses = jax.lax.scan(
-        scan_body, state, (batches_input, batches_labels)
-    )
-
-    return final_state, jnp.mean(losses)
 
 
 def train_model(
@@ -174,6 +134,7 @@ def train_model(
 
     # setup model
     model, keys, meta = init_model(
+        Transformer,
         dataset,
         encoder,
         d_model=d_model,
@@ -183,43 +144,46 @@ def train_model(
     _, params_key, dropout_key = keys
     vocab_size, _ = meta
 
-    if (save_path / "params.pkl").exists() and resume:
-        params = load_model(save_path)
-        last_step = int(get_last_csv_row(save_path / "train_losses.csv")[0])
-        logger.info(f"Training resume from {last_step:,}")
-        steps = range(last_step, num_train_steps, sweep)
-    else:
-        blank_idx = get_sample_idx(batch_size, len(train_idx))
-        blank_batch_input = train_input[blank_idx]
-
-        key_data = {"params": params_key}
-        blank_model = model.init(key_data, blank_batch_input, training=True)
-        params = blank_model["params"]
-
-        n_params = sum(x.size for x in jax.tree_util.tree_leaves(params))
-        write_stat(save_path / "stats.txt", "n_params", f"{n_params:,}")
-        logger.info(f"Model initialized. Parameter count: {n_params}")
-
-        steps = range(0, num_train_steps, sweep)
+    resumed, meta, steps, params = init_params(
+        save_path,
+        resume,
+        num_train_steps,
+        sweep,
+        batch_size,
+        train_idx,
+        train_input,
+        params_key,
+        model,
+    )
 
     state = init_train_state(model, params, dropout_key)
+
+    if resumed:
+        logger.info(f"Training resume from {meta:,}")
+    else:
+        write_stat(save_path / "stats.txt", "n_params", f"{meta:,}")
+        logger.info(f"Model initialized. Parameter count: {meta}")
 
     # training
     logger.info("\n--- Starting Training ---")
     for step in steps:
-        inputs_10k = []
-        labels_10k = []
+        inputs_sweep = []
+        labels_sweep = []
 
         for _ in range(sweep):
             sample_idx = get_sample_idx(batch_size, len(train_idx))
-            inputs_10k.append(train_input[sample_idx])
-            labels_10k.append(train_label[sample_idx])
+            inputs_sweep.append(train_input[sample_idx])
+            labels_sweep.append(train_label[sample_idx])
 
-        jnp_inputs = jnp.stack(inputs_10k)
-        jnp_labels = jnp.stack(labels_10k)
+        jnp_inputs = jnp.stack(inputs_sweep)
+        jnp_labels = jnp.stack(labels_sweep)
 
-        # Run 1,000 steps entirely on the GPU in one shot
-        state, loss = train_10k_steps(state, jnp_inputs, jnp_labels)
+        state, loss = train_sweep_steps(
+            train_step_auto_regression,
+            state,
+            jnp_inputs,
+            jnp_labels,
+        )
 
         if (step + sweep) % sweep == 0 or (step + sweep) == num_train_steps:
             msg = f"Step {step + sweep:,}/{num_train_steps:,}, Loss: {float(loss):.4f}"
@@ -259,11 +223,6 @@ def main_train_tet():
     sample = True
 
     logging.basicConfig(level=logging.INFO)
-    send_ntfy(
-        "usyd-knottedness",
-        "Training Started",
-        f"Started training for SGD models on dehydration data",
-    )
 
     Ns = [20, 19, 18, 17, 16, 15, 14, 13, 12, 11, 10]
     for N in Ns:
@@ -305,20 +264,9 @@ def main_train_tet():
             f"Finished training for N={N}. Training time: {train_time:.2f} seconds. Sampling time: {sample_time:.2f} seconds.",
         )
 
-    send_ntfy(
-        "usyd-knottedness",
-        "All Training Finished",
-        f"Finished training for all N.",
-    )
-
 
 def main_train_long():
     logging.basicConfig(level=logging.INFO)
-    send_ntfy(
-        "usyd-knottedness",
-        "Long Training Started",
-        f"Started long training for SGD models on dehydration data",
-    )
 
     processed_data_path = data_home / "input_data" / "dehydration" / "processed"
     data_path = processed_data_path / f"spheres_10.hdf5"
@@ -351,15 +299,10 @@ def main_train_long():
     sample_time = toc - tic
     logger.info(f"Sampling time: {sample_time:.2f} seconds")
 
-    # NTFY
-    send_ntfy(
-        "usyd-knottedness",
-        "Training Finished",
-        f"Finished long training.",
-    )
-
 
 def main_train_scale():
+    logging.basicConfig(level=logging.INFO)
+
     train = True
     sample = True
 
@@ -373,13 +316,6 @@ def main_train_scale():
         "l": 12_500_000,
         "xl": 12_500_000,
     }
-
-    logging.basicConfig(level=logging.INFO)
-    send_ntfy(
-        "usyd-knottedness",
-        "Scale Training Started",
-        f"Started training for SGD models on dehydration data",
-    )
 
     sizes = ["xs"]
     for size in sizes:
@@ -442,17 +378,15 @@ def main_train_scale():
             sample_time = toc - tic
             logger.info(f"Sampling time: {sample_time:.2f} seconds")
 
+        message = (
+            f"Training time: {train_time:.2f} seconds."
+            f"Sampling time: {sample_time:.2f} seconds."
+        )
         send_ntfy(
             "usyd-knottedness",
-            f"Training Finished for size={size}",
-            f"Finished training for size={size}. Training time: {train_time:.2f} seconds. Sampling time: {sample_time:.2f} seconds.",
+            f"Finished training for size={size}.",
+            message,
         )
-
-    send_ntfy(
-        "usyd-knottedness",
-        "All Scale Training Finished",
-        f"Finished training for all scales.",
-    )
 
 
 if __name__ == "__main__":

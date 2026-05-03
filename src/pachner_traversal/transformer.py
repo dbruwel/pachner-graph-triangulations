@@ -9,6 +9,8 @@ from flax.core import freeze
 from flax.core.frozen_dict import FrozenDict
 from flax.linen.initializers import normal
 from flax.training import train_state
+from pachner_traversal.data_io_dehydration import Dataset, Encoder
+from pachner_traversal.utils import get_last_csv_row, get_sample_idx, load_model
 
 
 class MinimalTrainState(train_state.TrainState):
@@ -257,6 +259,26 @@ def train_step_scalar_regression(
     return new_state, loss
 
 
+@jax.jit
+def train_sweep_steps(
+    train_step,
+    state: MinimalTrainState,
+    batches_input: jax.Array,
+    batches_labels: jax.Array,
+):
+
+    def scan_body(current_state, carry):
+        b_input, b_label = carry
+        new_state, loss = train_step(current_state, b_input, b_label)
+        return new_state, loss
+
+    final_state, losses = jax.lax.scan(
+        scan_body, state, (batches_input, batches_labels)
+    )
+
+    return final_state, jnp.mean(losses)
+
+
 def generate_samples(
     state: MinimalTrainState,
     samps_to_gen: int,
@@ -304,3 +326,60 @@ def init_train_state(model, params, dropout_key):
     )
 
     return state
+
+
+def init_model(
+    model_type,
+    dataset: Dataset,
+    encoder: Encoder,
+    d_model: int = 512,
+    num_layers: int = 6,
+    num_heads: int = 4,
+):
+    vocab_size = len(encoder.char_to_id)
+    seq_len = dataset.max_len + 1
+
+    key = jax.random.PRNGKey(0)
+    main_key, params_key, dropout_key = jax.random.split(key, 3)
+
+    model = model_type(
+        vocab_size=vocab_size,
+        d_model=d_model,
+        block_size=seq_len,
+        num_layers=num_layers,
+        num_heads=num_heads,
+    )
+
+    return model, (main_key, params_key, dropout_key), (vocab_size, seq_len)
+
+
+def init_params(
+    save_path,
+    resume,
+    num_train_steps,
+    sweep,
+    batch_size,
+    train_idx,
+    train_input,
+    params_key,
+    model,
+):
+    resumed = (save_path / "params.pkl").exists() and resume
+    if resumed:
+        params = load_model(save_path)
+        last_step = int(get_last_csv_row(save_path / "train_losses.csv")[0])
+        steps = range(last_step, num_train_steps, sweep)
+        meta = last_step
+    else:
+        blank_idx = get_sample_idx(batch_size, len(train_idx))
+        blank_batch_input = train_input[blank_idx]
+
+        key_data = {"params": params_key}
+        blank_model = model.init(key_data, blank_batch_input, training=True)
+        params = blank_model["params"]
+
+        meta = sum(x.size for x in jax.tree_util.tree_leaves(params))
+
+        steps = range(0, num_train_steps, sweep)
+
+    return resumed, meta, steps, params
