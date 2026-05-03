@@ -188,7 +188,7 @@ def main_train_simple():
             num_layers=6,
             num_heads=4,
             batch_size=16,
-            num_test_samps=10_000,
+            num_test_samps=5_000,
             num_train_steps=10_000_000,
             resume=False,
         )
