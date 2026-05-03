@@ -19,7 +19,7 @@ from pachner_traversal.transformer import (
     init_model,
     init_params,
 )
-from pachner_traversal.utils import data_root as data_home
+from pachner_traversal.utils import data_root as data_root
 from pachner_traversal.utils import (
     get_sample_idx,
     load_model,
@@ -227,17 +227,17 @@ def main_train_tet():
     Ns = [20, 19, 18, 17, 16, 15, 14, 13, 12, 11, 10]
     for N in Ns:
         logger.info(f"\n\n=== N_TET = {N} ===")
-        processed_data_home = data_home / "input_data" / "dehydration" / "processed"
+        processed_data_home = data_root / "input_data" / "dehydration" / "processed"
         data_path = processed_data_home / f"spheres_{N}.hdf5"
 
-        save_path = data_home
+        save_path = data_root
 
         train_time = 0
         sample_time = 0
 
         if train:
             save_path = (
-                data_home
+                data_root
                 / "sgd_models_dehydration"
                 / f"spheres_512emb_6block_4head_{N}tet"
             )
@@ -268,14 +268,14 @@ def main_train_tet():
 def main_train_long():
     logging.basicConfig(level=logging.INFO)
 
-    processed_data_path = data_home / "input_data" / "dehydration" / "processed"
+    processed_data_path = data_root / "input_data" / "dehydration" / "processed"
     data_path = processed_data_path / f"spheres_10.hdf5"
 
     train_time = 0
     sample_time = 0
 
     save_path = (
-        data_home
+        data_root
         / "results"
         / "sgd_models_dehydration"
         / "long_train"
@@ -323,17 +323,17 @@ def main_train_scale():
         block = blocks[size]
         head = heads[size]
 
-        processed_data_home = data_home / "input_data" / "dehydration" / "processed"
+        processed_data_home = data_root / "input_data" / "dehydration" / "processed"
         data_path = processed_data_home / "spheres_10.hdf5"
 
-        save_path = data_home
+        save_path = data_root
 
         train_time = 0
         sample_time = 0
 
         if train:
             save_path = (
-                data_home
+                data_root
                 / "results"
                 / "sgd_models_dehydration"
                 / "archive"

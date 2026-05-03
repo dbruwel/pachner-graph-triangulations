@@ -13,18 +13,19 @@ from pachner_traversal.data_io_dehydration import Dataset, Encoder
 from pachner_traversal.transformer import (
     MinimalTrainState,
     ScalarTransformer,
-    train_step_scalar_regression,
-    init_train_state,
-    train_sweep_steps,
     init_model,
     init_params,
+    init_train_state,
+    train_step_scalar_regression,
+    train_sweep_steps,
 )
-from pachner_traversal.utils import data_root as data_home
 from pachner_traversal.utils import (
-    write_loss,
-    save_model,
-    write_stat,
+    data_root,
     get_sample_idx,
+    save_model,
+    send_ntfy,
+    write_loss,
+    write_stat,
 )
 
 logger = logging.getLogger(__name__)
@@ -156,39 +157,52 @@ def train_model(
 # main
 def main_train_simple():
     N = 10
+    obj_funcs: list[Literal["edge_degree_variance", "det_alexander"]] = [
+        "edge_degree_variance",
+        "det_alexander",
+    ]
 
     logging.basicConfig(level=logging.INFO)
 
-    logger.info(f"\n\n=== N_TET = {N} ===")
-    processed_data_home = data_home / "input_data" / "dehydration" / "processed"
-    data_path = processed_data_home / f"spheres_{N}.hdf5"
+    for obj_func in obj_funcs:
+        logger.info(f"\n\n=== OBJ = {obj_funcs} ===")
+        processed_data_home = data_root / "input_data" / "dehydration" / "processed"
+        data_path = processed_data_home / f"spheres_{N}.hdf5"
 
-    save_path = (
-        data_home
-        / "results"
-        / "sgd_models_dehydration"
-        / "scalar_simple"
-        / f"spheres_512emb_6block_4head_{N}tet"
-    )
-    save_path.mkdir(parents=True, exist_ok=True)
+        save_path = (
+            data_root
+            / "results"
+            / "sgd_models_dehydration"
+            / "scalar_simple"
+            / obj_func
+            / f"spheres_512emb_6block_4head_{N}tet"
+        )
+        save_path.mkdir(parents=True, exist_ok=True)
 
-    tic = time.time()
-    train_model(
-        data_path,
-        save_path,
-        dset_name="edge_degree_variance",
-        d_model=64,
-        num_layers=4,
-        num_heads=4,
-        batch_size=16,
-        num_test_samps=1_000,
-        num_train_steps=1_000_000,
-        resume=False,
-    )
-    toc = time.time()
+        tic = time.time()
+        train_model(
+            data_path,
+            save_path,
+            dset_name=obj_func,
+            d_model=512,
+            num_layers=6,
+            num_heads=4,
+            batch_size=16,
+            num_test_samps=10_000,
+            num_train_steps=10_000_000,
+            resume=False,
+        )
+        toc = time.time()
 
-    train_time = toc - tic
-    logger.info(f"Training time: {train_time:.2f} seconds")
+        train_time = toc - tic
+        logger.info(f"Training time: {train_time:.2f} seconds")
+
+        message = f"Training time: {train_time:.2f} seconds."
+        send_ntfy(
+            "usyd-knottedness",
+            f"Finished training for {obj_func}.",
+            message,
+        )
 
 
 if __name__ == "__main__":
