@@ -158,7 +158,6 @@ def train_model(
 ) -> None:
 
     # data
-    # TODO: change target label
     dataset = Dataset(data_path, num_test_samps)
     encoder = Encoder(dataset)
 
@@ -177,7 +176,7 @@ def train_model(
     train_label = all_data_label[train_idx]
 
     # setup model
-    model, keys, meta = init_model(
+    model, keys, _ = init_model(
         dataset,
         encoder,
         d_model=d_model,
@@ -185,13 +184,12 @@ def train_model(
         num_heads=num_heads,
     )
     _, params_key, dropout_key = keys
-    vocab_size, _ = meta
 
     if (save_path / "params.pkl").exists() and resume:
         params = load_model(save_path)
         last_step = int(get_last_csv_row(save_path / "train_losses.csv")[0])
         logger.info(f"Training resume from {last_step:,}")
-        steps = range(last_step, num_train_steps)
+        steps = range(last_step, num_train_steps, sweep)
     else:
         blank_idx = get_sample_idx(batch_size, len(train_idx))
         blank_batch_input = train_input[blank_idx]
@@ -204,7 +202,7 @@ def train_model(
         write_stat(save_path / "stats.txt", "n_params", f"{n_params:,}")
         logger.info(f"Model initialized. Parameter count: {n_params}")
 
-        steps = range(num_train_steps)
+        steps = range(num_train_steps, sweep)
 
     state = init_train_state(model, params, dropout_key)
 
