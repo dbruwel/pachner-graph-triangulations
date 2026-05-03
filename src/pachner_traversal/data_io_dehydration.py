@@ -131,7 +131,11 @@ class Dataset:
             dset = hf[dset]
             unique_lines = dset[sorted_indices]  # type: ignore
             restored_lines = unique_lines[inverse_map]  # type: ignore
-            return [line.decode("utf-8") for line in restored_lines]  # type: ignore
+            if dset == "isos":
+                res = [line.decode("utf-8") for line in restored_lines]  # type: ignore
+            else:
+                res = restored_lines
+            return res
 
     def setup_train_test(self):
         self.test_idx = np.random.choice(
