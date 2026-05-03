@@ -1,10 +1,12 @@
 import os
 import pathlib
+import pickle
 from datetime import datetime
 
 import matplotlib.pyplot as plt
 import numpy as np
 import requests
+import csv
 
 data_root = pathlib.Path(__file__).parent.parent.parent / "data"
 
@@ -69,3 +71,43 @@ def send_ntfy(topic: str, title: str, message: str) -> None:
     headers = {"Title": title, "Priority": "high", "Tags": "python,snake"}
 
     requests.post(url, data=message.encode("utf-8"), headers=headers)
+
+
+def write_loss(save_path, step, loss):
+    with open(save_path, "a") as f:
+        f.write(f"{step},{loss}\n")
+
+
+def save_model(save_path, state):
+    with open(save_path / "params.pkl", "wb") as file:
+        pickle.dump(state.params, file)
+
+
+def load_model(save_path):
+    with open(save_path / "params.pkl", "rb") as file:
+        params = pickle.load(file)
+
+    return params
+
+
+def write_stat(stat_file_path, stat_name, stat_value):
+    with open(stat_file_path, "a") as f:
+        f.write(f"{stat_name}, {stat_value}\n")
+
+
+def get_sample_idx(batch_size, dataset_size):
+    return np.random.choice(dataset_size, size=batch_size, replace=True)
+
+
+def get_last_csv_row(filepath):
+    with open(filepath, "rb") as f:
+        try:
+            f.seek(-2, os.SEEK_END)
+            while f.read(1) != b"\n":
+                f.seek(-2, os.SEEK_CUR)
+        except OSError:
+            f.seek(0)
+
+        last_line = f.readline().decode("utf-8")
+
+    return next(csv.reader([last_line]))

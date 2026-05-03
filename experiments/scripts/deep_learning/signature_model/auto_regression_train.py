@@ -2,7 +2,6 @@ import csv
 import logging
 import os
 import pathlib
-import pickle
 import sys
 import time
 from functools import partial
@@ -11,59 +10,26 @@ import jax
 import jax.numpy as jnp
 import numpy as np
 import optax
-from flax.core import freeze
 from pachner_traversal.data_io_dehydration import Dataset, Encoder
 from pachner_traversal.transformer import (
     MinimalTrainState,
     Transformer,
     generate_samples,
+    init_train_state,
     train_step_auto_regression,
 )
 from pachner_traversal.utils import data_root as data_home
-from pachner_traversal.utils import send_ntfy
+from pachner_traversal.utils import (
+    get_last_csv_row,
+    get_sample_idx,
+    load_model,
+    save_model,
+    send_ntfy,
+    write_loss,
+    write_stat,
+)
 
 logger = logging.getLogger(__name__)
-
-
-# simple utility
-def write_loss(save_path, step, loss):
-    with open(save_path, "a") as f:
-        f.write(f"{step},{loss}\n")
-
-
-def save_model(save_path, state):
-    with open(save_path / "params.pkl", "wb") as file:
-        pickle.dump(state.params, file)
-
-
-def load_model(save_path):
-    with open(save_path / "params.pkl", "rb") as file:
-        params = pickle.load(file)
-
-    return params
-
-
-def write_stat(stat_file_path, stat_name, stat_value):
-    with open(stat_file_path, "a") as f:
-        f.write(f"{stat_name}, {stat_value}\n")
-
-
-def get_sample_idx(batch_size, dataset_size):
-    return np.random.choice(dataset_size, size=batch_size, replace=True)
-
-
-def get_last_csv_row(filepath):
-    with open(filepath, "rb") as f:
-        try:
-            f.seek(-2, os.SEEK_END)
-            while f.read(1) != b"\n":
-                f.seek(-2, os.SEEK_CUR)
-        except OSError:
-            f.seek(0)
-
-        last_line = f.readline().decode("utf-8")
-
-    return next(csv.reader([last_line]))
 
 
 # jax utility
@@ -107,23 +73,6 @@ def init_model(
     )
 
     return model, (main_key, params_key, dropout_key), (vocab_size, seq_len)
-
-
-def init_train_state(model, params, dropout_key):
-    learning_rate = 0.0005
-
-    state = MinimalTrainState.create(
-        params=params,
-        apply_fn=model.apply,
-        dropout_key=dropout_key,
-        learning_rate=learning_rate,
-        m_tm1=freeze(jax.tree_util.tree_map(jnp.zeros_like, params)),
-        v_tm1=freeze(jax.tree_util.tree_map(jnp.zeros_like, params)),
-        t=0,
-        tx=optax.adamw(learning_rate=learning_rate, weight_decay=0.01),
-    )
-
-    return state
 
 
 # critical functions

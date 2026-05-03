@@ -5,6 +5,7 @@ import jax
 import jax.numpy as jnp
 import optax
 from flax import struct
+from flax.core import freeze
 from flax.core.frozen_dict import FrozenDict
 from flax.linen.initializers import normal
 from flax.training import train_state
@@ -286,3 +287,20 @@ def generate_samples(
         generate_step, initial_samples, xs=jnp.arange(seq_len - 1)
     )
     return samples
+
+
+def init_train_state(model, params, dropout_key):
+    learning_rate = 0.0005
+
+    state = MinimalTrainState.create(
+        params=params,
+        apply_fn=model.apply,
+        dropout_key=dropout_key,
+        learning_rate=learning_rate,
+        m_tm1=freeze(jax.tree_util.tree_map(jnp.zeros_like, params)),
+        v_tm1=freeze(jax.tree_util.tree_map(jnp.zeros_like, params)),
+        t=0,
+        tx=optax.adamw(learning_rate=learning_rate, weight_decay=0.01),
+    )
+
+    return state
