@@ -144,7 +144,9 @@ def train_10k_steps(
 def train_model(
     data_path: pathlib.Path,
     save_path: pathlib.Path,
-    dset: Literal["edge_degree_variance", "det_alexander"] = "edge_degree_variance",
+    dset_name: Literal[
+        "edge_degree_variance", "det_alexander"
+    ] = "edge_degree_variance",
     d_model: int = 512,
     num_layers: int = 6,
     num_heads: int = 4,
@@ -161,7 +163,7 @@ def train_model(
     encoder = Encoder(dataset)
 
     all_data_str = dataset.read_all_data()
-    all_data_label_raw = dataset.read_all_data(dset=dset)
+    all_data_label_raw = dataset.read_all_data(dset_name=dset_name)
     all_data_label = np.array(all_data_label_raw)
     all_data_input, _ = encoder.encode(all_data_str)
 
@@ -271,7 +273,7 @@ def main_train_simple():
     train_model(
         data_path,
         save_path,
-        dset="edge_degree_variance",
+        dset_name="edge_degree_variance",
         d_model=64,
         num_layers=4,
         num_heads=4,

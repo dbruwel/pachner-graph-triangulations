@@ -116,22 +116,22 @@ class Dataset:
 
         return chars, max_len
 
-    def get_data_size(self, dset="isos"):
+    def get_data_size(self, dset_name="isos"):
         with h5py.File(self.hdf5_file, "r") as hf:
-            dset = hf[dset]
+            dset = hf[dset_name]
             data_size = dset.shape[0]  # type: ignore
 
         return data_size
 
-    def read_lines(self, indices, dset="isos"):
+    def read_lines(self, indices, dset_name="isos"):
         with h5py.File(self.hdf5_file, "r") as hf:
             unique_indices, inverse_map = np.unique(indices, return_inverse=True)
             sorted_indices = np.sort(unique_indices)
 
-            dset = hf[dset]
+            dset = hf[dset_name]
             unique_lines = dset[sorted_indices]  # type: ignore
             restored_lines = unique_lines[inverse_map]  # type: ignore
-            if dset == "isos":
+            if dset_name == "isos":
                 res = [line.decode("utf-8") for line in restored_lines]  # type: ignore
             else:
                 res = restored_lines
@@ -168,8 +168,8 @@ class Dataset:
 
         return batch_data
 
-    def read_all_data(self, dset="isos"):
-        return self.read_lines(np.arange(len(self)), dset=dset)
+    def read_all_data(self, dset_name="isos"):
+        return self.read_lines(np.arange(len(self)), dset_name=dset_name)
 
 
 class Encoder:
