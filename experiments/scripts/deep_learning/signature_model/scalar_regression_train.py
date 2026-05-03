@@ -165,7 +165,7 @@ def main_train_simple():
     logging.basicConfig(level=logging.INFO)
 
     for obj_func in obj_funcs:
-        logger.info(f"\n\n=== OBJ = {obj_funcs} ===")
+        logger.info(f"\n\n=== OBJ = {obj_func} ===")
         processed_data_home = data_root / "input_data" / "dehydration" / "processed"
         data_path = processed_data_home / f"spheres_{N}.hdf5"
 

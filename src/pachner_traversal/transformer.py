@@ -1,3 +1,4 @@
+from functools import partial
 from typing import Callable
 
 import flax.linen as nn
@@ -259,7 +260,7 @@ def train_step_scalar_regression(
     return new_state, loss
 
 
-@jax.jit
+@partial(jax.jit, static_argnames=["train_step"])
 def train_sweep_steps(
     train_step,
     state: MinimalTrainState,
