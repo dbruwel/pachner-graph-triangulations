@@ -233,7 +233,6 @@ def train_model(
                 state,
                 test_input,
                 test_label,
-                vocab_size,
             )
 
             write_loss(save_path / "train_losses.csv", step + sweep, float(loss))
