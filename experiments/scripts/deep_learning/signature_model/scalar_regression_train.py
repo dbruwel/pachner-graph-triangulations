@@ -6,6 +6,7 @@ import pickle
 import sys
 import time
 from functools import partial
+from typing import Literal
 
 import jax
 import jax.numpy as jnp
@@ -122,16 +123,35 @@ def init_train_state(model, params, dropout_key):
     return state
 
 
+@jax.jit
+def train_10k_steps(
+    state: MinimalTrainState, batches_input: jax.Array, batches_labels: jax.Array
+):
+
+    def scan_body(current_state, carry):
+        b_input, b_label = carry
+        new_state, loss = train_step_scalar_regression(current_state, b_input, b_label)
+        return new_state, loss
+
+    final_state, losses = jax.lax.scan(
+        scan_body, state, (batches_input, batches_labels)
+    )
+
+    return final_state, jnp.mean(losses)
+
+
 # critical functions
 def train_model(
     data_path: pathlib.Path,
     save_path: pathlib.Path,
+    dset: Literal["edge_degree_variance", "det_alexander"] = "edge_degree_variance",
     d_model: int = 512,
     num_layers: int = 6,
     num_heads: int = 4,
     batch_size=64,
     num_test_samps: int = 1_000,
     num_train_steps=1_000_000,
+    sweep=10_000,
     resume=True,
 ) -> None:
 
@@ -141,9 +161,9 @@ def train_model(
     encoder = Encoder(dataset)
 
     all_data_str = dataset.read_all_data()
+    all_data_label_raw = dataset.read_all_data(dset=dset)
+    all_data_label = np.array(all_data_label_raw)
     all_data_input, _ = encoder.encode(all_data_str)
-
-    all_data_label = np.ones(len(all_data_input))
 
     test_input = all_data_input[dataset.test_idx]
     test_label = all_data_label[dataset.test_idx]
@@ -189,24 +209,33 @@ def train_model(
     # training
     logger.info("\n--- Starting Training ---")
     for step in steps:
-        sample_idx = get_sample_idx(batch_size, len(train_idx))
-        batch_input = train_input[sample_idx]
-        batch_label = train_label[sample_idx]
+        inputs_10k = []
+        labels_10k = []
 
-        state, loss = train_step_scalar_regression(state, batch_input, batch_label)
+        for _ in range(sweep):
+            sample_idx = get_sample_idx(batch_size, len(train_idx))
+            inputs_10k.append(train_input[sample_idx])
+            labels_10k.append(train_label[sample_idx])
 
-        if (step + 1) % 10_000 == 0 or (step + 1) == num_train_steps:
-            msg = f"Step {step + 1:,}/{num_train_steps:,}, Loss: {float(loss):.4f}"
+        jnp_inputs = jnp.stack(inputs_10k)
+        jnp_labels = jnp.stack(labels_10k)
+
+        # Run 1,000 steps entirely on the GPU in one shot
+        state, loss = train_10k_steps(state, jnp_inputs, jnp_labels)
+
+        if (step + sweep) % sweep == 0 or (step + sweep) == num_train_steps:
+            msg = f"Step {step + sweep:,}/{num_train_steps:,}, Loss: {float(loss):.4f}"
             logger.info(msg)
 
             test_loss = get_test_loss(
                 state,
                 test_input,
                 test_label,
+                vocab_size,
             )
 
-            write_loss(save_path / "train_losses.csv", step + 1, float(loss))
-            write_loss(save_path / "test_losses.csv", step + 1, float(test_loss))
+            write_loss(save_path / "train_losses.csv", step + sweep, float(loss))
+            write_loss(save_path / "test_losses.csv", step + sweep, float(test_loss))
             save_model(save_path, state)
 
     logger.info("\n Training finished.")
@@ -242,6 +271,7 @@ def main_train_simple():
     train_model(
         data_path,
         save_path,
+        dset="edge_degree_variance",
         d_model=64,
         num_layers=4,
         num_heads=4,
