@@ -150,7 +150,7 @@ def train_model(
         write_stat(save_path / "stats.txt", "n_params", f"{n_params:,}")
         logger.info(f"Model initialized. Parameter count: {n_params}")
 
-        steps = range(num_train_steps, sweep)
+        steps = range(0, num_train_steps, sweep)
 
     state = init_train_state(model, params, dropout_key)
 
