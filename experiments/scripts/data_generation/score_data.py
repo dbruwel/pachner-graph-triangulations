@@ -53,10 +53,7 @@ def compute_potential_unit_degree(iso: str) -> float:
     return potential_val
 
 
-def main():
-    logging.basicConfig(level=logging.INFO)
-    dataset_name = "unit_deg"
-
+def score_data(dataset_name):
     if dataset_name == "edge_degree_variance":
         compute_potential = compute_potential_var
     elif dataset_name == "det_alexander":
@@ -107,6 +104,12 @@ def main():
             del f[dataset_name]
 
         f.create_dataset(dataset_name, data=ved, compression="gzip", compression_opts=4)
+
+
+def main():
+    logging.basicConfig(level=logging.INFO)
+    score_data("unit_deg")
+    score_data("loop_count")
 
 
 if __name__ == "__main__":
