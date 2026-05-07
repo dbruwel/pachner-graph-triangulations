@@ -197,7 +197,7 @@ def main_train_simple():
             batch_size=64,
             epochs=160,
             num_test_samps=5_000,
-            num_train_steps=2_500_000,
+            num_train_steps=2_000_000,
             resume=False,
         )
         toc = time.time()
