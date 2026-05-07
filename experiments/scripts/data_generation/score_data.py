@@ -79,6 +79,7 @@ def score_data(dataset_name):
 
     num_cores = int(os.environ.get("SLURM_CPUS_PER_TASK", os.cpu_count() or 1))
     num_cores = min(100, num_cores)
+    num_cores = 1
     logger.info(f"number of workers: {num_cores}")
 
     tic = time.time()
