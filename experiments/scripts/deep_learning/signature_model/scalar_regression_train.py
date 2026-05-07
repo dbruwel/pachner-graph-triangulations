@@ -20,6 +20,7 @@ from pachner_traversal.transformer import (
     train_sweep_steps,
 )
 from pachner_traversal.utils import (
+    create_sample_schedule,
     data_root,
     get_sample_idx,
     save_model,
@@ -52,12 +53,13 @@ def train_model(
     data_path: pathlib.Path,
     save_path: pathlib.Path,
     dset_name: Literal[
-        "edge_degree_variance", "det_alexander"
+        "edge_degree_variance", "det_alexander", "loop_count", "unit_deg"
     ] = "edge_degree_variance",
     d_model: int = 512,
     num_layers: int = 6,
     num_heads: int = 4,
     batch_size=64,
+    epochs=64,
     num_test_samps: int = 1_000,
     num_train_steps=1_000_000,
     sweep=10_000,
@@ -95,15 +97,14 @@ def train_model(
 
     # resume / init parameters
     resumed, meta, steps, params = init_params(
+        model,
+        params_key,
         save_path,
-        resume,
+        train_input,
+        batch_size,
         num_train_steps,
         sweep,
-        batch_size,
-        train_idx,
-        train_input,
-        params_key,
-        model,
+        resume,
     )
 
     state = init_train_state(model, params, dropout_key)
@@ -114,14 +115,21 @@ def train_model(
         write_stat(save_path / "stats.txt", "n_params", f"{meta:,}")
         logger.info(f"Model initialized. Parameter count: {meta}")
 
+    schedule = create_sample_schedule(
+        batch_size,
+        dataset_size=len(train_input),
+        epochs=epochs,
+        num_itts=num_train_steps,
+    )
+
     # training
     logger.info("\n--- Starting Training ---")
     for step in steps:
         inputs_sweep = []
         labels_sweep = []
 
-        for _ in range(sweep):
-            sample_idx = get_sample_idx(batch_size, len(train_idx))
+        for i in range(sweep):
+            sample_idx = get_sample_idx(schedule, batch_size, step + i)
             inputs_sweep.append(train_input[sample_idx])
             labels_sweep.append(train_label[sample_idx])
 
@@ -157,10 +165,9 @@ def train_model(
 # main
 def main_train_simple():
     N = 10
-    obj_funcs: list[Literal["edge_degree_variance", "det_alexander"]] = [
-        "edge_degree_variance",
-        "det_alexander",
-    ]
+    obj_funcs: list[
+        Literal["edge_degree_variance", "det_alexander", "loop_count", "unit_deg"]
+    ] = ["loop_count", "unit_deg"]
 
     logging.basicConfig(level=logging.INFO)
 

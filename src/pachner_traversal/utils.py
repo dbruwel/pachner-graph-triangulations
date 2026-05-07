@@ -95,7 +95,36 @@ def write_stat(stat_file_path, stat_name, stat_value):
         f.write(f"{stat_name}, {stat_value}\n")
 
 
-def get_sample_idx(batch_size, dataset_size):
+def create_sample_schedule(batch_size, dataset_size, epochs, num_itts, seed=42):
+    np.random.seed(seed)
+
+    num_samples = num_itts * batch_size
+    num_unique_samples = num_samples // epochs
+
+    if num_samples % epochs != 0:
+        raise ValueError("Total samples is not a multiple of epochs.")
+    if num_unique_samples > dataset_size:
+        raise ValueError("Total unique samples exceeds dataset size.")
+
+    unique_samples = np.random.choice(
+        dataset_size, size=num_unique_samples, replace=False
+    )
+
+    schedule = np.repeat(unique_samples, epochs)
+    schedule = np.random.permutation(schedule)
+
+    return schedule
+
+
+def get_sample_idx(schedule, batch_size, itt):
+    start_pos = itt * batch_size
+    end_pos = start_pos + batch_size
+    idxs = schedule[start_pos:end_pos]
+
+    return idxs
+
+
+def get_random_sample_idx(batch_size, dataset_size):
     return np.random.choice(dataset_size, size=batch_size, replace=True)
 
 

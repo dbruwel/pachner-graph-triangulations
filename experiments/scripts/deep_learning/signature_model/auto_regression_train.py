@@ -13,12 +13,13 @@ from pachner_traversal.transformer import (
     MinimalTrainState,
     Transformer,
     generate_samples,
+    init_model,
+    init_params,
     init_train_state,
     train_step_auto_regression,
     train_sweep_steps,
-    init_model,
-    init_params,
 )
+from pachner_traversal.utils import create_sample_schedule
 from pachner_traversal.utils import data_root as data_root
 from pachner_traversal.utils import (
     get_sample_idx,
@@ -109,6 +110,7 @@ def train_model(
     num_layers: int = 6,
     num_heads: int = 4,
     batch_size=64,
+    epochs=64,
     num_test_samps: int = 1_000,
     num_train_steps=1_000_000,
     sweep: int = 10_000,
@@ -145,15 +147,14 @@ def train_model(
     vocab_size, _ = meta
 
     resumed, meta, steps, params = init_params(
+        model,
+        params_key,
         save_path,
-        resume,
+        train_input,
+        batch_size,
         num_train_steps,
         sweep,
-        batch_size,
-        train_idx,
-        train_input,
-        params_key,
-        model,
+        resume,
     )
 
     state = init_train_state(model, params, dropout_key)
@@ -164,14 +165,21 @@ def train_model(
         write_stat(save_path / "stats.txt", "n_params", f"{meta:,}")
         logger.info(f"Model initialized. Parameter count: {meta}")
 
+    schedule = create_sample_schedule(
+        batch_size,
+        dataset_size=len(train_input),
+        epochs=epochs,
+        num_itts=num_train_steps,
+    )
+
     # training
     logger.info("\n--- Starting Training ---")
     for step in steps:
         inputs_sweep = []
         labels_sweep = []
 
-        for _ in range(sweep):
-            sample_idx = get_sample_idx(batch_size, len(train_idx))
+        for i in range(sweep):
+            sample_idx = get_sample_idx(schedule, batch_size, step + i)
             inputs_sweep.append(train_input[sample_idx])
             labels_sweep.append(train_label[sample_idx])
 

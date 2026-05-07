@@ -1,11 +1,10 @@
+import math
+import multiprocessing
 from typing import Optional, Type
 
 import numpy as np
 import regina
 from snappy import Manifold
-
-import multiprocessing
-import math
 
 
 def is_knotted(t: regina.engine.Triangulation3) -> bool:
@@ -168,7 +167,7 @@ class Potential:
         edges = regina.engine.Triangulation3.fromIsoSig(iso).countEdges()
         tetrahedra = regina.engine.Triangulation3.fromIsoSig(iso).countTetrahedra()
 
-        if (not self.max_size is None) and (tetrahedra > self.max_size):
+        if (self.max_size is not None) and (tetrahedra > self.max_size):
             return -np.inf, 0.0, 0, False
 
         if num_processes is None:
@@ -277,7 +276,7 @@ def calc_composite_potential(iso):
                 score_num_gen = NumGenerators.base_score
                 knotted.append(0)
                 all_knotted = False
-        except Exception as e:
+        except Exception:
             import pdb
 
             pdb.set_trace()

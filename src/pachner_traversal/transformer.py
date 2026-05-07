@@ -1,9 +1,11 @@
 from functools import partial
+from pathlib import Path
 from typing import Callable
 
 import flax.linen as nn
 import jax
 import jax.numpy as jnp
+import numpy as np
 import optax
 from flax import struct
 from flax.core import freeze
@@ -11,7 +13,7 @@ from flax.core.frozen_dict import FrozenDict
 from flax.linen.initializers import normal
 from flax.training import train_state
 from pachner_traversal.data_io_dehydration import Dataset, Encoder
-from pachner_traversal.utils import get_last_csv_row, get_sample_idx, load_model
+from pachner_traversal.utils import get_last_csv_row, get_random_sample_idx, load_model
 
 
 class MinimalTrainState(train_state.TrainState):
@@ -355,24 +357,23 @@ def init_model(
 
 
 def init_params(
-    save_path,
-    resume,
-    num_train_steps,
-    sweep,
-    batch_size,
-    train_idx,
-    train_input,
-    params_key,
     model,
+    params_key,
+    load_path: Path,
+    train_input: np.ndarray,
+    batch_size: int,
+    num_train_steps: int,
+    sweep: int,
+    resume: bool,
 ):
-    resumed = (save_path / "params.pkl").exists() and resume
+    resumed = (load_path / "params.pkl").exists() and resume
     if resumed:
-        params = load_model(save_path)
-        last_step = int(get_last_csv_row(save_path / "train_losses.csv")[0])
+        params = load_model(load_path)
+        last_step = int(get_last_csv_row(load_path / "train_losses.csv")[0])
         steps = range(last_step, num_train_steps, sweep)
         meta = last_step
     else:
-        blank_idx = get_sample_idx(batch_size, len(train_idx))
+        blank_idx = get_random_sample_idx(batch_size, len(train_input))
         blank_batch_input = train_input[blank_idx]
 
         key_data = {"params": params_key}

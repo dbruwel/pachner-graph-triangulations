@@ -1,18 +1,17 @@
+import logging
 import os
 import time
-import h5py
-import numpy as np
 from concurrent.futures import ProcessPoolExecutor
 
+import h5py
+import numpy as np
 from pachner_traversal.potential_functions import (
+    DeterminantAlexanderPolynomial,
     Potential,
     VarianceEdgeDegree,
-    DeterminantAlexanderPolynomial,
 )
 from pachner_traversal.utils import data_root
 from regina import Triangulation3
-
-import logging
 
 logger = logging.getLogger(__name__)
 
@@ -31,14 +30,41 @@ def compute_potential_det(iso: str) -> float | np.floating:
     return potential_val
 
 
+def compute_potential_loops(iso: str):
+    tri = Triangulation3.rehydrate(iso)
+    potential_val = 0
+
+    for tet in tri.tetrahedra():
+        for i in range(4):
+            loop = tet.index() == tet.adjacentSimplex(i).index()
+            potential_val = potential_val + loop / 2
+
+    return potential_val
+
+
+def compute_potential_unit_degree(iso: str) -> float:
+    tri = Triangulation3.rehydrate(iso)
+    potential_val = 0.0
+
+    for edge in tri.edges():
+        unit_degree = float(edge.degree() == 1)
+        potential_val = potential_val + unit_degree
+
+    return potential_val
+
+
 def main():
     logging.basicConfig(level=logging.INFO)
-    dataset_name = "det_alexander"  # edge_degree_variance, det_alexander
+    dataset_name = "unit_deg"
 
     if dataset_name == "edge_degree_variance":
         compute_potential = compute_potential_var
     elif dataset_name == "det_alexander":
         compute_potential = compute_potential_det
+    elif dataset_name == "loop_count":
+        compute_potential = compute_potential_loops
+    elif dataset_name == "unit_deg":
+        compute_potential = compute_potential_unit_degree
     else:
         raise TypeError(f"invalid option {dataset_name}")
 
@@ -60,8 +86,11 @@ def main():
 
     tic = time.time()
 
-    with ProcessPoolExecutor(max_workers=num_cores) as executor:
-        ved_list = list(executor.map(compute_potential, isos_to_process))
+    if num_cores == 1:
+        ved_list = [compute_potential(iso) for iso in isos_to_process]
+    else:
+        with ProcessPoolExecutor(max_workers=num_cores) as executor:
+            ved_list = list(executor.map(compute_potential, isos_to_process))
 
     ved = np.array(ved_list)
 
@@ -74,7 +103,7 @@ def main():
 
     with h5py.File(data_path, "r+") as f:
         if dataset_name in f:
-            logger.info(f"overwriting")
+            logger.info("overwriting")
             del f[dataset_name]
 
         f.create_dataset(dataset_name, data=ved, compression="gzip", compression_opts=4)
