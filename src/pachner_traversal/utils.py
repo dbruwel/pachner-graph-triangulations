@@ -1,3 +1,4 @@
+import csv
 import os
 import pathlib
 import pickle
@@ -6,7 +7,6 @@ from datetime import datetime
 import matplotlib.pyplot as plt
 import numpy as np
 import requests
-import csv
 
 data_root = pathlib.Path(__file__).parent.parent.parent / "data"
 
@@ -110,8 +110,9 @@ def create_sample_schedule(batch_size, dataset_size, epochs, num_itts, seed=42):
         dataset_size, size=num_unique_samples, replace=False
     )
 
-    schedule = np.repeat(unique_samples, epochs)
-    schedule = np.random.permutation(schedule)
+    schedule = np.concatenate(
+        [np.random.permutation(unique_samples) for _ in range(epochs)]
+    )
 
     return schedule
 

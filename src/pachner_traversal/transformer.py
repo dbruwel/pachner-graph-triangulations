@@ -1,3 +1,4 @@
+import shutil
 from functools import partial
 from pathlib import Path
 from typing import Callable
@@ -12,6 +13,7 @@ from flax.core import freeze
 from flax.core.frozen_dict import FrozenDict
 from flax.linen.initializers import normal
 from flax.training import train_state
+
 from pachner_traversal.data_io_dehydration import Dataset, Encoder
 from pachner_traversal.utils import get_last_csv_row, get_random_sample_idx, load_model
 
@@ -127,9 +129,9 @@ class Transformer(nn.Module):
     @nn.compact
     def __call__(self, idx: jax.Array, training: bool = False) -> jax.Array:
         B, T = idx.shape
-        assert (
-            T <= self.block_size
-        ), f"Cannot forward sequence of length {T}, block size is only {self.block_size}"
+        assert T <= self.block_size, (
+            f"Cannot forward sequence of length {T}, block size is only {self.block_size}"
+        )
         # Token embedding
         wte = nn.Embed(
             num_embeddings=self.vocab_size,
@@ -314,9 +316,7 @@ def generate_samples(
     return samples
 
 
-def init_train_state(model, params, dropout_key):
-    learning_rate = 0.0005
-
+def init_train_state(model, params, dropout_key, learning_rate=0.0005):
     state = MinimalTrainState.create(
         params=params,
         apply_fn=model.apply,
@@ -373,6 +373,11 @@ def init_params(
         steps = range(last_step, num_train_steps, sweep)
         meta = last_step
     else:
+        # clear path if it exists
+        if load_path.exists() and load_path.is_dir():
+            shutil.rmtree(load_path)
+        load_path.mkdir(parents=True, exist_ok=True)
+
         blank_idx = get_random_sample_idx(batch_size, len(train_input))
         blank_batch_input = train_input[blank_idx]
 

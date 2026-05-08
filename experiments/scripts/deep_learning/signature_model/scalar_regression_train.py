@@ -63,6 +63,7 @@ def train_model(
     num_test_samps: int = 1_000,
     num_train_steps=1_000_000,
     sweep=10_000,
+    learning_rate=0.0005,
     resume=True,
 ) -> None:
 
@@ -107,7 +108,7 @@ def train_model(
         resume,
     )
 
-    state = init_train_state(model, params, dropout_key)
+    state = init_train_state(model, params, dropout_key, learning_rate=learning_rate)
 
     if resumed:
         logger.info(f"Training resume from {meta:,}")
@@ -167,7 +168,7 @@ def main_train_simple():
     N = 10
     obj_funcs: list[
         Literal["edge_degree_variance", "det_alexander", "loop_count", "unit_deg"]
-    ] = ["loop_count", "unit_deg", "edge_degree_variance", "det_alexander"]
+    ] = ["edge_degree_variance", "det_alexander"]
 
     logging.basicConfig(level=logging.INFO)
 
@@ -184,7 +185,6 @@ def main_train_simple():
             / obj_func
             / f"spheres_512emb_6block_4head_{N}tet"
         )
-        save_path.mkdir(parents=True, exist_ok=True)
 
         tic = time.time()
         train_model(
@@ -194,10 +194,11 @@ def main_train_simple():
             d_model=512,
             num_layers=6,
             num_heads=4,
-            batch_size=64,
-            epochs=160,
+            batch_size=32,
+            epochs=64,
             num_test_samps=5_000,
-            num_train_steps=2_000_000,
+            num_train_steps=1_990_000,
+            learning_rate=0.001,
             resume=False,
         )
         toc = time.time()
