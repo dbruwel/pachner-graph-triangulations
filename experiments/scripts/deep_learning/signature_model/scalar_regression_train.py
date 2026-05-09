@@ -168,7 +168,7 @@ def main_train_simple():
     N = 10
     obj_funcs: list[
         Literal["edge_degree_variance", "det_alexander", "loop_count", "unit_deg"]
-    ] = ["edge_degree_variance", "det_alexander"]
+    ] = ["edge_degree_variance"]
 
     logging.basicConfig(level=logging.INFO)
 
@@ -194,11 +194,10 @@ def main_train_simple():
             d_model=512,
             num_layers=6,
             num_heads=4,
-            batch_size=32,
+            batch_size=16,
             epochs=64,
             num_test_samps=5_000,
-            num_train_steps=1_990_000,
-            learning_rate=0.001,
+            num_train_steps=3_980_000,
             resume=False,
         )
         toc = time.time()
