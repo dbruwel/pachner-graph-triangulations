@@ -195,10 +195,10 @@ def main_train_simple():
             num_layers=6,
             num_heads=4,
             batch_size=16,
-            epochs=128,
+            epochs=128 * 4,
             num_test_samps=5_000,
-            num_train_steps=7_960_000,
-            resume=False,
+            num_train_steps=7_960_000 * 4,
+            resume=True,
         )
         toc = time.time()
 
