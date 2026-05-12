@@ -158,7 +158,7 @@ def train_model(
             write_loss(save_path / "test_losses.csv", step + sweep, float(test_loss))
             save_model(save_path, state)
 
-    logger.info("\n Training finished.")
+    logger.info("Training finished.")
 
     save_model(save_path, state)
 
@@ -168,7 +168,7 @@ def main_train_simple():
     N = 10
     obj_funcs: list[
         Literal["edge_degree_variance", "det_alexander", "loop_count", "unit_deg"]
-    ] = ["edge_degree_variance", "det_alexander"]
+    ] = ["det_alexander"]
 
     logging.basicConfig(level=logging.INFO)
 
