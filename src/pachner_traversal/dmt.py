@@ -1,3 +1,4 @@
+# adapted from J. Spreer
 from __future__ import annotations
 
 import logging

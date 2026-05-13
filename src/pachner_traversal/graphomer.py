@@ -1,7 +1,6 @@
 import flax.linen as nn
 import jax
 import jax.numpy as jnp
-from jax import lax
 
 
 class MicroGNN(nn.Module):
@@ -124,6 +123,7 @@ class GraphomerBlock(nn.Module):
     @nn.compact
     def __call__(self, x, dist_matrix, training: bool = False):
         B, N, C = x.shape
+        # TODO: enable bias, removed for debugging.
         bias = SpatialBias(max_dist=self.max_dist, num_heads=self.num_heads)(
             dist_matrix
         )

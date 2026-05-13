@@ -1,10 +1,11 @@
+# adapted from J. Spreer
+import logging
 import math
+import multiprocessing
 import random
+from datetime import datetime
 
 from regina.engine import Triangulation3
-import logging
-import multiprocessing
-from datetime import datetime
 
 logger = logging.getLogger(__name__)
 
@@ -24,7 +25,7 @@ def neighbours(iso: str, f: list[int], a: int) -> dict:
                 # get isomorphism signature of result, add it to neighbours
                 tiso = target.isoSig_RidgeDegrees()
                 # add edge needed to flip to obtain this neighbour (in standard iso sig labelling)
-                if not tiso in nbrs:
+                if tiso not in nbrs:
                     nbrs[tiso] = t
         return nbrs
     # going down (3-2-move at every edge of degree three in three distinct tetrahedra)
@@ -38,7 +39,7 @@ def neighbours(iso: str, f: list[int], a: int) -> dict:
                 # get isomorphism signature of result, add it to neighbours
                 tiso = target.isoSig_RidgeDegrees()
                 # add edge needed to flip to obtain this neighbour (in standard iso sig labelling)
-                if not tiso in nbrs:
+                if tiso not in nbrs:
                     nbrs[tiso] = e
         return nbrs
 
@@ -124,7 +125,6 @@ def iterate(iso: str, gamma: float, steps: int = 1) -> str:
     # initialise number of steps
     t = Triangulation3.fromIsoSig(iso)
     f = t.fVector()
-    samp = 0
 
     for i in range(int(steps)):
         iso, f = choosemove(iso, f, gamma)
@@ -167,7 +167,7 @@ def mcmc3d(
             print(
                 "collecting triangulation", int(samp), " of ", int(samples), " :", iso
             )
-        if printToFile != False:
+        if printToFile:
             # open output file
             with open(name, "a") as fl:
                 fl.write(iso + "\n")

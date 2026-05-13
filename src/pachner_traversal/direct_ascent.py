@@ -1,7 +1,5 @@
 import functools
 import logging
-import multiprocessing
-from multiprocessing import Pool
 
 import numpy as np
 import regina
@@ -30,7 +28,6 @@ def take_step(iso, potential, beta):
         p0 = potential(iso)
         return iso, p0[0], p0[0], p0[1], p0[2], p0[3]
 
-    # with Pool(processes=7) as pool:
     results_list = [worker_function(n, potential) for n in nbrs]
     scores = np.array(results_list)
     if beta == np.inf:
@@ -77,13 +74,6 @@ def run_single_accent(chain_id, base_iso, potential, beta, height=20):
 
 def run_accent(base_isos, potential, betas, height=20):
     logger.info(f"Running {len(base_isos)} chains of height {height}.")
-    # with Pool() as pool:
-    #     args = [
-    #         (chain_id, base_iso, potential, beta, height)
-    #         for chain_id, (base_iso, beta) in enumerate(zip(base_isos, betas))
-    #     ]
-
-    #     results = pool.starmap(run_single_accent, args)
 
     args = [
         (chain_id, base_iso, potential, beta, height)

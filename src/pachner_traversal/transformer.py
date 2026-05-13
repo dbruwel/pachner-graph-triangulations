@@ -272,10 +272,10 @@ def train_sweep_steps(
     batches_labels: jax.Array,
 ):
 
-    def scan_body(current_state, carry):
-        b_input, b_label = carry
-        new_state, loss = train_step(current_state, b_input, b_label)
-        return new_state, loss
+    def scan_body(carry_current_state, data):
+        b_input, b_label = data
+        carry_new_state, loss = train_step(carry_current_state, b_input, b_label)
+        return carry_new_state, loss
 
     final_state, losses = jax.lax.scan(
         scan_body, state, (batches_input, batches_labels)

@@ -167,29 +167,32 @@ class Encoder:
         self.char_to_id["[PAD]"] = len(self.char_to_id)
         self.id_to_char[len(self.id_to_char)] = "[PAD]"
 
-    def encode(self, batch):
-        encode_in = (
-            lambda x: [self.char_to_id["[BOS]"]]
-            + [self.char_to_id[c] for c in x]
-            + [self.char_to_id["[PAD]"]] * (self.dataset.max_len - len(x))
-        )
-        encode_out = (
-            lambda x: [self.char_to_id[c] for c in x]
-            + [self.char_to_id["[EOS]"]]
-            + [self.char_to_id["[PAD]"]] * (self.dataset.max_len - len(x))
-        )
+    @staticmethod
+    def strip_excess(x_str):
+        (x_str.replace("[BOS]", "").replace("[EOS]", "").replace("[PAD]", ""))
 
-        batch_input = [encode_in(x) for x in batch]
-        batch_label = [encode_out(x) for x in batch]
+    def encode_in(self, x):
+        pad_len = self.dataset.max_len - len(x)
+        res = [self.char_to_id["[BOS]"]]
+        res = res + [self.char_to_id[c] for c in x]
+        res = res + [self.char_to_id["[PAD]"]] * pad_len
+        return res
+
+    def encode_out(self, x):
+        pad_len = self.dataset.max_len - len(x)
+        res = [self.char_to_id[c] for c in x]
+        res = res + [self.char_to_id["[EOS]"]]
+        res = res + [self.char_to_id["[PAD]"]] * pad_len
+        return res
+
+    def decode_in(self, x):
+        "".join([self.id_to_char[i] for i in x])
+
+    def encode(self, batch):
+        batch_input = [self.encode_in(x) for x in batch]
+        batch_label = [self.encode_out(x) for x in batch]
 
         return np.array(batch_input), np.array(batch_label)
 
     def decode(self, batch):
-        strip_excess = (
-            lambda x_str: x_str.replace("[BOS]", "")
-            .replace("[EOS]", "")
-            .replace("[PAD]", "")
-        )
-        decode_in = lambda x: "".join([self.id_to_char[i] for i in x])
-
-        return [strip_excess(decode_in(x)) for x in batch]
+        return [self.strip_excess(self.decode_in(x)) for x in batch]

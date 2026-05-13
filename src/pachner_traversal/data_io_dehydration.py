@@ -1,5 +1,4 @@
 import pathlib
-import pdb
 
 import h5py
 import numpy as np
@@ -188,41 +187,46 @@ class Encoder:
         self.char_to_id["[PAD]"] = len(self.char_to_id)
         self.id_to_char[len(self.id_to_char)] = "[PAD]"
 
-    def encode(self, batch):
-        encode_in = (
-            lambda x: [self.char_to_id["[BOS]"]]
-            + [self.char_to_id[c] for c in x]
-            + [self.char_to_id["[PAD]"]] * (self.dataset.max_len - len(x))
-        )
-        batch_input = [encode_in(split_to_encoding(x)) for x in batch]
+    @staticmethod
+    def strip_excess(x_str):
+        return x_str == "[PAD]" or x_str == "[BOS]" or x_str == "[EOS]"
 
-        encode_out = (
-            lambda x: [self.char_to_id[c] for c in x]
-            + [self.char_to_id["[EOS]"]]
-            + [self.char_to_id["[PAD]"]] * (self.dataset.max_len - len(x))
-        )
-        batch_label = [encode_out(split_to_encoding(x)) for x in batch]
+    def encode_in(self, x):
+        pad_len = self.dataset.max_len - len(x)
+        res = [self.char_to_id["[BOS]"]]
+        res = res + [self.char_to_id[c] for c in x]
+        res = res + [self.char_to_id["[PAD]"]] * pad_len
+
+        return res
+
+    def encode_out(self, x):
+        pad_len = self.dataset.max_len - len(x)
+        res = [self.char_to_id[c] for c in x]
+        res = res + [self.char_to_id["[EOS]"]]
+        res = res + [self.char_to_id["[PAD]"]] * pad_len
+        return res
+
+    def decode_in(self, x):
+        return [
+            self.id_to_char[i] for i in x if not self.strip_excess(self.id_to_char[i])
+        ]
+
+    def encode(self, batch):
+        batch_input = [self.encode_in(split_to_encoding(x)) for x in batch]
+        batch_label = [self.encode_out(split_to_encoding(x)) for x in batch]
 
         return np.array(batch_input), np.array(batch_label)
 
     def decode(self, batch):
-        excess = lambda str: str == "[PAD]" or str == "[BOS]" or str == "[EOS]"
-        decode_in = lambda x: [
-            self.id_to_char[i] for i in x if not excess(self.id_to_char[i])
-        ]
-
-        return [merge_pairs(decode_in(x)) for x in batch]
+        return [merge_pairs(self.decode_in(x)) for x in batch]
 
 
 if __name__ == "__main__":
     from pachner_traversal.utils import data_root
 
-    for N in [10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20]:
-        input_path = (
-            data_root / "input_data" / "dehydration" / "raw" / f"spheres_{N}.txt"
-        )
-        hdf5_file = (
-            data_root / "input_data" / "dehydration" / "processed" / f"spheres_{N}.hdf5"
-        )
+    dehydration_root = data_root / "input_data" / "dehydration"
 
-        convert_to_hdf5(input_path, hdf5_file)
+    input_path = dehydration_root / "raw" / "spheres_15.txt"
+    hdf5_file = dehydration_root / "processed" / "spheres_15.hdf5"
+
+    convert_to_hdf5(input_path, hdf5_file)

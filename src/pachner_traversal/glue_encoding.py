@@ -1,9 +1,10 @@
 import logging
+
+import jax.numpy as jnp
 import networkx as nx
 import numpy as np
 from regina import Perm4, Triangulation3
 from scipy.sparse.csgraph import connected_components
-import jax.numpy as jnp
 
 logger = logging.getLogger(__name__)
 
@@ -318,7 +319,7 @@ def joint_graph_matching(nd_face, target_face, nd_vertex, target_vertex):
             if label not in comps:
                 comps[label] = []
             comps[label].append(node)
-        return [comps[l] for l in sorted(comps.keys())]
+        return [comps[lab] for lab in sorted(comps.keys())]
 
     _, nd_tri_labels = connected_components(nd_f, directed=False)
     _, tgt_tri_labels = connected_components(tgt_f, directed=False)

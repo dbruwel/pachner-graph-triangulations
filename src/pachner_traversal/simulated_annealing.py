@@ -4,7 +4,6 @@ from pathlib import Path
 from typing import Any, Optional
 
 import numpy as np
-import regina
 
 from .mcmc import iterate
 
@@ -107,7 +106,7 @@ def sample_chain(
             beta = beta * np.exp(lambda_ * diff)
             betas.append(beta)
 
-        if not path is None:
+        if path is not None:
             if not (path / "progress.csv").exists():
                 with open(path / "progress.csv", "w") as f:
                     f.write("iso,score\n")

@@ -126,6 +126,7 @@ def train_model(
     # training
     logger.info("\n--- Starting Training ---")
     for step in steps:
+        # collect data
         inputs_sweep = []
         labels_sweep = []
 
@@ -137,6 +138,7 @@ def train_model(
         jnp_inputs = jnp.stack(inputs_sweep)
         jnp_labels = jnp.stack(labels_sweep)
 
+        # run training steps
         state, loss = train_sweep_steps(
             train_step_scalar_regression,
             state,
@@ -144,23 +146,21 @@ def train_model(
             jnp_labels,
         )
 
-        if (step + sweep) % sweep == 0 or (step + sweep) == num_train_steps:
-            msg = f"Step {step + sweep:,}/{num_train_steps:,}, Loss: {float(loss):.4f}"
-            logger.info(msg)
+        # log progress
+        msg = f"Step {step + sweep:,}/{num_train_steps:,}, Loss: {float(loss):.4f}"
+        logger.info(msg)
 
-            test_loss = get_test_loss(
-                state,
-                test_input,
-                test_label,
-            )
+        # get test loss
+        test_loss = get_test_loss(
+            state,
+            test_input,
+            test_label,
+        )
 
-            write_loss(save_path / "train_losses.csv", step + sweep, float(loss))
-            write_loss(save_path / "test_losses.csv", step + sweep, float(test_loss))
-            save_model(save_path, state)
-
-    logger.info("Training finished.")
-
-    save_model(save_path, state)
+        # write data
+        write_loss(save_path / "train_losses.csv", step + sweep, float(loss))
+        write_loss(save_path / "test_losses.csv", step + sweep, float(test_loss))
+        save_model(save_path, state)
 
 
 # main
