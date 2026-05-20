@@ -273,3 +273,5 @@ def main_train_config():
 if __name__ == "__main__":
     if "simple" in sys.argv:
         main_train_simple()
+    if "config" in sys.argv:
+        main_train_config()
