@@ -57,6 +57,8 @@ def train_model(
     d_model: int = 512,
     num_layers: int = 6,
     num_heads: int = 4,
+    use_mask: bool = True,
+    output_size: int | None = None,
     batch_size=64,
     epochs=64,
     num_test_samps: int = 1_000,
@@ -97,6 +99,8 @@ def train_model(
         d_model=d_model,
         num_layers=num_layers,
         num_heads=num_heads,
+        use_mask=use_mask,
+        output_size=output_size,
     )
     _, params_key, dropout_key = keys
 
@@ -170,7 +174,7 @@ def train_model(
 # Main functions.
 def main_train_simple():
     N = 10
-    obj_funcs: list[ObjType] = ["edge_degree_variance", "det_alexander"]
+    obj_funcs: list[ObjType] = ["edge_degree_variance"]
 
     logging.basicConfig(level=logging.INFO)
 
@@ -197,9 +201,60 @@ def main_train_simple():
             num_layers=6,
             num_heads=4,
             batch_size=16,
-            epochs=128 * 4,
+            epochs=128,
             num_test_samps=5_000,
-            num_train_steps=7_960_000 * 4,
+            num_train_steps=7_960_000,
+            resume=False,
+        )
+        toc = time.time()
+
+        train_time = toc - tic
+        logger.info(f"Training time: {train_time:.2f} seconds")
+
+        message = f"Training time: {train_time:.2f} seconds."
+        send_ntfy(
+            "usyd-knottedness",
+            f"Finished training for {obj_func}.",
+            message,
+        )
+
+
+def main_train_config():
+    N = 10
+    obj_func = "edge_degree_variance"
+
+    logging.basicConfig(level=logging.INFO)
+
+    for configs in [(True, None), (False, None), (True, 512), (False, 512)]:
+        use_mask, output_size = configs
+        logger.info(f"\n\n--- OBJ: `{obj_func}` ---")
+        processed_data_home = data_root / "input_data" / "dehydration" / "processed"
+        data_path = processed_data_home / f"spheres_{N}.hdf5"
+
+        save_path = (
+            data_root
+            / "results"
+            / "sgd_models_dehydration"
+            / "scalar_simple"
+            / f"use_mask_{use_mask}_output_size_{output_size}"
+            / obj_func
+            / f"spheres_512emb_6block_4head_{N}tet"
+        )
+
+        tic = time.time()
+        train_model(
+            data_path,
+            save_path,
+            dset_name=obj_func,
+            d_model=512,
+            num_layers=6,
+            num_heads=4,
+            use_mask=use_mask,
+            output_size=output_size,
+            batch_size=16,
+            epochs=128,
+            num_test_samps=5_000,
+            num_train_steps=7_960_000,
             resume=False,
         )
         toc = time.time()

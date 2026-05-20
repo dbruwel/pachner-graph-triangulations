@@ -135,8 +135,8 @@ class Transformer(nn.Module):
     num_layers: int
     num_heads: int
     use_mask: bool = True
-    dropout_rate: float = 0.1
     output_size: int | None = None
+    dropout_rate: float = 0.1
 
     @nn.compact
     def __call__(self, idx: jax.Array, training: bool = False) -> jax.Array:
@@ -205,6 +205,7 @@ class ScalarTransformer(nn.Module):
     num_layers: int
     num_heads: int
     use_mask: bool = False
+    output_size: int | None = None
     dropout_rate: float = 0.1
 
     @nn.compact
@@ -217,8 +218,8 @@ class ScalarTransformer(nn.Module):
             num_layers=self.num_layers,
             num_heads=self.num_heads,
             use_mask=self.use_mask,
+            output_size=self.output_size,
             dropout_rate=self.dropout_rate,
-            output_size=self.d_model,
         )(idx, training=training)
 
         x = nn.LayerNorm(name="pre_pool_ln")(x)  # -> (B, L, D)
@@ -366,6 +367,8 @@ def init_model(
     d_model: int = 512,
     num_layers: int = 6,
     num_heads: int = 4,
+    use_mask: bool = True,
+    output_size: int | None = None,
 ):
     vocab_size = len(encoder.char_to_id)
     seq_len = dataset.max_len + 1
@@ -379,6 +382,8 @@ def init_model(
         block_size=seq_len,
         num_layers=num_layers,
         num_heads=num_heads,
+        use_mask=use_mask,
+        output_size=output_size,
     )
 
     return model, (main_key, params_key, dropout_key), (vocab_size, seq_len)
