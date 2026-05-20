@@ -200,7 +200,7 @@ def main_train_simple():
             epochs=128 * 4,
             num_test_samps=5_000,
             num_train_steps=7_960_000 * 4,
-            resume=True,
+            resume=False,
         )
         toc = time.time()
 
