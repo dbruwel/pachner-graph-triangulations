@@ -19,9 +19,8 @@ from pachner_traversal.transformer import (
     train_step_auto_regression,
     train_sweep_steps,
 )
-from pachner_traversal.utils import create_sample_schedule
-from pachner_traversal.utils import data_root as data_root
 from pachner_traversal.utils import (
+    create_sample_schedule,
     get_sample_idx,
     load_model,
     save_model,
@@ -29,6 +28,7 @@ from pachner_traversal.utils import (
     write_loss,
     write_stat,
 )
+from pachner_traversal.utils import data_root as data_root
 
 logger = logging.getLogger(__name__)
 
@@ -217,7 +217,7 @@ def train_model(
                 num_heads=num_heads,
                 samps_to_gen=1_000,
                 gen_its=1,
-                tag=f"{step+sweep:,}",
+                tag=f"{step + sweep:,}",
             )
 
     logger.info("\n Training finished.")
@@ -277,7 +277,7 @@ def main_train_long():
     logging.basicConfig(level=logging.INFO)
 
     processed_data_path = data_root / "input_data" / "dehydration" / "processed"
-    data_path = processed_data_path / f"spheres_10.hdf5"
+    data_path = processed_data_path / "spheres_10.hdf5"
 
     train_time = 0
     sample_time = 0

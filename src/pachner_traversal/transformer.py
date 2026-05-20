@@ -33,21 +33,21 @@ class MinimalTrainState(train_state.TrainState):
 
 
 class CausalSelfAttention(nn.Module):
-    d_model: int  # n_embd
-    num_heads: int  # n_head
+    # (B, L, D) -> (B, L, D)
+    d_model: int
+    num_heads: int
+    use_mask: bool = True
     dropout_rate: float = 0.1
 
     @nn.compact
     def __call__(self, x: jax.Array, training: bool = False) -> jax.Array:
-        B, T, C = (
-            x.shape
-        )  # Batch size, sequence length, embedding dimensionality (d_model)
+        B, L, D = x.shape
 
-        assert C % self.num_heads == 0
-        head_size = C // self.num_heads
+        assert D % self.num_heads == 0
+        head_size = D // self.num_heads
 
         qkv = nn.Dense(
-            features=3 * C,
+            features=3 * D,
             name="c_attn",
             kernel_init=normal(0.02),
             dtype=jnp.bfloat16,
@@ -56,15 +56,19 @@ class CausalSelfAttention(nn.Module):
 
         q, k, v = jnp.split(qkv, 3, axis=-1)
 
-        k = k.reshape(B, T, self.num_heads, head_size)
-        q = q.reshape(B, T, self.num_heads, head_size)
-        v = v.reshape(B, T, self.num_heads, head_size)
+        k = k.reshape(B, L, self.num_heads, head_size)
+        q = q.reshape(B, L, self.num_heads, head_size)
+        v = v.reshape(B, L, self.num_heads, head_size)
 
-        mask_input = q[:, :, 0, 0]
-        causal_mask = nn.make_causal_mask(mask_input)
+        if self.use_mask:
+            mask_input = q[:, :, 0, 0]
+            causal_mask = nn.make_causal_mask(mask_input)
+            mask = causal_mask
+        else:
+            mask = None
 
-        y = nn.dot_product_attention(q, k, v, mask=causal_mask, broadcast_dropout=False)
-        y = y.reshape(B, T, C)
+        y = nn.dot_product_attention(q, k, v, mask=mask, broadcast_dropout=False)
+        y = y.reshape(B, L, D)
         y = nn.Dense(
             features=self.d_model,
             name="c_proj",
@@ -77,30 +81,36 @@ class CausalSelfAttention(nn.Module):
 
 
 class Block(nn.Module):
+    # (B, L, D) -> (B, L, D)
     d_model: int
     num_heads: int
+    use_mask: bool = True
     dropout_rate: float = 0.1
 
     @nn.compact
     def __call__(self, x: jax.Array, training: bool = False) -> jax.Array:
-        attn_output = CausalSelfAttention(
-            d_model=self.d_model, num_heads=self.num_heads, name="attn"
-        )(
-            nn.LayerNorm(name="ln_1", dtype=jnp.bfloat16, param_dtype=jnp.float32)(x),
-            training=training,
+        attn = CausalSelfAttention(
+            d_model=self.d_model,
+            num_heads=self.num_heads,
+            use_mask=self.use_mask,
+            name="attn",
         )
+
+        x_ln = nn.LayerNorm(name="ln_1", dtype=jnp.bfloat16, param_dtype=jnp.float32)(x)
+        attn_output = attn(x_ln, training=training)
         x = x + attn_output
         x = nn.Dropout(rate=self.dropout_rate, deterministic=not training)(x)
 
-        mlp_output = self.mlp(
-            nn.LayerNorm(name="ln_2", dtype=jnp.bfloat16, param_dtype=jnp.float32)(x)
-        )
+        x_ln = nn.LayerNorm(name="ln_2", dtype=jnp.bfloat16, param_dtype=jnp.float32)(x)
+        mlp_output = self.mlp(x_ln)
+
         x = x + mlp_output
         x = nn.Dropout(rate=self.dropout_rate, deterministic=not training)(x)
 
         return x
 
     def mlp(self, x: jax.Array) -> jax.Array:
+        # (B, L, D) -> (B, L, D)
         d_ff = 4 * self.d_model
         c_fc = nn.Dense(
             features=d_ff, name="c_fc", dtype=jnp.bfloat16, param_dtype=jnp.float32
@@ -120,19 +130,24 @@ class Block(nn.Module):
 
 class Transformer(nn.Module):
     vocab_size: int
-    d_model: int  # n_embd
-    block_size: int  # max sequence length
-    num_layers: int  # n_layer
-    num_heads: int  # n_head
+    d_model: int
+    block_size: int  # Max sequence length.
+    num_layers: int
+    num_heads: int
+    use_mask: bool = True
     dropout_rate: float = 0.1
+    output_size: int | None = None
 
     @nn.compact
     def __call__(self, idx: jax.Array, training: bool = False) -> jax.Array:
-        B, T = idx.shape
-        assert T <= self.block_size, (
-            f"Cannot forward sequence of length {T}, block size is only {self.block_size}"
+        output_size = self.output_size or self.vocab_size
+
+        _, L = idx.shape
+        assert L <= self.block_size, (
+            f"Cannot forward sequence of length {L}, block size is only {self.block_size}"
         )
-        # Token embedding
+        # Token embedding.
+        # (B, L) -> (B, L, D)
         wte = nn.Embed(
             num_embeddings=self.vocab_size,
             features=self.d_model,
@@ -142,7 +157,8 @@ class Transformer(nn.Module):
         )
         tok_emb = wte(idx)
 
-        # Learned positional embedding
+        # Learned positional embedding.
+        # (L) -> (L, D)
         wpe = nn.Embed(
             num_embeddings=self.block_size,
             features=self.d_model,
@@ -150,24 +166,29 @@ class Transformer(nn.Module):
             dtype=jnp.bfloat16,
             param_dtype=jnp.float32,
         )
-        pos = jnp.arange(0, T)
+        pos = jnp.arange(0, L)
         pos_emb = wpe(pos)
 
-        # Combine embeddings
-        x = tok_emb + pos_emb  # Broadcasting (1, T, C) over (B, T, C)
+        # Combine embeddings.
+        x = tok_emb + pos_emb  # Broadcasting (B, L, D) + (L, D) -> (B, L, D)
         x = nn.Dropout(rate=self.dropout_rate, deterministic=not training)(x)
 
-        # --- Transformer Blocks ---
+        # Transformer Blocks.
+        # (B, L, D) -> (B, L, D)
         for i in range(self.num_layers):
-            x = Block(d_model=self.d_model, num_heads=self.num_heads, name=f"h_{i}")(
-                x, training=training
-            )
+            x = Block(
+                d_model=self.d_model,
+                num_heads=self.num_heads,
+                use_mask=self.use_mask,
+                name=f"h_{i}",
+            )(x, training=training)
 
-        # --- Final Layers ---
+        # Final Layers.
         x = nn.LayerNorm(name="ln_f", dtype=jnp.bfloat16, param_dtype=jnp.float32)(x)
 
+        # (B, L, D) -> (B, L, output_size)
         logits = nn.Dense(
-            features=self.vocab_size,
+            features=output_size,
             use_bias=False,
             name="lm_head",
             dtype=jnp.bfloat16,
@@ -179,38 +200,43 @@ class Transformer(nn.Module):
 
 class ScalarTransformer(nn.Module):
     vocab_size: int
-    d_model: int  # n_embd
-    block_size: int  # max sequence length
-    num_layers: int  # n_layer
-    num_heads: int  # n_head
+    d_model: int
+    block_size: int  # Max sequence length.
+    num_layers: int
+    num_heads: int
+    use_mask: bool = False
     dropout_rate: float = 0.1
 
     @nn.compact
     def __call__(self, idx: jax.Array, training: bool = False) -> jax.Array:
-        # (B, T, C)
+        # (B, L, D)
         x = Transformer(
             vocab_size=self.vocab_size,
             d_model=self.d_model,
             block_size=self.block_size,
             num_layers=self.num_layers,
             num_heads=self.num_heads,
+            use_mask=self.use_mask,
             dropout_rate=self.dropout_rate,
+            output_size=self.d_model,
         )(idx, training=training)
 
-        x = nn.LayerNorm(name="pre_pool_ln")(x)  # (B, T, C)
-        logits = nn.Dense(1, name="attn_logits")(x)  # (B, T, 1)
-        weights = nn.softmax(logits, axis=1)  # (B, T, 1)
-        pooled = jnp.sum(x * weights, axis=1)  # (B, C)
+        x = nn.LayerNorm(name="pre_pool_ln")(x)  # -> (B, L, D)
+        logits = nn.Dense(1, name="attn_logits")(x)  # -> (B, L, 1)
+        weights = nn.softmax(logits, axis=1)  # -> (B, L, 1)
+        pooled = jnp.sum(x * weights, axis=1)  # -> (B, D)
         pooled = nn.LayerNorm(name="post_pool_ln")(pooled)
         pooled = nn.relu(nn.Dense(x.shape[-1], name="hidden_projection")(pooled))
-        out = nn.Dense(1, name="final_projection")(pooled)  # (B, 1)
+        out = nn.Dense(1, name="final_projection")(pooled)  # -> (B, 1)
 
-        return out.squeeze(-1)  # (B)
+        return out.squeeze(-1)  # -> (B)
 
 
 @jax.jit
 def train_step_auto_regression(
-    state: MinimalTrainState, batch_input: jax.Array, batch_labels: jax.Array
+    state: MinimalTrainState,
+    batch_input: jax.Array,
+    batch_labels: jax.Array,
 ) -> tuple[MinimalTrainState, jax.Array]:
     dropout_key, new_dropout_key = jax.random.split(state.dropout_key)
 
@@ -239,7 +265,9 @@ def train_step_auto_regression(
 
 @jax.jit
 def train_step_scalar_regression(
-    state: MinimalTrainState, batch_input: jax.Array, batch_labels: jax.Array
+    state: MinimalTrainState,
+    batch_input: jax.Array,
+    batch_labels: jax.Array,
 ) -> tuple[MinimalTrainState, jax.Array]:
     dropout_key, new_dropout_key = jax.random.split(state.dropout_key)
 
@@ -373,7 +401,7 @@ def init_params(
         steps = range(last_step, num_train_steps, sweep)
         meta = last_step
     else:
-        # clear path if it exists
+        # Clear path if it exists.
         if load_path.exists() and load_path.is_dir():
             shutil.rmtree(load_path)
         load_path.mkdir(parents=True, exist_ok=True)

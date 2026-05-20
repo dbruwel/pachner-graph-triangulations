@@ -3,7 +3,6 @@ import pathlib
 import sys
 import time
 from functools import partial
-from typing import Literal
 
 import jax
 import jax.numpy as jnp
@@ -19,10 +18,12 @@ from pachner_traversal.transformer import (
     train_step_scalar_regression,
     train_sweep_steps,
 )
+from pachner_traversal.types import ObjType
 from pachner_traversal.utils import (
     create_sample_schedule,
     data_root,
     get_sample_idx,
+    normalize,
     save_model,
     send_ntfy,
     write_loss,
@@ -52,9 +53,7 @@ def get_test_loss(
 def train_model(
     data_path: pathlib.Path,
     save_path: pathlib.Path,
-    dset_name: Literal[
-        "edge_degree_variance", "det_alexander", "loop_count", "unit_deg"
-    ] = "edge_degree_variance",
+    dset_name: ObjType = "edge_degree_variance",
     d_model: int = 512,
     num_layers: int = 6,
     num_heads: int = 4,
@@ -67,25 +66,30 @@ def train_model(
     resume=True,
 ) -> None:
 
-    # data
+    # Dataset and Encoder.
     dataset = Dataset(data_path, num_test_samps)
     encoder = Encoder(dataset)
 
-    all_data_str = dataset.read_all_data()
-    all_data_label_raw = dataset.read_all_data(dset_name=dset_name)
-    all_data_label = np.array(all_data_label_raw)
-    all_data_input, _ = encoder.encode(all_data_str)
+    # Read in signatures and encode.
+    all_data_input_str = dataset.read_all_data()
+    all_data_input, _ = encoder.encode(all_data_input_str)
 
+    # Read in target value and normalize.
+    all_data_target_value_raw = dataset.read_all_data(dset_name=dset_name)
+    all_data_target_value = np.array(all_data_target_value_raw)
+    all_data_target_value = normalize(all_data_target_value)
+
+    # Split train and test data.
     test_input = all_data_input[dataset.test_idx]
-    test_label = all_data_label[dataset.test_idx]
+    test_target_value = all_data_target_value[dataset.test_idx]
 
-    train_idx = list(set(range(len(all_data_label))) - set(dataset.test_idx))
+    train_idx = list(set(range(len(all_data_target_value))) - set(dataset.test_idx))
     train_idx.sort()
 
     train_input = all_data_input[train_idx]
-    train_label = all_data_label[train_idx]
+    train_target_value = all_data_target_value[train_idx]
 
-    # setup model
+    # Setup model.
     model, keys, _ = init_model(
         ScalarTransformer,
         dataset,
@@ -96,7 +100,7 @@ def train_model(
     )
     _, params_key, dropout_key = keys
 
-    # resume / init parameters
+    # Resume / init parameters.
     resumed, meta, steps, params = init_params(
         model,
         params_key,
@@ -123,57 +127,55 @@ def train_model(
         num_itts=num_train_steps,
     )
 
-    # training
+    # Training.
     logger.info("\n--- Starting Training ---")
     for step in steps:
-        # collect data
+        # Collect data.
         inputs_sweep = []
-        labels_sweep = []
+        target_values_sweep = []
 
         for i in range(sweep):
             sample_idx = get_sample_idx(schedule, batch_size, step + i)
             inputs_sweep.append(train_input[sample_idx])
-            labels_sweep.append(train_label[sample_idx])
+            target_values_sweep.append(train_target_value[sample_idx])
 
         jnp_inputs = jnp.stack(inputs_sweep)
-        jnp_labels = jnp.stack(labels_sweep)
+        jnp_target_values = jnp.stack(target_values_sweep)
 
-        # run training steps
+        # Run training steps.
         state, loss = train_sweep_steps(
             train_step_scalar_regression,
             state,
             jnp_inputs,
-            jnp_labels,
+            jnp_target_values,
         )
 
-        # log progress
+        # Log progress.
         msg = f"Step {step + sweep:,}/{num_train_steps:,}, Loss: {float(loss):.4f}"
         logger.info(msg)
 
-        # get test loss
+        # Get test loss.
         test_loss = get_test_loss(
             state,
             test_input,
-            test_label,
+            test_target_value,
         )
 
-        # write data
+        # Write data.
         write_loss(save_path / "train_losses.csv", step + sweep, float(loss))
         write_loss(save_path / "test_losses.csv", step + sweep, float(test_loss))
         save_model(save_path, state)
 
 
-# main
+# Main functions.
 def main_train_simple():
     N = 10
-    obj_funcs: list[
-        Literal["edge_degree_variance", "det_alexander", "loop_count", "unit_deg"]
-    ] = ["det_alexander"]
+    obj_funcs: list[ObjType] = ["edge_degree_variance", "det_alexander"]
 
     logging.basicConfig(level=logging.INFO)
 
     for obj_func in obj_funcs:
-        logger.info(f"\n\n=== OBJ = {obj_func} ===")
+        logger.info(f"\n\n--- OBJ: `{obj_func}` ---")
         processed_data_home = data_root / "input_data" / "dehydration" / "processed"
         data_path = processed_data_home / f"spheres_{N}.hdf5"
 

@@ -141,3 +141,7 @@ def get_last_csv_row(filepath):
         last_line = f.readline().decode("utf-8")
 
     return next(csv.reader([last_line]))
+
+
+def normalize(x):
+    return (x - x.mean()) / x.std()
