@@ -14,7 +14,7 @@ def main():
     num_chains = 80
     seed = "cMcabbgqs"
     gamma_ = 1 / 6
-    itts = 1_000_000
+    itts = 100_000
     steps = 1
     size = 15
     leading_char = leading_chars[size]
