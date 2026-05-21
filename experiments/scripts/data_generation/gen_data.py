@@ -1,5 +1,4 @@
 import logging
-from datetime import datetime
 
 import numpy as np
 from pachner_traversal.mcmc import run_chains
@@ -24,8 +23,6 @@ def main():
     save_path = data_root / "input_data" / "dehydration" / "raw" / "mcmc_samples"
 
     while len(unique_target_samps) <= 10_005_000:
-        logger.info(f"Starting MCMC run at {datetime.now().strftime('%H:%M:%S')}")
-
         data = run_chains(
             num_chains=num_chains,
             seed=seed,
@@ -41,7 +38,8 @@ def main():
         isos_list_target = isos_list[np.char.startswith(isos_list, leading_char)]
         unique_target_samps.update(isos_list_target)
 
-    logger.info(f"{len(unique_target_samps):,} samples for N={size}.")
+        logger.info(f"{len(unique_target_samps):,} samples for N={size}.")
+
     with open(save_path / f"samps{size}.txt", "a") as f:
         np.savetxt(f, list(unique_target_samps), fmt="%s")
 
