@@ -318,11 +318,11 @@ def main_train_scale():
     blocks = {"xs": 4, "s": 6, "m": 12, "l": 16, "xl": 24}
     heads = {"xs": 4, "s": 6, "m": 8, "l": 12, "xl": 16}
     itts = {
-        "xs": 500_000,
-        "s": 1_500_000,
-        "m": 5_000_000,
-        "l": 12_500_000,
-        "xl": 12_500_000,
+        "xs": 300_000,
+        "s": 1_200_000,
+        "m": 3_500_000,
+        "l": 10_000_000,
+        "xl": 10_000_000,
     }
 
     sizes = ["xs"]
@@ -332,7 +332,7 @@ def main_train_scale():
         head = heads[size]
 
         processed_data_home = data_root / "input_data" / "dehydration" / "processed"
-        data_path = processed_data_home / "spheres_10.hdf5"
+        data_path = processed_data_home / "spheres_15.hdf5"
 
         save_path = data_root
 
@@ -346,7 +346,7 @@ def main_train_scale():
                 / "sgd_models_dehydration"
                 / "archive"
                 / "scale"
-                / f"spheres_{emb}emb_{block}block_{head}head_10tet"
+                / f"spheres_{emb}emb_{block}block_{head}head_15tet"
             )
             save_path.mkdir(parents=True, exist_ok=True)
             logger.info(f"Created directoy: {save_path.resolve()}")
@@ -361,6 +361,8 @@ def main_train_scale():
                 num_heads=head,
                 num_layers=block,
                 batch_size=16,
+                epochs=16,
+                num_test_samps=5_000,
                 num_train_steps=itts[size],
                 sample=True,
                 resume=False,

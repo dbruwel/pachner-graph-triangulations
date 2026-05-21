@@ -2,7 +2,6 @@ import logging
 from datetime import datetime
 
 import numpy as np
-
 from pachner_traversal.mcmc import run_chains
 from pachner_traversal.utils import data_root, leading_chars
 
@@ -12,20 +11,20 @@ logger = logging.getLogger(__name__)
 # main function
 def main():
     logging.basicConfig(level=logging.INFO)
-    num_chains = 30
+    num_chains = 80
     seed = "cMcabbgqs"
     gamma_ = 1 / 10
     itts = 1_000_000
     steps = 1
-    size = 20
+    size = 15
     leading_char = leading_chars[size]
+
+    unique_target_samps = set()
 
     save_path = data_root / "input_data" / "dehydration" / "raw" / "mcmc_samples"
 
-    for i in range(10):
-        logger.info(
-            f"Starting MCMC run {i + 1}/10 at {datetime.now().strftime('%H:%M:%S')}"
-        )
+    while len(unique_target_samps) <= 10_005_000:
+        logger.info(f"Starting MCMC run at {datetime.now().strftime('%H:%M:%S')}")
 
         data = run_chains(
             num_chains=num_chains,
@@ -39,18 +38,12 @@ def main():
         isos_list = isos_list.astype(str)
         isos_list = np.unique(isos_list)
 
-        logger.info(f"Total unique samples: {len(isos_list):,}.")
-        logger.info(f"Example samples: {isos_list[-5:]}")
+        isos_list_target = isos_list[np.char.startswith(isos_list, leading_char)]
+        unique_target_samps.update(isos_list_target)
 
-        samp = isos_list[np.char.startswith(isos_list, leading_char)]
-
-        logger.info(f"{len(samp):,} samples for N={size}.")
-        with open(save_path / f"samps{size}.txt", "a") as f:
-            np.savetxt(f, samp, fmt="%s")
-
-        save_path.mkdir(parents=True, exist_ok=True)
-        with open(save_path / "mcmc_samples.txt", "a") as f:
-            np.savetxt(f, isos_list, fmt="%s")
+    logger.info(f"{len(unique_target_samps):,} samples for N={size}.")
+    with open(save_path / f"samps{size}.txt", "a") as f:
+        np.savetxt(f, list(unique_target_samps), fmt="%s")
 
 
 if __name__ == "__main__":
