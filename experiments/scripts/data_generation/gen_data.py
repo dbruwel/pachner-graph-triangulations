@@ -13,7 +13,7 @@ def main():
     logging.basicConfig(level=logging.INFO)
     num_chains = 80
     seed = "cMcabbgqs"
-    gamma_ = 1 / 10
+    gamma_ = 1 / 6
     itts = 1_000_000
     steps = 1
     size = 15

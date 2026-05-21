@@ -187,7 +187,7 @@ def sample_chain(
     isos = [seed]
 
     for itt in range(itts):
-        if (itt % 1_000 == 0) or (itt < 100 and itt % 10 == 0):
+        if itt % 100_000 == 0:
             if chain_id == 0:
                 logger.info(
                     f"Chain {chain_id}: iteration {itt:,.0f}/{itts:,.0f} at {datetime.now().strftime('%H:%M:%S')}"
