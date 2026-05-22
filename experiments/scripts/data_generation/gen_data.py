@@ -40,8 +40,8 @@ def main():
 
         logger.info(f"{len(unique_target_samps):,} samples for N={size}.")
 
-    with open(save_path / f"samps{size}.txt", "a") as f:
-        np.savetxt(f, list(unique_target_samps), fmt="%s")
+        with open(save_path / f"samps{size}.txt", "w") as f:
+            np.savetxt(f, list(unique_target_samps), fmt="%s")
 
 
 if __name__ == "__main__":

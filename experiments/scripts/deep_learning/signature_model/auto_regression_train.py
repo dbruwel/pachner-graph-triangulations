@@ -325,7 +325,7 @@ def main_train_scale():
         "xl": 10_000_000,
     }
 
-    sizes = ["xs"]
+    sizes = ["l"]
     for size in sizes:
         emb = embs[size]
         block = blocks[size]
