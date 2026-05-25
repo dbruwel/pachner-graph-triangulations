@@ -174,7 +174,16 @@ def train_model(
 # Main functions.
 def main_train_simple():
     N = 10
-    obj_funcs: list[ObjType] = ["edge_degree_variance"]
+    obj_funcs: list[ObjType] = [
+        "count_5_deg",
+        "count_4_deg",
+        "count_3_deg",
+        "count_2_deg",
+        "count_1_deg",
+        "edge_degree_variance",
+        "loop_count",
+        "det_alexander",
+    ]
 
     logging.basicConfig(level=logging.INFO)
 
@@ -200,6 +209,8 @@ def main_train_simple():
             d_model=512,
             num_layers=6,
             num_heads=4,
+            use_mask=True,
+            output_size=64,
             batch_size=16,
             epochs=128,
             num_test_samps=5_000,

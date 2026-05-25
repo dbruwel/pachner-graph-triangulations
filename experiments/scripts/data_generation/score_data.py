@@ -53,6 +53,61 @@ def compute_potential_unit_degree(iso: str) -> float:
     return potential_val
 
 
+def compute_potential_1_degree(iso: str) -> float:
+    tri = Triangulation3.rehydrate(iso)
+    potential_val = 0.0
+
+    for edge in tri.edges():
+        unit_degree = float(edge.degree() == 1)
+        potential_val = potential_val + unit_degree
+
+    return potential_val
+
+
+def compute_potential_2_degree(iso: str) -> float:
+    tri = Triangulation3.rehydrate(iso)
+    potential_val = 0.0
+
+    for edge in tri.edges():
+        unit_degree = float(edge.degree() == 2)
+        potential_val = potential_val + unit_degree
+
+    return potential_val
+
+
+def compute_potential_3_degree(iso: str) -> float:
+    tri = Triangulation3.rehydrate(iso)
+    potential_val = 0.0
+
+    for edge in tri.edges():
+        unit_degree = float(edge.degree() == 3)
+        potential_val = potential_val + unit_degree
+
+    return potential_val
+
+
+def compute_potential_4_degree(iso: str) -> float:
+    tri = Triangulation3.rehydrate(iso)
+    potential_val = 0.0
+
+    for edge in tri.edges():
+        unit_degree = float(edge.degree() == 4)
+        potential_val = potential_val + unit_degree
+
+    return potential_val
+
+
+def compute_potential_5_degree(iso: str) -> float:
+    tri = Triangulation3.rehydrate(iso)
+    potential_val = 0.0
+
+    for edge in tri.edges():
+        unit_degree = float(edge.degree() == 5)
+        potential_val = potential_val + unit_degree
+
+    return potential_val
+
+
 def score_data(dataset_name):
     if dataset_name == "edge_degree_variance":
         compute_potential = compute_potential_var
@@ -62,6 +117,16 @@ def score_data(dataset_name):
         compute_potential = compute_potential_loops
     elif dataset_name == "unit_deg":
         compute_potential = compute_potential_unit_degree
+    elif dataset_name == "count_1_deg":
+        compute_potential = compute_potential_1_degree
+    elif dataset_name == "count_2_deg":
+        compute_potential = compute_potential_2_degree
+    elif dataset_name == "count_3_deg":
+        compute_potential = compute_potential_3_degree
+    elif dataset_name == "count_4_deg":
+        compute_potential = compute_potential_4_degree
+    elif dataset_name == "count_5_deg":
+        compute_potential = compute_potential_5_degree
     else:
         raise TypeError(f"invalid option {dataset_name}")
 
@@ -109,8 +174,11 @@ def score_data(dataset_name):
 
 def main():
     logging.basicConfig(level=logging.INFO)
-    score_data("unit_deg")
-    score_data("loop_count")
+    score_data("count_1_deg")
+    score_data("count_2_deg")
+    score_data("count_3_deg")
+    score_data("count_4_deg")
+    score_data("count_5_deg")
 
 
 if __name__ == "__main__":
