@@ -169,8 +169,8 @@ def train_model(
         # Write data.
         write_loss(
             save_path / "train_losses.csv",
-            np.arange(step, step + sweep),
-            np.array(losses),
+            step + sweep,
+            float(loss),
         )
         write_loss(
             save_path / "test_losses.csv",
@@ -248,13 +248,13 @@ def main_train_lr(lrs):
     N = 10
     obj_funcs: list[ObjType] = [
         "count_5_deg",
-        "count_4_deg",
-        "count_3_deg",
-        "count_2_deg",
-        "count_1_deg",
-        "edge_degree_variance",
-        "loop_count",
-        "det_alexander",
+        # "count_4_deg",
+        # "count_3_deg",
+        # "count_2_deg",
+        # "count_1_deg",
+        # "edge_degree_variance",
+        # "loop_count",
+        # "det_alexander",
     ]
 
     logging.basicConfig(level=logging.INFO)
@@ -286,10 +286,10 @@ def main_train_lr(lrs):
                 use_mask=True,
                 output_size=64,
                 batch_size=16,
-                epochs=16,
+                epochs=2,
                 num_test_samps=5_000,
-                num_train_steps=995_000,
-                sweep=1_000,
+                num_train_steps=124_375,
+                sweep=500,
                 learning_rate=lr,
                 resume=False,
             )
@@ -363,8 +363,8 @@ if __name__ == "__main__":
     if "config" in sys.argv:
         main_train_config()
     if "lra" in sys.argv:
-        main_train_lr([0.001])
+        main_train_lr([0.001, 0.01])
     if "lrb" in sys.argv:
-        main_train_lr([0.0005])
+        main_train_lr([0.0005, 0.005])
     if "lrc" in sys.argv:
         main_train_lr([0.0001])
