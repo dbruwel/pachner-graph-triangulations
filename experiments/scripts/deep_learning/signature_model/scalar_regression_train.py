@@ -363,8 +363,8 @@ if __name__ == "__main__":
     if "config" in sys.argv:
         main_train_config()
     if "lra" in sys.argv:
-        main_train_lr([0.001, 0.01])
+        main_train_lr([0.01])
     if "lrb" in sys.argv:
-        main_train_lr([0.0005, 0.005])
-    if "lrc" in sys.argv:
-        main_train_lr([0.0001])
+        main_train_lr([0.005])
+    # if "lrc" in sys.argv:
+    #     main_train_lr([0.0001])
