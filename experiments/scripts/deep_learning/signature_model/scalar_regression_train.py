@@ -175,7 +175,7 @@ def train_model(
         write_loss(
             save_path / "test_losses.csv",
             step + sweep,
-            test_loss,
+            float(test_loss),
         )
         save_model(save_path, state)
 
