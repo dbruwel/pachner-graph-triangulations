@@ -310,7 +310,7 @@ def train_sweep_steps(
         scan_body, state, (batches_input, batches_labels)
     )
 
-    return final_state, jnp.mean(losses)
+    return final_state, losses
 
 
 def generate_samples(

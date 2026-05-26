@@ -4,6 +4,7 @@ import sys
 import time
 from functools import partial
 
+import chex
 import jax
 import jax.numpy as jnp
 import numpy as np
@@ -35,18 +36,18 @@ logger = logging.getLogger(__name__)
 
 # jax utility
 @partial(jax.jit)
-def get_test_loss(
+def get_test_losses(
     state: MinimalTrainState,
     test_batch_input: jax.Array,
     test_batch_label: jax.Array,
-) -> jax.Array:
+) -> chex.Array:
     logits = state.apply_fn(
         {"params": state.params},
         test_batch_input,
         training=False,
     )
-    test_loss = optax.squared_error(logits, test_batch_label).mean()
-    return test_loss
+    test_losses = optax.squared_error(logits, test_batch_label)
+    return test_losses
 
 
 # critical functions
@@ -147,28 +148,41 @@ def train_model(
         jnp_target_values = jnp.stack(target_values_sweep)
 
         # Run training steps.
-        state, loss = train_sweep_steps(
+        state, losses = train_sweep_steps(
             train_step_scalar_regression,
             state,
             jnp_inputs,
             jnp_target_values,
         )
+        loss = jnp.mean(losses)
 
         # Log progress.
         msg = f"Step {step + sweep:,}/{num_train_steps:,}, Loss: {float(loss):.4f}"
         logger.info(msg)
 
         # Get test loss.
-        test_loss = get_test_loss(
+        test_losses = get_test_losses(
             state,
             test_input,
             test_target_value,
         )
 
         # Write data.
-        write_loss(save_path / "train_losses.csv", step + sweep, float(loss))
-        write_loss(save_path / "test_losses.csv", step + sweep, float(test_loss))
+        write_loss(
+            save_path / "train_losses.csv",
+            np.arange(step, step + sweep),
+            np.array(losses),
+        )
+        write_loss(
+            save_path / "test_losses.csv",
+            np.arange(step, step + sweep),
+            np.array(test_losses),
+        )
         save_model(save_path, state)
+
+        del losses
+        del test_losses
+        del loss
 
 
 # Main functions.

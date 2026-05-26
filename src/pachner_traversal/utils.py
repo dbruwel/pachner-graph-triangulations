@@ -74,8 +74,13 @@ def send_ntfy(topic: str, title: str, message: str) -> None:
 
 
 def write_loss(save_path, step, loss):
-    with open(save_path, "a") as f:
-        f.write(f"{step},{loss}\n")
+    if isinstance(loss, (float, np.floating, int, np.integer)):
+        with open(save_path, "a") as f:
+            f.write(f"{step},{loss}\n")
+    else:
+        with open(save_path, "a") as f:
+            for st, lo in zip(step, loss):
+                f.write(f"{st},{lo}\n")
 
 
 def save_model(save_path, state):
