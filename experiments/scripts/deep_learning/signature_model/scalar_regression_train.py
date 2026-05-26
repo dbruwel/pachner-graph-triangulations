@@ -4,7 +4,6 @@ import sys
 import time
 from functools import partial
 
-import chex
 import jax
 import jax.numpy as jnp
 import numpy as np
@@ -36,18 +35,18 @@ logger = logging.getLogger(__name__)
 
 # jax utility
 @partial(jax.jit)
-def get_test_losses(
+def get_test_loss(
     state: MinimalTrainState,
     test_batch_input: jax.Array,
     test_batch_label: jax.Array,
-) -> chex.Array:
+) -> jax.Array:
     logits = state.apply_fn(
         {"params": state.params},
         test_batch_input,
         training=False,
     )
-    test_losses = optax.squared_error(logits, test_batch_label)
-    return test_losses
+    test_loss = optax.squared_error(logits, test_batch_label).mean()
+    return test_loss
 
 
 # critical functions
@@ -161,7 +160,7 @@ def train_model(
         logger.info(msg)
 
         # Get test loss.
-        test_losses = get_test_losses(
+        test_loss = get_test_loss(
             state,
             test_input,
             test_target_value,
@@ -175,14 +174,14 @@ def train_model(
         )
         write_loss(
             save_path / "test_losses.csv",
-            np.arange(step, step + sweep),
-            np.array(test_losses),
+            step + sweep,
+            test_loss,
         )
         save_model(save_path, state)
 
-        del losses
-        del test_losses
         del loss
+        del losses
+        del test_loss
 
 
 # Main functions.
@@ -364,8 +363,8 @@ if __name__ == "__main__":
     if "config" in sys.argv:
         main_train_config()
     if "lra" in sys.argv:
-        main_train_lr([1e-3])
+        main_train_lr([0.001])
     if "lrb" in sys.argv:
-        main_train_lr([5e-3])
+        main_train_lr([0.0005])
     if "lrc" in sys.argv:
-        main_train_lr([1e-2])
+        main_train_lr([0.0001])
