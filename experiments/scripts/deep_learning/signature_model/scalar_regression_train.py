@@ -59,13 +59,13 @@ def train_model(
     num_heads: int = 4,
     use_mask: bool = True,
     output_size: int | None = None,
-    batch_size=64,
-    epochs=64,
+    batch_size: int = 64,
+    epochs: int = 64,
     num_test_samps: int = 1_000,
-    num_train_steps=1_000_000,
-    sweep=10_000,
-    learning_rate=0.0005,
-    resume=True,
+    num_train_steps: int = 1_000_000,
+    sweep: int = 10_000,
+    learning_rate: float = 0.0005,
+    resume: bool = True,
 ) -> None:
 
     # Dataset and Encoder.
@@ -215,6 +215,7 @@ def main_train_simple():
             epochs=128,
             num_test_samps=5_000,
             num_train_steps=7_960_000,
+            learning_rate=0.0005,
             resume=False,
         )
         toc = time.time()
@@ -228,6 +229,68 @@ def main_train_simple():
             f"Finished training for {obj_func}.",
             message,
         )
+
+
+def main_train_lr(lrs):
+    N = 10
+    obj_funcs: list[ObjType] = [
+        "count_5_deg",
+        "count_4_deg",
+        "count_3_deg",
+        "count_2_deg",
+        "count_1_deg",
+        "edge_degree_variance",
+        "loop_count",
+        "det_alexander",
+    ]
+
+    logging.basicConfig(level=logging.INFO)
+
+    for obj_func in obj_funcs:
+        for lr in lrs:
+            logger.info(f"\n\n--- OBJ: `{obj_func}` ---")
+            processed_data_home = data_root / "input_data" / "dehydration" / "processed"
+            data_path = processed_data_home / f"spheres_{N}.hdf5"
+
+            save_path = (
+                data_root
+                / "results"
+                / "sgd_models_dehydration"
+                / "scalar_simple"
+                / obj_func
+                / f"lr_{lr}"
+                / f"spheres_512emb_6block_4head_{N}tet"
+            )
+
+            tic = time.time()
+            train_model(
+                data_path,
+                save_path,
+                dset_name=obj_func,
+                d_model=512,
+                num_layers=6,
+                num_heads=4,
+                use_mask=True,
+                output_size=64,
+                batch_size=16,
+                epochs=16,
+                num_test_samps=5_000,
+                num_train_steps=995_000,
+                sweep=1_000,
+                learning_rate=lr,
+                resume=False,
+            )
+            toc = time.time()
+
+            train_time = toc - tic
+            logger.info(f"Training time: {train_time:.2f} seconds")
+
+            message = f"Training time: {train_time:.2f} seconds."
+            send_ntfy(
+                "usyd-knottedness",
+                f"Finished training for {obj_func}.",
+                message,
+            )
 
 
 def main_train_config():
@@ -286,3 +349,9 @@ if __name__ == "__main__":
         main_train_simple()
     if "config" in sys.argv:
         main_train_config()
+    if "lra" in sys.argv:
+        main_train_lr([1e-3])
+    if "lrb" in sys.argv:
+        main_train_lr([5e-3])
+    if "lrc" in sys.argv:
+        main_train_lr([1e-2])
