@@ -191,18 +191,8 @@ def train_model(
 
 
 # Main functions.
-def main_train_simple():
+def main_train_simple(obj_funcs: list[ObjType]):
     N = 10
-    obj_funcs: list[ObjType] = [
-        # "count_5_deg",
-        "count_4_deg",
-        # "count_3_deg",
-        # "count_2_deg",
-        # "count_1_deg",
-        "edge_degree_variance",
-        # "loop_count",
-        # "det_alexander",
-    ]
 
     logging.basicConfig(level=logging.INFO)
 
@@ -366,8 +356,21 @@ def main_train_config():
 
 
 if __name__ == "__main__":
-    if "simple" in sys.argv:
-        main_train_simple()
+    obj_funcs: list[ObjType] = [
+        # "count_5_deg",
+        "count_4_deg",
+        # "count_3_deg",
+        # "count_2_deg",
+        # "count_1_deg",
+        "edge_degree_variance",
+        # "loop_count",
+        # "det_alexander",
+    ]
+
+    if "simple_c4" in sys.argv:
+        main_train_simple(["count_4_deg"])
+    if "simple_edv" in sys.argv:
+        main_train_simple(["edge_degree_variance"])
     if "config" in sys.argv:
         main_train_config()
     if "lra" in sys.argv:
