@@ -367,15 +367,12 @@ def init_train_state(
     )
 
     tx = optax.adamw(learning_rate=lr_schedule, weight_decay=0.01)
-    opt_state = tx.init(params)
 
     state = MinimalTrainState.create(
         params=params,
         apply_fn=model.apply,
         dropout_key=dropout_key,
         tx=tx,
-        opt_state=opt_state,
-        step=0,
     )
 
     return state
