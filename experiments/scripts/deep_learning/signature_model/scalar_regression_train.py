@@ -116,7 +116,13 @@ def train_model(
         resume,
     )
 
-    state = init_train_state(model, params, dropout_key, learning_rate=learning_rate)
+    state = init_train_state(
+        model,
+        params,
+        dropout_key,
+        train_steps=num_train_steps,
+        peak_learning_rate=learning_rate,
+    )
 
     if resumed:
         logger.info(f"Training resume from {meta:,}")
@@ -188,14 +194,14 @@ def train_model(
 def main_train_simple():
     N = 10
     obj_funcs: list[ObjType] = [
-        "count_5_deg",
+        # "count_5_deg",
         "count_4_deg",
-        "count_3_deg",
-        "count_2_deg",
-        "count_1_deg",
+        # "count_3_deg",
+        # "count_2_deg",
+        # "count_1_deg",
         "edge_degree_variance",
-        "loop_count",
-        "det_alexander",
+        # "loop_count",
+        # "det_alexander",
     ]
 
     logging.basicConfig(level=logging.INFO)
@@ -211,6 +217,7 @@ def main_train_simple():
             / "sgd_models_dehydration"
             / "scalar_simple"
             / obj_func
+            / "new_schedule"
             / f"spheres_512emb_6block_4head_{N}tet"
         )
 
@@ -224,11 +231,12 @@ def main_train_simple():
             num_heads=4,
             use_mask=True,
             output_size=64,
-            batch_size=16,
+            batch_size=512,
             epochs=128,
             num_test_samps=5_000,
-            num_train_steps=7_960_000,
-            learning_rate=0.0005,
+            num_train_steps=248_750,
+            sweep=300,
+            learning_rate=0.0003,
             resume=False,
         )
         toc = time.time()

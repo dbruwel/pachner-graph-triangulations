@@ -1,16 +1,12 @@
 import shutil
 from functools import partial
 from pathlib import Path
-from typing import Callable
 
 import flax.linen as nn
 import jax
 import jax.numpy as jnp
 import numpy as np
 import optax
-from flax import struct
-from flax.core import freeze
-from flax.core.frozen_dict import FrozenDict
 from flax.linen.initializers import normal
 from flax.training import train_state
 
@@ -19,17 +15,7 @@ from pachner_traversal.utils import get_last_csv_row, get_random_sample_idx, loa
 
 
 class MinimalTrainState(train_state.TrainState):
-    params: FrozenDict
-    apply_fn: Callable = struct.field(pytree_node=False)
     dropout_key: jax.Array
-    learning_rate: float = struct.field(pytree_node=False)
-    m_tm1: FrozenDict = struct.field(pytree_node=True)
-    v_tm1: FrozenDict = struct.field(pytree_node=True)
-    beta_1: float = 0.9
-    beta_2: float = 0.99
-    eps: float = 1e-8
-    t: int = 0
-    weight_decay: float = 0.01
 
 
 class CausalSelfAttention(nn.Module):
@@ -269,28 +255,46 @@ def train_step_scalar_regression(
     state: MinimalTrainState,
     batch_input: jax.Array,
     batch_labels: jax.Array,
+    num_microbatches: int = 32,
 ) -> tuple[MinimalTrainState, jax.Array]:
-    dropout_key, new_dropout_key = jax.random.split(state.dropout_key)
+    mb_input = batch_input.reshape(num_microbatches, -1, *batch_input.shape[1:])
+    mb_labels = batch_labels.reshape(num_microbatches, -1, *batch_labels.shape[1:])
 
-    def loss_fn(params):
-        logits = state.apply_fn(
-            {"params": params},
-            batch_input,
-            training=True,
-            rngs={"dropout": dropout_key},
-        )
-        logits_fp32 = logits.astype(jnp.float32)
+    def microbatch_step(carry, xs):
+        key, grad_acc, loss_acc = carry
+        x, y = xs
 
-        loss = optax.squared_error(logits_fp32, batch_labels).mean()
-        return loss
+        key, subkey = jax.random.split(key)
 
-    grad_fn = jax.value_and_grad(loss_fn)
-    loss, grads = grad_fn(state.params)
+        def loss_fn(params):
+            logits = state.apply_fn(
+                {"params": params},
+                x,
+                training=True,
+                rngs={"dropout": subkey},
+            )
+            logits_fp32 = logits.astype(jnp.float32)
+            loss = optax.squared_error(logits_fp32, y).mean() / num_microbatches
+            return loss
 
-    new_state = state.apply_gradients(grads=grads)
+        loss, grads = jax.value_and_grad(loss_fn)(state.params)
+
+        grad_acc = jax.tree_util.tree_map(lambda a, b: a + b, grad_acc, grads)
+        loss_acc += loss
+
+        return (key, grad_acc, loss_acc), None
+
+    init_grads = jax.tree_util.tree_map(jnp.zeros_like, state.params)
+    init_carry = (state.dropout_key, init_grads, jnp.array(0.0))
+
+    (new_dropout_key, total_grads, total_loss), _ = jax.lax.scan(
+        microbatch_step, init_carry, (mb_input, mb_labels)
+    )
+
+    new_state = state.apply_gradients(grads=total_grads)
     new_state = new_state.replace(dropout_key=new_dropout_key)
 
-    return new_state, loss
+    return new_state, total_loss
 
 
 @partial(jax.jit, static_argnames=["train_step"])
@@ -345,16 +349,33 @@ def generate_samples(
     return samples
 
 
-def init_train_state(model, params, dropout_key, learning_rate=0.0005):
+def init_train_state(
+    model,
+    params,
+    dropout_key,
+    train_steps=1e6,
+    peak_learning_rate=0.0005,
+    final_learning_rate_frac=0.1,
+    warmup_frac=0.05,
+):
+    lr_schedule = optax.warmup_cosine_decay_schedule(
+        init_value=0.0,
+        peak_value=peak_learning_rate,
+        warmup_steps=int(train_steps * warmup_frac),
+        decay_steps=int(train_steps * (1 - warmup_frac)),
+        end_value=peak_learning_rate * final_learning_rate_frac,
+    )
+
+    tx = optax.adamw(learning_rate=lr_schedule, weight_decay=0.01)
+    opt_state = tx.init(params)
+
     state = MinimalTrainState.create(
         params=params,
         apply_fn=model.apply,
         dropout_key=dropout_key,
-        learning_rate=learning_rate,
-        m_tm1=freeze(jax.tree_util.tree_map(jnp.zeros_like, params)),
-        v_tm1=freeze(jax.tree_util.tree_map(jnp.zeros_like, params)),
-        t=0,
-        tx=optax.adamw(learning_rate=learning_rate, weight_decay=0.01),
+        tx=tx,
+        opt_state=opt_state,
+        step=0,
     )
 
     return state
