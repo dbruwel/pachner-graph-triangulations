@@ -149,8 +149,13 @@ def train_model(
             inputs_sweep.append(train_input[sample_idx])
             target_values_sweep.append(train_target_value[sample_idx])
 
-        jnp_inputs = jnp.stack(inputs_sweep)
-        jnp_target_values = jnp.stack(target_values_sweep)
+        try:
+            jnp_inputs = jnp.stack(inputs_sweep)
+            jnp_target_values = jnp.stack(target_values_sweep)
+        except Exception as _:
+            m = "Error stacking inputs or target values. Likely incomplete sweep size."
+            logger.error(m)
+            continue
 
         # Run training steps.
         state, losses = train_sweep_steps(
