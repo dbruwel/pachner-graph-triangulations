@@ -191,8 +191,19 @@ def train_model(
 
 
 # Main functions.
-def main_train_simple(obj_funcs: list[ObjType]):
+def main_train(lr):
     N = 10
+
+    obj_funcs: list[ObjType] = [
+        "count_5_deg",
+        "count_4_deg",
+        "count_3_deg",
+        "count_2_deg",
+        "count_1_deg",
+        "edge_degree_variance",
+        "loop_count",
+        "det_alexander",
+    ]
 
     logging.basicConfig(level=logging.INFO)
 
@@ -205,9 +216,9 @@ def main_train_simple(obj_funcs: list[ObjType]):
             data_root
             / "results"
             / "sgd_models_dehydration"
-            / "scalar_simple"
+            / "scalar_regression"
             / obj_func
-            / "new_schedule"
+            / f"{lr}lr_48epoch_512batch"
             / f"spheres_512emb_6block_4head_{N}tet"
         )
 
@@ -222,124 +233,11 @@ def main_train_simple(obj_funcs: list[ObjType]):
             use_mask=True,
             output_size=64,
             batch_size=512,
-            epochs=128,
+            epochs=48,
             num_test_samps=5_000,
-            num_train_steps=248_750,
+            num_train_steps=93_264,
             sweep=300,
-            learning_rate=0.0003,
-            resume=False,
-        )
-        toc = time.time()
-
-        train_time = toc - tic
-        logger.info(f"Training time: {train_time:.2f} seconds")
-
-        message = f"Training time: {train_time:.2f} seconds."
-        send_ntfy(
-            "usyd-knottedness",
-            f"Finished training for {obj_func}.",
-            message,
-        )
-
-
-def main_train_lr(lrs):
-    N = 10
-    obj_funcs: list[ObjType] = [
-        "count_5_deg",
-        # "count_4_deg",
-        # "count_3_deg",
-        # "count_2_deg",
-        # "count_1_deg",
-        # "edge_degree_variance",
-        # "loop_count",
-        # "det_alexander",
-    ]
-
-    logging.basicConfig(level=logging.INFO)
-
-    for obj_func in obj_funcs:
-        for lr in lrs:
-            logger.info(f"\n\n--- OBJ: `{obj_func}` ---")
-            processed_data_home = data_root / "input_data" / "dehydration" / "processed"
-            data_path = processed_data_home / f"spheres_{N}.hdf5"
-
-            save_path = (
-                data_root
-                / "results"
-                / "sgd_models_dehydration"
-                / "scalar_simple"
-                / obj_func
-                / f"lr_{lr}"
-                / f"spheres_512emb_6block_4head_{N}tet"
-            )
-
-            tic = time.time()
-            train_model(
-                data_path,
-                save_path,
-                dset_name=obj_func,
-                d_model=512,
-                num_layers=6,
-                num_heads=4,
-                use_mask=True,
-                output_size=64,
-                batch_size=16,
-                epochs=2,
-                num_test_samps=5_000,
-                num_train_steps=124_375,
-                sweep=500,
-                learning_rate=lr,
-                resume=False,
-            )
-            toc = time.time()
-
-            train_time = toc - tic
-            logger.info(f"Training time: {train_time:.2f} seconds")
-
-            message = f"Training time: {train_time:.2f} seconds."
-            send_ntfy(
-                "usyd-knottedness",
-                f"Finished training for {obj_func}.",
-                message,
-            )
-
-
-def main_train_config():
-    N = 10
-    obj_func = "edge_degree_variance"
-
-    logging.basicConfig(level=logging.INFO)
-
-    for configs in [(True, None), (False, None), (True, 512), (False, 512)]:
-        use_mask, output_size = configs
-        logger.info(f"\n\n--- OBJ: `{obj_func}` ---")
-        processed_data_home = data_root / "input_data" / "dehydration" / "processed"
-        data_path = processed_data_home / f"spheres_{N}.hdf5"
-
-        save_path = (
-            data_root
-            / "results"
-            / "sgd_models_dehydration"
-            / "scalar_simple"
-            / f"use_mask_{use_mask}_output_size_{output_size}"
-            / obj_func
-            / f"spheres_512emb_6block_4head_{N}tet"
-        )
-
-        tic = time.time()
-        train_model(
-            data_path,
-            save_path,
-            dset_name=obj_func,
-            d_model=512,
-            num_layers=6,
-            num_heads=4,
-            use_mask=use_mask,
-            output_size=output_size,
-            batch_size=16,
-            epochs=128,
-            num_test_samps=5_000,
-            num_train_steps=7_960_000,
+            learning_rate=lr,
             resume=False,
         )
         toc = time.time()
@@ -356,26 +254,9 @@ def main_train_config():
 
 
 if __name__ == "__main__":
-    obj_funcs: list[ObjType] = [
-        # "count_5_deg",
-        "count_4_deg",
-        # "count_3_deg",
-        # "count_2_deg",
-        # "count_1_deg",
-        "edge_degree_variance",
-        # "loop_count",
-        # "det_alexander",
-    ]
-
-    if "simple_c4" in sys.argv:
-        main_train_simple(["count_4_deg"])
-    if "simple_edv" in sys.argv:
-        main_train_simple(["edge_degree_variance"])
-    if "config" in sys.argv:
-        main_train_config()
-    if "lra" in sys.argv:
-        main_train_lr([0.01])
-    if "lrb" in sys.argv:
-        main_train_lr([0.005])
-    # if "lrc" in sys.argv:
-    #     main_train_lr([0.0001])
+    if "high" in sys.argv:
+        main_train(1e-3)
+    if "med" in sys.argv:
+        main_train(3e-4)
+    if "low" in sys.argv:
+        main_train(1e-4)
