@@ -200,7 +200,7 @@ def main_train(lr):
     N = 10
 
     obj_funcs: list[ObjType] = [
-        "count_5_deg",
+        # "count_5_deg",
         "count_4_deg",
         "count_3_deg",
         "count_2_deg",
