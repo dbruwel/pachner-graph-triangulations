@@ -200,7 +200,7 @@ def main_train(lr):
     N = 10
 
     obj_funcs: list[ObjType] = [
-        # "count_5_deg",
+        "count_5_deg",
         "count_4_deg",
         "count_3_deg",
         "count_2_deg",
@@ -259,9 +259,13 @@ def main_train(lr):
 
 
 if __name__ == "__main__":
-    if "high" in sys.argv:
+    if "xhigh" in sys.argv:
         main_train(1e-3)
-    if "med" in sys.argv:
+    if "high" in sys.argv:
         main_train(3e-4)
-    if "low" in sys.argv:
+    if "med" in sys.argv:
         main_train(1e-4)
+    if "low" in sys.argv:
+        main_train(3e-5)
+    if "xlow" in sys.argv:
+        main_train(1e-5)
