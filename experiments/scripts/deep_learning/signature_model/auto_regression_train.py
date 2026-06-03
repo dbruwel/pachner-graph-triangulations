@@ -271,8 +271,11 @@ def main_train_tet(lr):
         if train:
             save_path = (
                 data_root
+                / "results"
                 / "sgd_models_dehydration"
+                / "tet_sweep"
                 / f"spheres_512emb_6block_4head_{N}tet"
+                / f"lr{lr}"
             )
             save_path.mkdir(parents=True, exist_ok=True)
 
