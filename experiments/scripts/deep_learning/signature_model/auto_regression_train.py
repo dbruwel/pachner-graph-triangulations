@@ -417,15 +417,15 @@ def main_train_scale(lr):
 
 if __name__ == "__main__":
     if "tet_xlo" in sys.argv:
-        main_train_tet(1e-5)
-    if "tet_low" in sys.argv:
-        main_train_tet(3e-5)
-    if "tet_med" in sys.argv:
-        main_train_tet(1e-4)
-    if "tet_high" in sys.argv:
         main_train_tet(3e-4)
-    if "tet_xhi" in sys.argv:
+    if "tet_low" in sys.argv:
         main_train_tet(1e-3)
+    if "tet_med" in sys.argv:
+        main_train_tet(3e-3)
+    if "tet_high" in sys.argv:
+        main_train_tet(1e-2)
+    if "tet_xhi" in sys.argv:
+        main_train_tet(3e-2)
 
     if "scale" in sys.argv:
         main_train_scale(1e-4)
