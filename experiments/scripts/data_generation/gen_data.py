@@ -35,10 +35,13 @@ def main():
         )
 
         isos_list = np.array(data).flatten()
+        logger.info(f"Collected {len(isos_list):,} samples.")
         isos_list = isos_list.astype(str)
         isos_list = np.unique(isos_list)
+        logger.info(f"{len(isos_list):,} unique samples.")
 
         isos_list_target = isos_list[np.char.startswith(isos_list, leading_char)]
+        logger.info(f"{len(isos_list_target):,} unique samples of size {size}.")
         unique_target_samps.update(isos_list_target)
 
         logger.info(f"{len(unique_target_samps):,} samples for N={size}.")
