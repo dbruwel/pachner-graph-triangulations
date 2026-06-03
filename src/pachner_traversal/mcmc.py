@@ -23,10 +23,13 @@ def neighbours(iso: str, f: list[int], a: int) -> dict:
             if target.pachner(target.triangle(t), True, False):
                 target.pachner(target.triangle(t), False, True)
                 # get isomorphism signature of result, add it to neighbours
-                tiso = target.dehydrate()
-                # add edge needed to flip to obtain this neighbour (in standard iso sig labelling)
-                if tiso not in nbrs:
-                    nbrs[tiso] = t
+                try:
+                    tiso = target.dehydrate()
+                    # add edge needed to flip to obtain this neighbour (in standard iso sig labelling)
+                    if tiso not in nbrs:
+                        nbrs[tiso] = t
+                except Exception:
+                    pass
         return nbrs
     # going down (3-2-move at every edge of degree three in three distinct tetrahedra)
     if a == 2:
@@ -37,10 +40,13 @@ def neighbours(iso: str, f: list[int], a: int) -> dict:
             if target.pachner(target.edge(e), True, False):
                 target.pachner(target.edge(e), False, True)
                 # get isomorphism signature of result, add it to neighbours
-                tiso = target.dehydrate()
-                # add edge needed to flip to obtain this neighbour (in standard iso sig labelling)
-                if tiso not in nbrs:
-                    nbrs[tiso] = e
+                try:
+                    tiso = target.dehydrate()
+                    # add edge needed to flip to obtain this neighbour (in standard iso sig labelling)
+                    if tiso not in nbrs:
+                        nbrs[tiso] = e
+                except Exception:
+                    pass
         return nbrs
 
     else:
