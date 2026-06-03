@@ -287,7 +287,7 @@ def main_train_tet(lr):
                 num_layers=6,
                 num_heads=4,
                 batch_size=512,
-                epochs=16,
+                epochs=64,
                 num_test_samps=10_000,
                 num_train_steps=30_000,
                 sweep=300,
@@ -417,15 +417,13 @@ def main_train_scale(lr):
 
 if __name__ == "__main__":
     if "tet_xlo" in sys.argv:
-        main_train_tet(3e-4)
+        main_train_tet(1e-4)
     if "tet_low" in sys.argv:
-        main_train_tet(1e-3)
+        main_train_tet(3e-4)
     if "tet_med" in sys.argv:
-        main_train_tet(3e-3)
+        main_train_tet(1e-3)
     if "tet_high" in sys.argv:
-        main_train_tet(1e-2)
-    if "tet_xhi" in sys.argv:
-        main_train_tet(3e-2)
+        main_train_tet(3e-3)
 
     if "scale" in sys.argv:
         main_train_scale(1e-4)
