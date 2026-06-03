@@ -18,12 +18,12 @@ def neighbours(iso: str, f: list[int], a: int) -> dict:
     if a == 1:
         for t in range(f[2]):
             # create copy of tri in standard iso sig labelling
-            target = Triangulation3.fromIsoSig(iso)
+            target = Triangulation3.rehydrate(iso)
             # test if move is possible and if so, perform it
             if target.pachner(target.triangle(t), True, False):
                 target.pachner(target.triangle(t), False, True)
                 # get isomorphism signature of result, add it to neighbours
-                tiso = target.isoSig_RidgeDegrees()
+                tiso = target.dehydrate()
                 # add edge needed to flip to obtain this neighbour (in standard iso sig labelling)
                 if tiso not in nbrs:
                     nbrs[tiso] = t
@@ -32,12 +32,12 @@ def neighbours(iso: str, f: list[int], a: int) -> dict:
     if a == 2:
         for e in range(f[1]):
             # create copy of tri in standard iso sig labelling
-            target = Triangulation3.fromIsoSig(iso)
+            target = Triangulation3.rehydrate(iso)
             # test if move is possible and if so, perform it
             if target.pachner(target.edge(e), True, False):
                 target.pachner(target.edge(e), False, True)
                 # get isomorphism signature of result, add it to neighbours
-                tiso = target.isoSig_RidgeDegrees()
+                tiso = target.dehydrate()
                 # add edge needed to flip to obtain this neighbour (in standard iso sig labelling)
                 if tiso not in nbrs:
                     nbrs[tiso] = e
@@ -123,7 +123,7 @@ def randomise(
 
 def iterate(iso: str, gamma: float, steps: int = 1) -> str:
     # initialise number of steps
-    t = Triangulation3.fromIsoSig(iso)
+    t = Triangulation3.rehydrate(iso)
     f = t.fVector()
 
     for i in range(int(steps)):
@@ -136,7 +136,7 @@ def mcmc3d(
 ):
     "Collects 'samples' samples of triangulations by performing a random walk in the Pachner graph starting from 'iso' with parameter `gamma`. offset' is the number of triangulations to be burnt (discarded initially). 'interval' is the number of triangulations between successive samples. Parameter `verbose` decides print behaviour, `printToFile` is the filename for the output file in the folder outputs/."
     # initialise number of steps
-    t = Triangulation3.fromIsoSig(iso)
+    t = Triangulation3.rehydrate(iso)
     f = t.fVector()
     samp = 0
 

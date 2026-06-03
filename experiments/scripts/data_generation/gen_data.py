@@ -21,6 +21,9 @@ def main():
     unique_target_samps = set()
 
     save_path = data_root / "input_data" / "dehydration" / "raw" / "mcmc_samples"
+    fname = f"samps{size}_16m.txt"
+
+    unique_target_samps = set()
 
     while len(unique_target_samps) <= 160_005_000:
         data = run_chains(
@@ -40,7 +43,7 @@ def main():
 
         logger.info(f"{len(unique_target_samps):,} samples for N={size}.")
 
-        with open(save_path / f"samps{size}_16m.txt", "w") as f:
+        with open(save_path / fname, "w") as f:
             np.savetxt(f, list(unique_target_samps), fmt="%s")
 
 
