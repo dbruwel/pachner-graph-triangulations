@@ -109,13 +109,14 @@ def train_model(
     d_model: int = 512,
     num_layers: int = 6,
     num_heads: int = 4,
-    batch_size=64,
-    epochs=64,
-    num_test_samps: int = 1_000,
-    num_train_steps=1_000_000,
-    sweep: int = 10_000,
-    sample=False,
-    resume=True,
+    batch_size=512,
+    epochs=16,
+    num_test_samps: int = 10_000,
+    num_train_steps=30_000,
+    sweep: int = 300,
+    learning_rate: float = 1e-4,
+    sample=True,
+    resume=False,
 ) -> None:
 
     # data
@@ -157,7 +158,13 @@ def train_model(
         resume,
     )
 
-    state = init_train_state(model, params, dropout_key)
+    state = init_train_state(
+        model,
+        params,
+        dropout_key,
+        train_steps=num_train_steps,
+        peak_learning_rate=learning_rate,
+    )
 
     if resumed:
         logger.info(f"Training resume from {meta:,}")
@@ -174,6 +181,7 @@ def train_model(
 
     # training
     logger.info("\n--- Starting Training ---")
+    sam_counter = 0
     for step in steps:
         inputs_sweep = []
         labels_sweep = []
@@ -183,32 +191,48 @@ def train_model(
             inputs_sweep.append(train_input[sample_idx])
             labels_sweep.append(train_label[sample_idx])
 
-        jnp_inputs = jnp.stack(inputs_sweep)
-        jnp_labels = jnp.stack(labels_sweep)
+        try:
+            jnp_inputs = jnp.stack(inputs_sweep)
+            jnp_labels = jnp.stack(labels_sweep)
+        except Exception as e:
+            logger.error(f"Error stacking inputs/labels at step {step}: {e}")
+            continue
 
-        state, loss = train_sweep_steps(
+        state, losses = train_sweep_steps(
             train_step_auto_regression,
             state,
             jnp_inputs,
             jnp_labels,
         )
+        loss = jnp.mean(losses)
 
-        if (step + sweep) % sweep == 0 or (step + sweep) == num_train_steps:
-            msg = f"Step {step + sweep:,}/{num_train_steps:,}, Loss: {float(loss):.4f}"
-            logger.info(msg)
+        msg = f"Step {step + sweep:,}/{num_train_steps:,}, Loss: {float(loss):.4f}"
+        logger.info(msg)
 
-            test_loss = get_test_loss(
-                state,
-                test_input,
-                test_label,
-                vocab_size,
-            )
+        test_loss = get_test_loss(
+            state,
+            test_input,
+            test_label,
+            vocab_size,
+        )
 
-            write_loss(save_path / "train_losses.csv", step + sweep, float(loss))
-            write_loss(save_path / "test_losses.csv", step + sweep, float(test_loss))
-            save_model(save_path, state)
+        write_loss(
+            save_path / "train_losses.csv",
+            step + sweep,
+            float(loss),
+        )
+        write_loss(
+            save_path / "test_losses.csv",
+            step + sweep,
+            float(test_loss),
+        )
+        save_model(save_path, state)
 
-        if sample and (step + sweep) % 100_000 == 0:
+        del loss
+        del losses
+        del test_loss
+
+        if sam_counter % 10 == 9 and sample:
             sample_model(
                 data_path,
                 save_path,
@@ -219,6 +243,7 @@ def train_model(
                 gen_its=1,
                 tag=f"{step + sweep:,}",
             )
+            sam_counter += 1
 
     logger.info("\n Training finished.")
 
@@ -226,7 +251,7 @@ def train_model(
 
 
 # main
-def main_train_tet():
+def main_train_tet(lr):
     train = True
     sample = True
 
@@ -252,7 +277,21 @@ def main_train_tet():
             save_path.mkdir(parents=True, exist_ok=True)
 
             tic = time.time()
-            train_model(data_path, save_path)
+            train_model(
+                data_path,
+                save_path,
+                d_model=512,
+                num_layers=6,
+                num_heads=4,
+                batch_size=512,
+                epochs=16,
+                num_test_samps=10_000,
+                num_train_steps=30_000,
+                sweep=300,
+                learning_rate=lr,
+                sample=True,
+                resume=False,
+            )
             toc = time.time()
 
             train_time = toc - tic
@@ -273,42 +312,7 @@ def main_train_tet():
         )
 
 
-def main_train_long():
-    logging.basicConfig(level=logging.INFO)
-
-    processed_data_path = data_root / "input_data" / "dehydration" / "processed"
-    data_path = processed_data_path / "spheres_10.hdf5"
-
-    train_time = 0
-    sample_time = 0
-
-    save_path = (
-        data_root
-        / "results"
-        / "sgd_models_dehydration"
-        / "long_train"
-        / "spheres_512emb_6block_4head_10tet"
-    )
-    save_path.mkdir(parents=True, exist_ok=True)
-
-    # Train
-    tic = time.time()
-    train_model(data_path, save_path, num_train_steps=10_000_000, sample=True)
-    toc = time.time()
-
-    train_time = toc - tic
-    logger.info(f"Training time: {train_time:.2f} seconds")
-
-    # Sample
-    tic = time.time()
-    sample_model(data_path, save_path, samps_to_gen=1_000, gen_its=20, tag="final")
-    toc = time.time()
-
-    sample_time = toc - tic
-    logger.info(f"Sampling time: {sample_time:.2f} seconds")
-
-
-def main_train_scale():
+def main_train_scale(lr):
     logging.basicConfig(level=logging.INFO)
 
     train = True
@@ -318,11 +322,18 @@ def main_train_scale():
     blocks = {"xs": 4, "s": 6, "m": 12, "l": 16, "xl": 24}
     heads = {"xs": 4, "s": 6, "m": 8, "l": 12, "xl": 16}
     itts = {
-        "xs": 300_000,
-        "s": 1_200_000,
-        "m": 3_500_000,
-        "l": 10_000_000,
-        "xl": 10_000_000,
+        "xs": 9_984,
+        "s": 38_880,
+        "m": 119_808,
+        "l": 297_216,
+        "xl": 294_912,
+    }
+    epochs = {
+        "xs": 52,
+        "s": 60,
+        "m": 52,
+        "l": 43,
+        "xl": 16,
     }
 
     sizes = ["l"]
@@ -358,12 +369,14 @@ def main_train_scale():
                 data_path,
                 save_path,
                 d_model=emb,
-                num_heads=head,
                 num_layers=block,
-                batch_size=16,
-                epochs=16,
-                num_test_samps=5_000,
+                num_heads=head,
+                batch_size=512,
+                epochs=epochs[size],
+                num_test_samps=10_000,
                 num_train_steps=itts[size],
+                sweep=300,
+                learning_rate=lr,
                 sample=True,
                 resume=False,
             )
@@ -400,9 +413,16 @@ def main_train_scale():
 
 
 if __name__ == "__main__":
-    if "long" in sys.argv:
-        main_train_long()
-    if "tet" in sys.argv:
-        main_train_tet()
+    if "tet_xlo" in sys.argv:
+        main_train_tet(1e-5)
+    if "tet_low" in sys.argv:
+        main_train_tet(3e-5)
+    if "tet_med" in sys.argv:
+        main_train_tet(1e-4)
+    if "tet_high" in sys.argv:
+        main_train_tet(3e-4)
+    if "tet_xhi" in sys.argv:
+        main_train_tet(1e-3)
+
     if "scale" in sys.argv:
-        main_train_scale()
+        main_train_scale(1e-4)
