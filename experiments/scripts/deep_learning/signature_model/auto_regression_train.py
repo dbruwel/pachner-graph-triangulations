@@ -290,7 +290,7 @@ def main_train_tet(lr):
                 epochs=64,
                 num_test_samps=10_000,
                 num_train_steps=120_000,
-                sweep=10_000,
+                sweep=1_000,
                 learning_rate=lr,
                 sample=True,
                 resume=False,

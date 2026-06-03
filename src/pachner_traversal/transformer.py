@@ -224,7 +224,7 @@ def train_step_auto_regression(
     state: MinimalTrainState,
     batch_input: jax.Array,
     batch_labels: jax.Array,
-    num_microbatches: int = 32,
+    num_microbatches: int = 8,
 ) -> tuple[MinimalTrainState, jax.Array]:
     mb_input = batch_input.reshape(num_microbatches, -1, *batch_input.shape[1:])
     mb_labels = batch_labels.reshape(num_microbatches, -1, *batch_labels.shape[1:])
