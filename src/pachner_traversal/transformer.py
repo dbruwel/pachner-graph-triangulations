@@ -244,9 +244,10 @@ def train_step_auto_regression(
             )
             logits_fp32 = logits.astype(jnp.float32)
 
-            loss = optax.softmax_cross_entropy_with_integer_labels(
+            all_loss = optax.softmax_cross_entropy_with_integer_labels(
                 logits=logits_fp32, labels=y
-            ).mean()
+            )
+            loss = all_loss.mean() / num_microbatches
             return loss
 
         loss, grads = jax.value_and_grad(loss_fn)(state.params)

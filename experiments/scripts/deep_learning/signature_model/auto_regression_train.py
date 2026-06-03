@@ -232,7 +232,8 @@ def train_model(
         del losses
         del test_loss
 
-        if sam_counter % 10 == 9 and sample:
+        sam_counter += 1
+        if sam_counter % 10 == 0 and sample:
             sample_model(
                 data_path,
                 save_path,
@@ -243,7 +244,6 @@ def train_model(
                 gen_its=1,
                 tag=f"{step + sweep:,}",
             )
-            sam_counter += 1
 
     logger.info("\n Training finished.")
 
