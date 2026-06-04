@@ -85,6 +85,38 @@ def compute_potential_3_degree(iso: str) -> float:
 
     return potential_val
 
+def compute_potential_3_degree_regular(iso: str) -> float:
+    tri = Triangulation3.rehydrate(iso)
+    potential_val = 0.0
+
+    for edge in tri.edges():
+        if edge.degree() == 3:
+            if tri.pachner(edge, True, False):
+                unit_degree = 1.0
+            else:
+                unit_degree = 0.0
+        else:
+            unit_degree = 0.0
+        potential_val = potential_val + unit_degree
+
+    return potential_val
+
+def compute_potential_3_degree_folded(iso: str) -> float:
+    tri = Triangulation3.rehydrate(iso)
+    potential_val = 0.0
+
+    for edge in tri.edges():
+        if edge.degree() == 3:
+            if tri.pachner(edge, True, False):
+                unit_degree = 0.0
+            else:
+                unit_degree = 1.0
+        else:
+            unit_degree = 0.0
+        potential_val = potential_val + unit_degree
+
+    return potential_val
+
 
 def compute_potential_4_degree(iso: str) -> float:
     tri = Triangulation3.rehydrate(iso)
@@ -127,6 +159,10 @@ def score_data(dataset_name):
         compute_potential = compute_potential_4_degree
     elif dataset_name == "count_5_deg":
         compute_potential = compute_potential_5_degree
+    elif dataset_name == "count_3_deg_regular":
+        compute_potential = compute_potential_3_degree_regular
+    elif dataset_name == "count_3_deg_folded":
+        compute_potential = compute_potential_3_degree_folded
     else:
         raise TypeError(f"invalid option {dataset_name}")
 
@@ -173,11 +209,12 @@ def score_data(dataset_name):
 
 def main():
     logging.basicConfig(level=logging.INFO)
-    score_data("count_1_deg")
-    score_data("count_2_deg")
-    score_data("count_3_deg")
-    score_data("count_4_deg")
-    score_data("count_5_deg")
+    score_data("count_3_deg_regular")
+    score_data("count_3_deg_folded")
+    # score_data("count_2_deg")
+    # score_data("count_3_deg")
+    # score_data("count_4_deg")
+    # score_data("count_5_deg")
 
 
 if __name__ == "__main__":
