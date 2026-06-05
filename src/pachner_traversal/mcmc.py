@@ -230,3 +230,28 @@ def run_chains(
         isos_lists = pool.starmap(sample_chain, args)
 
     return isos_lists
+
+
+def run_chain_multi_arg(
+    num_chains: int,
+    itts: int,
+    seed_list: list[str],
+    gamma_list: list[float],
+    steps_list: list[int],
+) -> list[list[str]]:
+    def get_args(chain_id: int):
+        args = (
+            seed_list[chain_id],
+            gamma_list[chain_id],
+            itts,
+            steps_list[chain_id],
+            chain_id,
+        )
+        return args
+
+    with multiprocessing.Pool(processes=num_chains) as pool:
+        args = [get_args(chain_id) for chain_id in range(num_chains)]
+
+        isos_lists = pool.starmap(sample_chain, args)
+
+    return isos_lists
