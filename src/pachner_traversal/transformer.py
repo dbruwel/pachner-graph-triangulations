@@ -5,7 +5,6 @@ from pathlib import Path
 import flax.linen as nn
 import jax
 import jax.numpy as jnp
-import numpy as np
 import optax
 from flax.linen.initializers import normal
 from flax.training import train_state
@@ -431,7 +430,8 @@ def init_params(
     model,
     params_key,
     load_path: Path,
-    train_input: np.ndarray,
+    dataset: Dataset,
+    encoder: Encoder,
     batch_size: int,
     num_train_steps: int,
     sweep: int,
@@ -449,8 +449,9 @@ def init_params(
             shutil.rmtree(load_path)
         load_path.mkdir(parents=True, exist_ok=True)
 
-        blank_idx = get_random_sample_idx(batch_size, len(train_input))
-        blank_batch_input = train_input[blank_idx]
+        blank_idx = get_random_sample_idx(batch_size, len(dataset))
+        blank_data = dataset.read_lines(blank_idx)
+        blank_batch_input, _ = encoder.encode(blank_data)
 
         key_data = {"params": params_key}
         blank_model = model.init(key_data, blank_batch_input, training=True)

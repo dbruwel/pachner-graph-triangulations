@@ -118,23 +118,28 @@ def train_model(
     samp_freq=10,
     sample=True,
     resume=False,
+    low_mem=False,
 ) -> None:
 
     # data
     dataset = Dataset(data_path, num_test_samps)
     encoder = Encoder(dataset)
 
-    all_data_str = dataset.read_all_data()
-    all_data_input, all_data_label = encoder.encode(all_data_str)
-
-    test_input = all_data_input[dataset.test_idx]
-    test_label = all_data_label[dataset.test_idx]
-
-    train_idx = list(set(range(len(all_data_label))) - set(dataset.test_idx))
+    train_idx = list(set(range(len(dataset))) - set(dataset.test_idx))
     train_idx.sort()
 
-    train_input = all_data_input[train_idx]
-    train_label = all_data_label[train_idx]
+    if not low_mem:
+        all_data_str = dataset.read_all_data()
+        all_data_input, all_data_label = encoder.encode(all_data_str)
+
+        test_input = all_data_input[dataset.test_idx]
+        test_label = all_data_label[dataset.test_idx]
+
+        train_input = all_data_input[train_idx]
+        train_label = all_data_label[train_idx]
+    else:
+        test_samples = dataset.read_lines(dataset.test_idx)
+        test_input, test_label = encoder.encode(test_samples)
 
     # setup model
     model, keys, meta = init_model(
@@ -152,7 +157,8 @@ def train_model(
         model,
         params_key,
         save_path,
-        train_input,
+        dataset,
+        encoder,
         batch_size,
         num_train_steps,
         sweep,
@@ -175,7 +181,7 @@ def train_model(
 
     schedule = create_sample_schedule(
         batch_size,
-        dataset_size=len(train_input),
+        dataset_size=len(train_idx),
         epochs=epochs,
         num_itts=num_train_steps,
     )
@@ -189,8 +195,15 @@ def train_model(
 
         for i in range(sweep):
             sample_idx = get_sample_idx(schedule, batch_size, step + i)
-            inputs_sweep.append(train_input[sample_idx])
-            labels_sweep.append(train_label[sample_idx])
+            if not low_mem:
+                mb_input = train_input[sample_idx]  # type: ignore
+                mb_labels = train_label[sample_idx]  # type: ignore
+            else:
+                mb_samples = dataset.read_lines(train_idx[sample_idx])
+                mb_input, mb_labels = encoder.encode(mb_samples)
+
+            inputs_sweep.append(mb_input)
+            labels_sweep.append(mb_labels)
 
         try:
             jnp_inputs = jnp.stack(inputs_sweep)
@@ -351,6 +364,7 @@ def main_train_scale(lr):
                 / "archive"
                 / "scale"
                 / f"{size}"
+                / f"{lr}"
                 / f"spheres_{emb}emb_{block}block_{head}head_15tet"
             )
             save_path.mkdir(parents=True, exist_ok=True)
@@ -374,6 +388,7 @@ def main_train_scale(lr):
                 learning_rate=lr,
                 sample=True,
                 resume=False,
+                low_mem=True,
             )
             toc = time.time()
 
