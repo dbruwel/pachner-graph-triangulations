@@ -251,7 +251,7 @@ def train_model(
         logger.info(f"Training resume from {meta:,}")
     else:
         write_stat(save_path / "stats.txt", "n_params", f"{meta:,}")
-        logger.info(f"Model initialized. Parameter count: {meta}")
+        logger.info(f"Model initialized. Parameter count: {meta:,}")
 
     logger.debug("Creating sample schedule")
     schedule = create_sample_schedule(
@@ -269,7 +269,7 @@ def train_model(
         labels_sweep = []
         sample_idx_sweep = []
 
-        if step == 0:
+        if step <= 2:
             logger.debug("Starting batch gen")
 
         for i in range(sweep):
@@ -278,7 +278,7 @@ def train_model(
 
         if low_mem:
             sample_idx_sweep_flat = np.array(sample_idx_sweep).flatten()
-            logger.debug(f"Reading {len(sample_idx_sweep_flat)} lines")
+            logger.debug(f"Reading {len(sample_idx_sweep_flat):,} lines")
             sweep_samples = dataset.read_lines(
                 np.array(train_idx)[sample_idx_sweep_flat]
             )
@@ -301,7 +301,7 @@ def train_model(
             logger.error(f"Error stacking inputs/labels at step {step}: {e}")
             continue
 
-        if step == 0:
+        if step <= 2:
             logger.info("Finished batch gen")
 
         state, losses = train_sweep_steps(
@@ -315,6 +315,7 @@ def train_model(
         msg = f"Step {step + sweep:,}/{num_train_steps:,}, Loss: {float(loss):.4f}"
         logger.info(msg)
 
+        logger.debug("Get test loss")
         test_loss = get_test_loss(
             state,
             test_input,
@@ -339,6 +340,7 @@ def train_model(
         del test_loss
 
         if sam_counter % samp_freq == 0 and sample:
+            logger.debug("Sample model")
             sample_model(
                 data_path,
                 save_path,
