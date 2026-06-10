@@ -210,7 +210,7 @@ def train_model(
             else:
                 if step == 0:
                     logger.debug(f"Reading MB {i} samples")
-                mb_samples = dataset.read_lines(train_idx[sample_idx])
+                mb_samples = dataset.read_lines(np.array(train_idx)[sample_idx])
                 if step == 0:
                     logger.debug(f"Encoding MB {i} samples")
                 mb_input, mb_labels = encoder.encode(mb_samples)
@@ -343,7 +343,16 @@ def main_train_tet(lr):
 
 
 def main_train_scale(lr):
-    logging.basicConfig(level=logging.DEBUG)
+    import os
+
+    os.environ["TF_CPP_MIN_LOG_LEVEL"] = "2"
+    logging.basicConfig(
+        format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
+        datefmt="%Y-%m-%d %H:%M:%S",
+        level=logging.DEBUG,
+    )
+    logging.getLogger("jax").setLevel(logging.WARNING)
+    logging.getLogger("absl").setLevel(logging.WARNING)
 
     train = True
     sample = True
