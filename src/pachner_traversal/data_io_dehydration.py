@@ -1,4 +1,5 @@
 import pathlib
+from typing import cast
 
 import h5py
 import numpy as np
@@ -72,9 +73,11 @@ class Dataset:
         data_size: int | None = None,
         chars: list | None = None,
         max_len: int | None = None,
+        store_in_memory=False,
     ):
         self.hdf5_file = hdf5_file
         self.num_test_samps = num_test_samps
+        self.store_in_memory = store_in_memory
 
         if data_size is None:
             self.data_size = self.get_data_size()
@@ -86,6 +89,9 @@ class Dataset:
         else:
             self.chars = chars
             self.max_len = max_len
+
+        if self.store_in_memory:
+            self.read_into_memory()
 
         self.setup_train_test()
 
@@ -134,18 +140,33 @@ class Dataset:
         return data_size
 
     def read_lines(self, indices, dset_name="isos"):
-        with h5py.File(self.hdf5_file, "r") as hf:
-            unique_indices, inverse_map = np.unique(indices, return_inverse=True)
-            sorted_indices = np.sort(unique_indices)
+        unique_indices, inverse_map = np.unique(indices, return_inverse=True)
+        sorted_indices = np.sort(unique_indices)
 
+        if self.store_in_memory:
+            unique_lines = self.all_lines[sorted_indices]
+            restored_lines = unique_lines[inverse_map]
+            return restored_lines
+
+        else:
+            with h5py.File(self.hdf5_file, "r") as hf:
+                dset = hf[dset_name]
+                unique_lines = dset[sorted_indices]  # type: ignore
+                restored_lines = unique_lines[inverse_map]  # type: ignore
+                if dset_name == "isos":
+                    res = [line.decode("utf-8") for line in restored_lines]  # type: ignore
+                else:
+                    res = restored_lines
+                return res
+
+    def read_into_memory(self, dset_name="isos"):
+        with h5py.File(self.hdf5_file, "r") as hf:
             dset = hf[dset_name]
-            unique_lines = dset[sorted_indices]  # type: ignore
-            restored_lines = unique_lines[inverse_map]  # type: ignore
+            all_lines = dset[:]  # type: ignore
+            all_lines = cast(np.ndarray, all_lines)
             if dset_name == "isos":
-                res = [line.decode("utf-8") for line in restored_lines]  # type: ignore
-            else:
-                res = restored_lines
-            return res
+                all_lines = [line.decode("utf-8") for line in all_lines]  # type: ignore
+            self.all_lines = all_lines
 
     def setup_train_test(self):
         self.test_idx = np.random.choice(

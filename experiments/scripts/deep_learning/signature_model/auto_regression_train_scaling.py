@@ -188,6 +188,7 @@ def train_model(
         data_size=160_036_916,
         chars=char_list,
         max_len=41,
+        store_in_memory=True,
     )
     logger.debug("Setting up encoder")
     encoder = Encoder(dataset)
@@ -277,7 +278,7 @@ def train_model(
 
         if low_mem:
             sample_idx_sweep_flat = np.array(sample_idx_sweep).flatten()
-            logger.debug("Reading lines")
+            logger.debug(f"Reading {len(sample_idx_sweep_flat)} lines")
             sweep_samples = dataset.read_lines(
                 np.array(train_idx)[sample_idx_sweep_flat]
             )
