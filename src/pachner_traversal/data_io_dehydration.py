@@ -69,12 +69,23 @@ class Dataset:
         self,
         hdf5_file: pathlib.Path,
         num_test_samps: int = 1_000,
+        data_size: int | None = None,
+        chars: list | None = None,
+        max_len: int | None = None,
     ):
         self.hdf5_file = hdf5_file
         self.num_test_samps = num_test_samps
 
-        self.data_size = self.get_data_size()
-        self.chars, self.max_len = self.get_chars_and_max_len()
+        if data_size is None:
+            self.data_size = self.get_data_size()
+        else:
+            self.data_size = data_size
+
+        if (chars is None) or (max_len is None):
+            self.chars, self.max_len = self.get_chars_and_max_len()
+        else:
+            self.chars = chars
+            self.max_len = max_len
 
         self.setup_train_test()
 

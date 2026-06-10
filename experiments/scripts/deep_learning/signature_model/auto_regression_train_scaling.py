@@ -124,7 +124,11 @@ def train_model(
     # data
     logger.debug("Setting up dataset")
     dataset = Dataset(data_path, num_test_samps)
+    logger.debug("data_size", dataset.data_size)
+    logger.debug("max_len", dataset.max_len)
+    logger.debug("chars", dataset.chars)
     logger.debug("Setting up encoder")
+    raise RuntimeError("STOP")
     encoder = Encoder(dataset)
 
     train_idx = list(set(range(len(dataset))) - set(dataset.test_idx))
@@ -277,18 +281,36 @@ def train_model(
     save_model(save_path, state)
 
 
-# main
-def main_train_tet(lr):
+def main_train_scale(lr):
+    import os
+
+    os.environ["TF_CPP_MIN_LOG_LEVEL"] = "2"
+    logging.basicConfig(
+        format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
+        datefmt="%Y-%m-%d %H:%M:%S",
+        level=logging.DEBUG,
+    )
+    logging.getLogger("jax").setLevel(logging.WARNING)
+    logging.getLogger("absl").setLevel(logging.WARNING)
+
     train = True
     sample = True
 
-    logging.basicConfig(level=logging.INFO)
+    embs = {"xs": 256, "s": 384, "m": 512, "l": 768, "xl": 1024}
+    blocks = {"xs": 4, "s": 6, "m": 12, "l": 16, "xl": 24}
+    heads = {"xs": 4, "s": 6, "m": 8, "l": 12, "xl": 16}
+    itts = {"xs": 10_000, "s": 40_000, "m": 110_000, "l": 300_000, "xl": 300_000}
+    samp_freqs = {"xs": 1, "s": 2, "m": 5, "l": 10, "xl": 10}
+    sweeps = {"xs": 200, "s": 400, "m": 400, "l": 600, "xl": 600}
 
-    Ns = [20, 19, 18, 17, 16, 15, 14, 13, 12, 11, 10]
-    for N in Ns:
-        logger.info(f"\n\n=== N_TET = {N} ===")
+    sizes = ["xs"]
+    for size in sizes:
+        emb = embs[size]
+        block = blocks[size]
+        head = heads[size]
+
         processed_data_home = data_root / "input_data" / "dehydration" / "processed"
-        data_path = processed_data_home / f"spheres_{N}.hdf5"
+        data_path = processed_data_home / "spheres_15_16m.hdf5"
 
         save_path = data_root
 
@@ -300,27 +322,34 @@ def main_train_tet(lr):
                 data_root
                 / "results"
                 / "sgd_models_dehydration"
-                / "tet_sweep"
-                / f"spheres_512emb_6block_4head_{N}tet"
-                / f"lr{lr}"
+                / "archive"
+                / "scale"
+                / f"{size}"
+                / f"{lr}"
+                / f"spheres_{emb}emb_{block}block_{head}head_15tet"
             )
             save_path.mkdir(parents=True, exist_ok=True)
+            logger.info(f"Created directoy: {save_path.resolve()}")
+            write_stat(save_path / "stats.txt", "size:", size)
 
             tic = time.time()
+
             train_model(
                 data_path,
                 save_path,
-                d_model=512,
-                num_layers=6,
-                num_heads=4,
+                d_model=emb,
+                num_layers=block,
+                num_heads=head,
                 batch_size=512,
-                epochs=64,
+                epochs=1,
                 num_test_samps=10_000,
-                num_train_steps=120_000,
-                sweep=1_000,
+                num_train_steps=itts[size],
+                sweep=sweeps[size],
+                samp_freq=samp_freqs[size],
                 learning_rate=lr,
                 sample=True,
                 resume=False,
+                low_mem=True,
             )
             toc = time.time()
 
@@ -329,25 +358,37 @@ def main_train_tet(lr):
 
         if sample:
             tic = time.time()
-            sample_model(data_path, save_path, samps_to_gen=1_000, gen_its=20)
+            sample_model(
+                data_path,
+                save_path,
+                d_model=emb,
+                num_heads=head,
+                num_layers=block,
+                samps_to_gen=1_000,
+                gen_its=20,
+            )
             toc = time.time()
 
             sample_time = toc - tic
             logger.info(f"Sampling time: {sample_time:.2f} seconds")
 
+        message = (
+            f"Training time: {train_time:.2f} seconds."
+            f"Sampling time: {sample_time:.2f} seconds."
+        )
         send_ntfy(
             "usyd-knottedness",
-            f"Training Finished for N={N}",
-            f"Finished training for N={N}. Training time: {train_time:.2f} seconds. Sampling time: {sample_time:.2f} seconds.",
+            f"Finished training for size={size}.",
+            message,
         )
 
 
 if __name__ == "__main__":
-    if "tet_xlo" in sys.argv:
-        main_train_tet(1e-4)
-    if "tet_low" in sys.argv:
-        main_train_tet(3e-4)
-    if "tet_med" in sys.argv:
-        main_train_tet(1e-3)
-    if "tet_high" in sys.argv:
-        main_train_tet(3e-3)
+    if "scale_xlo" in sys.argv:
+        main_train_scale(1e-4)
+    if "scale_low" in sys.argv:
+        main_train_scale(3e-4)
+    if "scale_med" in sys.argv:
+        main_train_scale(1e-3)
+    if "scale_high" in sys.argv:
+        main_train_scale(3e-3)
