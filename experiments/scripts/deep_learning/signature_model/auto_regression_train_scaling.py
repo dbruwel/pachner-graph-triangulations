@@ -185,9 +185,9 @@ def train_model(
     dataset = Dataset(
         data_path,
         num_test_samps,
-        # data_size=160_036_916,
-        # chars=char_list,
-        # max_len=41,
+        data_size=160_036_916,
+        chars=char_list,
+        max_len=41,
     )
     logger.debug("Setting up encoder")
     encoder = Encoder(dataset)
@@ -268,6 +268,9 @@ def train_model(
         labels_sweep = []
         sample_idx_sweep = []
 
+        if step == 0:
+            logger.debug("Starting batch gen")
+
         for i in range(sweep):
             sample_idx = get_sample_idx(schedule, batch_size, step + i)
             sample_idx_sweep.append(sample_idx)
@@ -294,6 +297,9 @@ def train_model(
         except Exception as e:
             logger.error(f"Error stacking inputs/labels at step {step}: {e}")
             continue
+
+        if step == 0:
+            logger.info("Finished batch gen")
 
         state, losses = train_sweep_steps(
             train_step_auto_regression,
