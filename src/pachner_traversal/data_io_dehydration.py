@@ -226,7 +226,7 @@ if __name__ == "__main__":
 
     dehydration_root = data_root / "input_data" / "dehydration"
 
-    input_path = dehydration_root / "raw" / "spheres_15.txt"
-    hdf5_file = dehydration_root / "processed" / "spheres_15.hdf5"
+    input_path = dehydration_root / "raw" / "mcmc_samples" / "samps15_16m.txt"
+    hdf5_file = dehydration_root / "processed" / "spheres_15_16m.hdf5"
 
     convert_to_hdf5(input_path, hdf5_file)
