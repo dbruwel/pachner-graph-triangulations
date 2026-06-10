@@ -277,10 +277,12 @@ def train_model(
 
         if low_mem:
             sample_idx_sweep_flat = np.array(sample_idx_sweep).flatten()
+            logger.debug("Reading lines")
             sweep_samples = dataset.read_lines(
                 np.array(train_idx)[sample_idx_sweep_flat]
             )
 
+            logger.debug("Encoding")
             sweep_samples = np.array(sweep_samples).reshape(-1, batch_size)
             for i in range(sweep):
                 b_input, b_label = encoder.encode(sweep_samples[i])
