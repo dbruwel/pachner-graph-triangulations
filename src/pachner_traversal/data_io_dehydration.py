@@ -1,5 +1,4 @@
 import pathlib
-from typing import cast
 
 import h5py
 import numpy as np
@@ -146,7 +145,11 @@ class Dataset:
         if self.store_in_memory:
             unique_lines = self.all_lines[sorted_indices]
             restored_lines = unique_lines[inverse_map]
-            return restored_lines
+            if dset_name == "isos":
+                res = np.array([line.decode("utf-8") for line in restored_lines])
+            else:
+                res = restored_lines
+            return res
 
         else:
             with h5py.File(self.hdf5_file, "r") as hf:
@@ -163,9 +166,9 @@ class Dataset:
         with h5py.File(self.hdf5_file, "r") as hf:
             dset = hf[dset_name]
             all_lines = dset[:]  # type: ignore
-            all_lines = cast(np.ndarray, all_lines)
-            if dset_name == "isos":
-                all_lines = [line.decode("utf-8") for line in all_lines]  # type: ignore
+            all_lines = np.array(all_lines)
+            # if dset_name == "isos":
+            #     all_lines = [line.decode("utf-8") for line in all_lines]  # type: ignore
             self.all_lines = all_lines
 
     def setup_train_test(self):
