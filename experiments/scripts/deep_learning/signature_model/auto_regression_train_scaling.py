@@ -207,7 +207,7 @@ def train_model(
         train_label = all_data_label[train_idx]
     else:
         logger.debug("Loading limited test data")
-        test_samples = dataset.read_lines(dataset.test_idx)
+        test_samples = dataset.test_data
         logger.debug("Encoding limited test data")
         test_input, test_label = encoder.encode(test_samples)
 
