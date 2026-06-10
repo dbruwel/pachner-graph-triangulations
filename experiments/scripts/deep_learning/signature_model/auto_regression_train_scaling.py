@@ -32,6 +32,65 @@ from pachner_traversal.utils import data_root as data_root
 
 logger = logging.getLogger(__name__)
 
+char_list = [
+    "Ha",
+    "Hb",
+    "Hc",
+    "Hd",
+    "He",
+    "Hf",
+    "Hg",
+    "Hh",
+    "Hi",
+    "Hj",
+    "Hk",
+    "Hl",
+    "Hm",
+    "Hn",
+    "Ho",
+    "Hp",
+    "Hq",
+    "Hr",
+    "Hs",
+    "Ht",
+    "Hu",
+    "Hv",
+    "Hw",
+    "Hx",
+    "Na",
+    "Nb",
+    "Nc",
+    "Nd",
+    "Ne",
+    "Nf",
+    "Ng",
+    "Nh",
+    "Ni",
+    "Nj",
+    "Nk",
+    "Nl",
+    "Nm",
+    "Nn",
+    "No",
+    "Np",
+    "Wa",
+    "Wb",
+    "Wc",
+    "Wd",
+    "We",
+    "Wf",
+    "Wg",
+    "Wh",
+    "Wi",
+    "Wj",
+    "Wk",
+    "Wl",
+    "Wm",
+    "Wn",
+    "Wo",
+    "p",
+]
+
 
 # jax utility
 @partial(jax.jit, static_argnames=["vocab_size"])
@@ -123,12 +182,14 @@ def train_model(
 
     # data
     logger.debug("Setting up dataset")
-    dataset = Dataset(data_path, num_test_samps)
-    logger.debug("data_size", dataset.data_size)
-    logger.debug("max_len", dataset.max_len)
-    logger.debug("chars", dataset.chars)
+    dataset = Dataset(
+        data_path,
+        num_test_samps,
+        # data_size=160_036_916,
+        # chars=char_list,
+        # max_len=41,
+    )
     logger.debug("Setting up encoder")
-    raise RuntimeError("STOP")
     encoder = Encoder(dataset)
 
     train_idx = list(set(range(len(dataset))) - set(dataset.test_idx))
@@ -205,22 +266,27 @@ def train_model(
     for step in steps:
         inputs_sweep = []
         labels_sweep = []
+        sample_idx_sweep = []
 
         for i in range(sweep):
             sample_idx = get_sample_idx(schedule, batch_size, step + i)
-            if not low_mem:
-                mb_input = train_input[sample_idx]  # type: ignore
-                mb_labels = train_label[sample_idx]  # type: ignore
-            else:
-                if step == 0:
-                    logger.debug(f"Reading MB {i} samples")
-                mb_samples = dataset.read_lines(np.array(train_idx)[sample_idx])
-                if step == 0:
-                    logger.debug(f"Encoding MB {i} samples")
-                mb_input, mb_labels = encoder.encode(mb_samples)
+            sample_idx_sweep.append(sample_idx)
 
-            inputs_sweep.append(mb_input)
-            labels_sweep.append(mb_labels)
+        if low_mem:
+            sample_idx_sweep_flat = np.array(sample_idx_sweep).flatten()
+            sweep_samples = dataset.read_lines(
+                np.array(train_idx)[sample_idx_sweep_flat]
+            )
+
+            sweep_samples = np.array(sweep_samples).reshape(-1, batch_size)
+            for i in range(sweep):
+                b_input, b_label = encoder.encode(sweep_samples[i])
+                inputs_sweep.append(b_input)
+                labels_sweep.append(b_label)
+        else:
+            for sample_idx in sample_idx_sweep:
+                inputs_sweep.append(train_input[sample_idx])  # type: ignore
+                labels_sweep.append(train_label[sample_idx])  # type: ignore
 
         try:
             jnp_inputs = jnp.stack(inputs_sweep)
