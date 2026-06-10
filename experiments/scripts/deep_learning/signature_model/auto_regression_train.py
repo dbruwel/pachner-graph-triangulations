@@ -122,13 +122,16 @@ def train_model(
 ) -> None:
 
     # data
+    logger.debug("Setting up dataset")
     dataset = Dataset(data_path, num_test_samps)
+    logger.debug("Setting up encoder")
     encoder = Encoder(dataset)
 
     train_idx = list(set(range(len(dataset))) - set(dataset.test_idx))
     train_idx.sort()
 
     if not low_mem:
+        logger.debug("Loading all data")
         all_data_str = dataset.read_all_data()
         all_data_input, all_data_label = encoder.encode(all_data_str)
 
@@ -138,10 +141,13 @@ def train_model(
         train_input = all_data_input[train_idx]
         train_label = all_data_label[train_idx]
     else:
+        logger.debug("Loading limited test data")
         test_samples = dataset.read_lines(dataset.test_idx)
+        logger.debug("Encoding limited test data")
         test_input, test_label = encoder.encode(test_samples)
 
     # setup model
+    logger.debug("Initialising model")
     model, keys, meta = init_model(
         Transformer,
         dataset,
@@ -153,6 +159,7 @@ def train_model(
     _, params_key, dropout_key = keys
     vocab_size, _ = meta
 
+    logger.debug("Initialising parameters")
     resumed, meta, steps, params = init_params(
         model,
         params_key,
@@ -165,6 +172,7 @@ def train_model(
         resume,
     )
 
+    logger.debug("Initialising train state")
     state = init_train_state(
         model,
         params,
@@ -179,6 +187,7 @@ def train_model(
         write_stat(save_path / "stats.txt", "n_params", f"{meta:,}")
         logger.info(f"Model initialized. Parameter count: {meta}")
 
+    logger.debug("Creating sample schedule")
     schedule = create_sample_schedule(
         batch_size,
         dataset_size=len(train_idx),
@@ -199,7 +208,11 @@ def train_model(
                 mb_input = train_input[sample_idx]  # type: ignore
                 mb_labels = train_label[sample_idx]  # type: ignore
             else:
+                if step == 0:
+                    logger.debug(f"Reading MB {i} samples")
                 mb_samples = dataset.read_lines(train_idx[sample_idx])
+                if step == 0:
+                    logger.debug(f"Encoding MB {i} samples")
                 mb_input, mb_labels = encoder.encode(mb_samples)
 
             inputs_sweep.append(mb_input)
@@ -330,7 +343,7 @@ def main_train_tet(lr):
 
 
 def main_train_scale(lr):
-    logging.basicConfig(level=logging.INFO)
+    logging.basicConfig(level=logging.DEBUG)
 
     train = True
     sample = True
