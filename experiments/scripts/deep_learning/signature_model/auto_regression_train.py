@@ -336,7 +336,7 @@ def main_train_scale(lr):
         head = heads[size]
 
         processed_data_home = data_root / "input_data" / "dehydration" / "processed"
-        data_path = processed_data_home / "spheres_15.hdf5"
+        data_path = processed_data_home / "spheres_15_16m.hdf5"
 
         save_path = data_root
 
