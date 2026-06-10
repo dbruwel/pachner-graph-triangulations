@@ -309,7 +309,7 @@ def train_model(
             continue
 
         if step <= 2:
-            logger.info("Finished batch gen")
+            logger.debug("Finished batch gen")
 
         state, losses = train_sweep_steps(
             train_step_auto_regression,
@@ -387,7 +387,7 @@ def main_train_scale(lr):
     samp_freqs = {"xs": 1, "s": 2, "m": 5, "l": 10, "xl": 10}
     sweeps = {"xs": 200, "s": 400, "m": 400, "l": 600, "xl": 600}
 
-    sizes = ["s"]
+    sizes = ["m", "l"]
     for size in sizes:
         emb = embs[size]
         block = blocks[size]
