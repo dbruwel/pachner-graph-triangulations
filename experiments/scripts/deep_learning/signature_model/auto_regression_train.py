@@ -115,6 +115,7 @@ def train_model(
     num_train_steps=30_000,
     sweep: int = 300,
     learning_rate: float = 1e-4,
+    samp_freq=10,
     sample=True,
     resume=False,
 ) -> None:
@@ -232,8 +233,7 @@ def train_model(
         del losses
         del test_loss
 
-        sam_counter += 1
-        if sam_counter % 10 == 0 and sample:
+        if sam_counter % samp_freq == 0 and sample:
             sample_model(
                 data_path,
                 save_path,
@@ -244,6 +244,7 @@ def train_model(
                 gen_its=1,
                 tag=f"{step + sweep:,}",
             )
+        sam_counter += 1
 
     logger.info("\n Training finished.")
 
@@ -324,22 +325,11 @@ def main_train_scale(lr):
     embs = {"xs": 256, "s": 384, "m": 512, "l": 768, "xl": 1024}
     blocks = {"xs": 4, "s": 6, "m": 12, "l": 16, "xl": 24}
     heads = {"xs": 4, "s": 6, "m": 8, "l": 12, "xl": 16}
-    itts = {
-        "xs": 9_984,
-        "s": 38_880,
-        "m": 119_808,
-        "l": 297_216,
-        "xl": 294_912,
-    }
-    epochs = {
-        "xs": 52,
-        "s": 60,
-        "m": 52,
-        "l": 43,
-        "xl": 16,
-    }
+    itts = {"xs": 10_000, "s": 40_000, "m": 110_000, "l": 300_000, "xl": 300_000}
+    samp_freqs = {"xs": 1, "s": 2, "m": 5, "l": 10, "xl": 10}
+    sweeps = {"xs": 200, "s": 400, "m": 400, "l": 600, "xl": 600}
 
-    sizes = ["l"]
+    sizes = ["xs"]
     for size in sizes:
         emb = embs[size]
         block = blocks[size]
@@ -360,6 +350,7 @@ def main_train_scale(lr):
                 / "sgd_models_dehydration"
                 / "archive"
                 / "scale"
+                / f"{size}"
                 / f"spheres_{emb}emb_{block}block_{head}head_15tet"
             )
             save_path.mkdir(parents=True, exist_ok=True)
@@ -375,10 +366,11 @@ def main_train_scale(lr):
                 num_layers=block,
                 num_heads=head,
                 batch_size=512,
-                epochs=epochs[size],
+                epochs=1,
                 num_test_samps=10_000,
                 num_train_steps=itts[size],
-                sweep=300,
+                sweep=sweeps[size],
+                samp_freq=samp_freqs[size],
                 learning_rate=lr,
                 sample=True,
                 resume=False,
@@ -425,5 +417,11 @@ if __name__ == "__main__":
     if "tet_high" in sys.argv:
         main_train_tet(3e-3)
 
-    if "scale" in sys.argv:
+    if "scale_xlo" in sys.argv:
         main_train_scale(1e-4)
+    if "scale_low" in sys.argv:
+        main_train_scale(3e-4)
+    if "scale_med" in sys.argv:
+        main_train_scale(1e-3)
+    if "scale_high" in sys.argv:
+        main_train_scale(3e-3)
