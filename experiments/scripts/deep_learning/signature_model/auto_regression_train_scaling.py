@@ -124,7 +124,14 @@ def sample_model(
     tag: str | None = None,
 ) -> None:
     # setup model
-    dataset = Dataset(data_path, num_test_samps)
+    dataset = Dataset(
+        data_path,
+        num_test_samps,
+        data_size=160_036_916,
+        chars=char_list,
+        max_len=41,
+        store_in_memory=True,
+    )
     encoder = Encoder(dataset)
 
     params = load_model(save_path)
