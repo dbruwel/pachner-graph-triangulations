@@ -497,7 +497,7 @@ def main_train_scale(lr):
     itts = {"xs": 48_000, "s": 160_000, "m": 192_000, "l": 320_000, "xl": 320_000}
     sweeps = {"xs": 1_500, "s": 5_000, "m": 6_000, "l": 10_000, "xl": 10_000}
 
-    sizes = ["xs"]
+    sizes = ["s", "m"]
     for size in sizes:
         # Setup.
         emb = embs[size]
