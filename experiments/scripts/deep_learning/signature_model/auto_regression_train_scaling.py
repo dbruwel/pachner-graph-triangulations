@@ -536,7 +536,7 @@ def main_train_scale(lr):
             num_train_steps=itts[size],
             sweep=sweeps[size],
             learning_rate=lr,
-            resume=True,
+            resume=False,
             model_setup=model_setup,
         )
         toc = time.time()
