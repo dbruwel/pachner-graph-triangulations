@@ -397,6 +397,60 @@ def init_train_state(
     return state
 
 
+def init_train_state_scale(
+    model,
+    params,
+    dropout_key,
+    peak_learning_rate=0.0005,
+    warmup_steps=10_000,
+    resume=False,
+):
+    if resume:
+        lr_schedule = peak_learning_rate
+    else:
+        lr_schedule = optax.warmup_constant_schedule(
+            init_value=0.0,
+            peak_value=peak_learning_rate,
+            warmup_steps=warmup_steps,
+        )
+
+    tx = optax.adamw(learning_rate=lr_schedule, weight_decay=0.01)
+
+    state = MinimalTrainState.create(
+        params=params,
+        apply_fn=model.apply,
+        dropout_key=dropout_key,
+        tx=tx,
+    )
+
+    return state
+
+
+def init_fine_tune_state(
+    model,
+    params,
+    dropout_key,
+    num_fine_tune_steps=10_000,
+    peak_learning_rate=0.0005,
+):
+    lr_schedule = optax.linear_schedule(
+        init_value=peak_learning_rate,
+        end_value=0.0,
+        transition_steps=num_fine_tune_steps,
+    )
+
+    tx = optax.adamw(learning_rate=lr_schedule, weight_decay=0.01)
+
+    state = MinimalTrainState.create(
+        params=params,
+        apply_fn=model.apply,
+        dropout_key=dropout_key,
+        tx=tx,
+    )
+
+    return state
+
+
 def init_model(
     model_type,
     dataset: Dataset,
@@ -437,10 +491,12 @@ def init_params(
     sweep: int,
     resume: bool,
     force_resume: bool = False,
+    params_tag: str | None = None,
 ):
-    resumed = (load_path / "params.pkl").exists() and resume
+    fname = f"params{params_tag}.pkl" if params_tag else "params.pkl"
+    resumed = (load_path / fname).exists() and resume
     if resumed:
-        params = load_model(load_path)
+        params = load_model(load_path, fname)
         last_step = int(get_last_csv_row(load_path / "train_losses.csv")[0])
         steps = range(last_step, num_train_steps, sweep)
         meta = last_step

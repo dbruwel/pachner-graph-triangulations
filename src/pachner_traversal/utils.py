@@ -83,13 +83,15 @@ def write_loss(save_path, step, loss):
                 f.write(f"{st},{lo}\n")
 
 
-def save_model(save_path, state):
-    with open(save_path / "params.pkl", "wb") as file:
+def save_model(save_path, state, tag=None):
+    fname = f"params{tag}.pkl" if tag else "params.pkl"
+
+    with open(save_path / fname, "wb") as file:
         pickle.dump(state.params, file)
 
 
-def load_model(save_path):
-    with open(save_path / "params.pkl", "rb") as file:
+def load_model(save_path, fname):
+    with open(save_path / fname, "rb") as file:
         params = pickle.load(file)
 
     return params
