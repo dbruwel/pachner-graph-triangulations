@@ -243,6 +243,7 @@ def train_model(
         num_train_steps,
         sweep,
         resume,
+        force_resume=resume,
     )
 
     logger.debug("Initialising train state")

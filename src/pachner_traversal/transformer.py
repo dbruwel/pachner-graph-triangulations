@@ -436,6 +436,7 @@ def init_params(
     num_train_steps: int,
     sweep: int,
     resume: bool,
+    force_resume: bool = False,
 ):
     resumed = (load_path / "params.pkl").exists() and resume
     if resumed:
@@ -444,6 +445,11 @@ def init_params(
         steps = range(last_step, num_train_steps, sweep)
         meta = last_step
     else:
+        if force_resume:
+            raise RuntimeError(
+                f"The model should have resumed but it did not. {(load_path / 'params.pkl')} {(load_path / 'params.pkl').exists()}"
+            )
+
         # Clear path if it exists.
         if load_path.exists() and load_path.is_dir():
             shutil.rmtree(load_path)
