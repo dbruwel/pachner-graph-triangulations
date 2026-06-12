@@ -3,6 +3,7 @@ import pathlib
 import sys
 import time
 from functools import partial
+from pathlib import Path
 
 import jax
 import jax.numpy as jnp
@@ -24,11 +25,11 @@ from pachner_traversal.utils import (
     get_sample_idx,
     load_model,
     save_model,
-    send_ntfy,
     write_loss,
     write_stat,
 )
-from pachner_traversal.utils import data_root as data_root
+
+data_root = Path("")  # TODO
 
 logger = logging.getLogger(__name__)
 
@@ -113,27 +114,17 @@ def get_test_loss(
 
 # critical functions
 def sample_model(
-    data_path: pathlib.Path,
+    dataset: Dataset,
+    encoder: Encoder,
     save_path: pathlib.Path,
     d_model: int = 512,
     num_layers: int = 6,
     num_heads: int = 4,
-    num_test_samps: int = 1_000,
     gen_its: int = 10,
     samps_to_gen: int = 1_000,
     tag: str | None = None,
 ) -> None:
     # setup model
-    dataset = Dataset(
-        data_path,
-        num_test_samps,
-        data_size=160_036_916,
-        chars=char_list,
-        max_len=41,
-        store_in_memory=True,
-    )
-    encoder = Encoder(dataset)
-
     params = load_model(save_path)
 
     model, keys, meta = init_model(
@@ -184,8 +175,7 @@ def train_model(
     samp_freq=10,
     sample=True,
     resume=False,
-    low_mem=False,
-) -> None:
+) -> tuple[Dataset, Encoder]:
 
     # data
     logger.debug("Setting up dataset")
@@ -203,21 +193,10 @@ def train_model(
     train_idx = list(set(range(len(dataset))) - set(dataset.test_idx))
     train_idx.sort()
 
-    if not low_mem:
-        logger.debug("Loading all data")
-        all_data_str = dataset.read_all_data()
-        all_data_input, all_data_label = encoder.encode(all_data_str)
-
-        test_input = all_data_input[dataset.test_idx]
-        test_label = all_data_label[dataset.test_idx]
-
-        train_input = all_data_input[train_idx]
-        train_label = all_data_label[train_idx]
-    else:
-        logger.debug("Loading limited test data")
-        test_samples = dataset.test_data
-        logger.debug("Encoding limited test data")
-        test_input, test_label = encoder.encode(test_samples)
+    logger.debug("Loading limited test data")
+    test_samples = dataset.test_data
+    logger.debug("Encoding limited test data")
+    test_input, test_label = encoder.encode(test_samples)
 
     # setup model
     logger.debug("Initialising model")
@@ -276,30 +255,20 @@ def train_model(
         labels_sweep = []
         sample_idx_sweep = []
 
-        if step <= 2:
-            logger.debug("Starting batch gen")
-
         for i in range(sweep):
             sample_idx = get_sample_idx(schedule, batch_size, step + i)
             sample_idx_sweep.append(sample_idx)
 
-        if low_mem:
-            sample_idx_sweep_flat = np.array(sample_idx_sweep).flatten()
-            logger.debug(f"Reading {len(sample_idx_sweep_flat):,} lines")
-            sweep_samples = dataset.read_lines(
-                np.array(train_idx)[sample_idx_sweep_flat]
-            )
+        sample_idx_sweep_flat = np.array(sample_idx_sweep).flatten()
+        logger.debug(f"Reading {len(sample_idx_sweep_flat):,} lines")
+        sweep_samples = dataset.read_lines(np.array(train_idx)[sample_idx_sweep_flat])
 
-            logger.debug("Encoding")
-            sweep_samples = np.array(sweep_samples).reshape(-1, batch_size)
-            for i in range(sweep):
-                b_input, b_label = encoder.encode(sweep_samples[i])
-                inputs_sweep.append(b_input)
-                labels_sweep.append(b_label)
-        else:
-            for sample_idx in sample_idx_sweep:
-                inputs_sweep.append(train_input[sample_idx])  # type: ignore
-                labels_sweep.append(train_label[sample_idx])  # type: ignore
+        logger.debug("Encoding")
+        sweep_samples = np.array(sweep_samples).reshape(-1, batch_size)
+        for i in range(sweep):
+            b_input, b_label = encoder.encode(sweep_samples[i])
+            inputs_sweep.append(b_input)
+            labels_sweep.append(b_label)
 
         try:
             jnp_inputs = jnp.stack(inputs_sweep)
@@ -307,9 +276,6 @@ def train_model(
         except Exception as e:
             logger.error(f"Error stacking inputs/labels at step {step}: {e}")
             continue
-
-        if step <= 2:
-            logger.debug("Finished batch gen")
 
         state, losses = train_sweep_steps(
             train_step_auto_regression,
@@ -349,7 +315,8 @@ def train_model(
         if sam_counter % samp_freq == 0 and sample:
             logger.debug("Sample model")
             sample_model(
-                data_path,
+                dataset,
+                encoder,
                 save_path,
                 d_model=d_model,
                 num_layers=num_layers,
@@ -364,8 +331,11 @@ def train_model(
 
     save_model(save_path, state)
 
+    return dataset, encoder
+
 
 def main_train_scale(lr):
+    # Logger Config.
     import os
 
     os.environ["TF_CPP_MIN_LOG_LEVEL"] = "2"
@@ -377,9 +347,7 @@ def main_train_scale(lr):
     logging.getLogger("jax").setLevel(logging.WARNING)
     logging.getLogger("absl").setLevel(logging.WARNING)
 
-    train = True
-    sample = True
-
+    # General Params.
     embs = {"xs": 256, "s": 384, "m": 512, "l": 768, "xl": 1024}
     blocks = {"xs": 4, "s": 6, "m": 12, "l": 16, "xl": 24}
     heads = {"xs": 4, "s": 6, "m": 8, "l": 12, "xl": 16}
@@ -387,91 +355,135 @@ def main_train_scale(lr):
     samp_freqs = {"xs": 1, "s": 2, "m": 5, "l": 10, "xl": 10}
     sweeps = {"xs": 200, "s": 400, "m": 400, "l": 600, "xl": 600}
 
-    sizes = ["xl"]
-    for size in sizes:
-        emb = embs[size]
-        block = blocks[size]
-        head = heads[size]
+    # Model Params.
+    size = "xl"
 
-        processed_data_home = data_root / "input_data" / "dehydration" / "processed"
-        data_path = processed_data_home / "spheres_15_16m.hdf5"
+    emb = embs[size]
+    block = blocks[size]
+    head = heads[size]
 
-        save_path = data_root
+    processed_data_home = data_root / "input_data" / "dehydration" / "processed"
+    data_path = processed_data_home / "spheres_15_16m.hdf5"
 
-        train_time = 0
-        sample_time = 0
+    # Model save path.
+    train_time = 0
+    sample_time = 0
 
-        if train:
-            save_path = (
-                data_root
-                / "results"
-                / "sgd_models_dehydration"
-                / "scale"
-                / f"{size}"
-                / f"{lr}"
-                / f"spheres_{emb}emb_{block}block_{head}head_15tet"
-            )
-            save_path.mkdir(parents=True, exist_ok=True)
-            logger.info(f"Created directoy: {save_path.resolve()}")
-            write_stat(save_path / "stats.txt", "size:", size)
+    save_path = (
+        data_root
+        / "results"
+        / "sgd_models_dehydration"
+        / "scale"
+        / f"{size}"
+        / f"{lr}"
+        / f"spheres_{emb}emb_{block}block_{head}head_15tet"
+    )
+    save_path.mkdir(parents=True, exist_ok=True)
+    logger.info(f"Created directoy: {save_path.resolve()}")
+    write_stat(save_path / "stats.txt", "size:", size)
 
-            tic = time.time()
+    # Model train.
+    tic = time.time()
+    dataset, encoder = train_model(
+        data_path,
+        save_path,
+        d_model=emb,
+        num_layers=block,
+        num_heads=head,
+        batch_size=512,
+        epochs=1,
+        num_test_samps=10_000,
+        num_train_steps=itts[size],
+        sweep=sweeps[size],
+        samp_freq=samp_freqs[size],
+        learning_rate=lr,
+        sample=True,
+        resume=False,
+    )
+    toc = time.time()
 
-            train_model(
-                data_path,
-                save_path,
-                d_model=emb,
-                num_layers=block,
-                num_heads=head,
-                batch_size=512,
-                epochs=1,
-                num_test_samps=10_000,
-                num_train_steps=itts[size],
-                sweep=sweeps[size],
-                samp_freq=samp_freqs[size],
-                learning_rate=lr,
-                sample=True,
-                resume=True,
-                low_mem=True,
-            )
-            toc = time.time()
+    train_time = toc - tic
+    logger.info(f"Training time: {train_time:.2f} seconds")
 
-            train_time = toc - tic
-            logger.info(f"Training time: {train_time:.2f} seconds")
+    # Model sample.
+    tic = time.time()
+    sample_model(
+        dataset,
+        encoder,
+        save_path,
+        d_model=emb,
+        num_heads=head,
+        num_layers=block,
+        samps_to_gen=1_000,
+        gen_its=20,
+    )
+    toc = time.time()
 
-        if sample:
-            tic = time.time()
-            sample_model(
-                data_path,
-                save_path,
-                d_model=emb,
-                num_heads=head,
-                num_layers=block,
-                samps_to_gen=1_000,
-                gen_its=20,
-            )
-            toc = time.time()
+    sample_time = toc - tic
+    logger.info(f"Sampling time: {sample_time:.2f} seconds")
 
-            sample_time = toc - tic
-            logger.info(f"Sampling time: {sample_time:.2f} seconds")
+    # Final logging.
+    message = (
+        f"Training time: {train_time:.2f} seconds."
+        f"Sampling time: {sample_time:.2f} seconds."
+    )
+    logger.info(message)
 
-        message = (
-            f"Training time: {train_time:.2f} seconds."
-            f"Sampling time: {sample_time:.2f} seconds."
-        )
-        send_ntfy(
-            "usyd-knottedness",
-            f"Finished training for size={size}.",
-            message,
-        )
+
+def main_test():
+    # Logger setup.
+    import os
+
+    os.environ["TF_CPP_MIN_LOG_LEVEL"] = "2"
+    logging.basicConfig(
+        format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
+        datefmt="%Y-%m-%d %H:%M:%S",
+        level=logging.DEBUG,
+    )
+    logging.getLogger("jax").setLevel(logging.WARNING)
+    logging.getLogger("absl").setLevel(logging.WARNING)
+
+    # Pathing.
+    processed_data_home = data_root / "input_data" / "dehydration" / "processed"
+    data_path = processed_data_home / "spheres_15_16m.hdf5"
+
+    save_path = data_root / "test"
+    save_path.mkdir(parents=True, exist_ok=True)
+    logger.info(f"Created directoy: {save_path.resolve()}")
+    write_stat(save_path / "stats.txt", "test:", "test")
+
+    # Dataset setup.
+    logger.debug("Setting up dataset")
+    tic = time.time()
+    dataset = Dataset(
+        data_path,
+        10_000,
+        data_size=160_036_916,
+        chars=char_list,
+        max_len=41,
+        store_in_memory=True,
+    )
+    logger.debug("Setting up encoder")
+    encoder = Encoder(dataset)
+    toc = time.time()
+    logger.info(f"Setuing up dataset and encoder took {toc - tic}s")
+
+    # Test readlines and encode.
+    tic = time.time()
+    lines = dataset.read_lines(np.arange(10_000))
+    encoder.encode(lines)
+    toc = time.time()
+
+    logger.info(f"read and encoded 10_000 samples in {toc - tic}s")
 
 
 if __name__ == "__main__":
+    if "test" in sys.argv:
+        main_test()
+
     if "scale_xlo" in sys.argv:
         main_train_scale(1e-4)
     if "scale_low" in sys.argv:
         main_train_scale(3e-4)
     if "scale_med" in sys.argv:
         main_train_scale(1e-3)
-    # if "scale_high" in sys.argv:
-    #     main_train_scale(1e-2)
