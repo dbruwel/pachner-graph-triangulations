@@ -383,11 +383,12 @@ def main_train_scale(lr):
     embs = {"xs": 256, "s": 384, "m": 512, "l": 768, "xl": 1024}
     blocks = {"xs": 4, "s": 6, "m": 12, "l": 16, "xl": 24}
     heads = {"xs": 4, "s": 6, "m": 8, "l": 12, "xl": 16}
-    itts = {"xs": 10_000, "s": 40_000, "m": 110_000, "l": 300_000, "xl": 300_000}
+    # itts = {"xs": 10_000, "s": 40_000, "m": 110_000, "l": 300_000, "xl": 300_000}
+    itts = {"xs": 50_000, "s": 160_000, "m": 200_000, "l": 300_000, "xl": 300_000}
     samp_freqs = {"xs": 1, "s": 2, "m": 5, "l": 10, "xl": 10}
     sweeps = {"xs": 200, "s": 400, "m": 400, "l": 600, "xl": 600}
 
-    sizes = ["xl"]
+    sizes = ["xs"]
     for size in sizes:
         emb = embs[size]
         block = blocks[size]
@@ -467,11 +468,11 @@ def main_train_scale(lr):
 
 
 if __name__ == "__main__":
-    if "scale_xlo" in sys.argv:
-        main_train_scale(1e-4)
+    # if "scale_xlo" in sys.argv:
+    #     main_train_scale(1e-4)
     if "scale_low" in sys.argv:
-        main_train_scale(3e-4)
-    if "scale_med" in sys.argv:
         main_train_scale(1e-3)
+    if "scale_med" in sys.argv:
+        main_train_scale(3e-3)
     # if "scale_high" in sys.argv:
     #     main_train_scale(1e-2)
