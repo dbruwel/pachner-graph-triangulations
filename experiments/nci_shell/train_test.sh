@@ -1,12 +1,12 @@
 #!/bin/bash
-#PBS -P ab12
+#PBS -P io00
 #PBS -q dgxa100
 #PBS -l walltime=00:15:00
 #PBS -l ngpus=1
 #PBS -l ncpus=16
 #PBS -l mem=200GB
 #PBS -l jobfs=10GB
-#PBS -l storage=gdata/ab12+scratch/ab12
+#PBS -l storage=gdata/io00+scratch/io00
 #PBS -N xlo_oom_test
 #PBS -M dbru8728@uni.sydney.edu.au
 #PBS -m abe

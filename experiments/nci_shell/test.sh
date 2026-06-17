@@ -5,7 +5,7 @@
 #PBS -l ncpus=12
 #PBS -l mem=48GB
 #PBS -l jobfs=10GB
-#PBS -l storage=gdata/ab12+scratch/ab12
+#PBS -l storage=gdata/io00+scratch/io00
 #PBS -N test_io
 #PBS -M dbru8728@uni.sydney.edu.au
 #PBS -m abe
