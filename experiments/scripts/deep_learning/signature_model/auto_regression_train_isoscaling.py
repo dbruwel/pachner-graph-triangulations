@@ -368,30 +368,29 @@ def train_model(
         del loss
         del losses
 
-    for step in range(bulk_num_train_steps, num_train_steps):
-        try:
-            jnp_inputs, jnp_labels = setup_batch(
-                dataset,
-                encoder,
-                train_idx,
-                1,
-                batch_size,
-                step,
-            )
-        except Exception as e:
-            logger.error(f"Error stacking inputs/labels at step {step}: {e}")
-            continue
-
-        # Train sweep.
-        state, losses = train_sweep_steps(
-            train_step_auto_regression,
-            state,
-            jnp_inputs,
-            jnp_labels,
+    try:
+        jnp_inputs, jnp_labels = setup_batch(
+            dataset,
+            encoder,
+            train_idx,
+            num_train_steps - bulk_num_train_steps,
+            batch_size,
+            bulk_num_train_steps,
         )
-        loss = jnp.mean(losses)
+    except Exception as e:
+        logger.error(f"Error stacking inputs/labels at final step: {e}")
+        return
 
-        msg = f"Step {step + 1:,}/{num_train_steps:,}, Loss: {float(loss):.4f}"
+    # Train sweep.
+    state, losses = train_sweep_steps(
+        train_step_auto_regression,
+        state,
+        jnp_inputs,
+        jnp_labels,
+    )
+    loss = jnp.mean(losses)
+
+    msg = f"Step {num_train_steps:,}/{num_train_steps:,}, Loss: {float(loss):.4f}"
 
     test_loss = get_test_loss(
         state,
