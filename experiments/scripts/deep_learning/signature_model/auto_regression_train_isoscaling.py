@@ -208,10 +208,15 @@ def setup_model(
     logger.debug("Setting up encoder")
     encoder = Encoder(dataset)
 
-    train_idx = list(set(range(len(dataset))) - set(dataset.test_idx))
+    logger.debug("Setting up train idx")
+    mask = np.ones(len(dataset), dtype=bool)
+    mask[dataset.test_idx] = False
+
+    train_idx = np.arange(len(dataset))[mask]
+
     np.random.seed(42)
     np.random.shuffle(train_idx)
-    train_idx = list(train_idx)
+    train_idx = train_idx.tolist()
 
     logger.debug("Loading limited test data")
     test_samples = dataset.test_data
@@ -437,13 +442,13 @@ def main_train_scale(lr):
     logging.getLogger("jax").setLevel(logging.WARNING)
     logging.getLogger("absl").setLevel(logging.WARNING)
 
-    embs = {"xs": 32, "s": 128, "m": 256, "l": 384}
-    heads = {"xs": 4, "s": 8, "m": 8, "l": 12}
-    flops = {"xs": 6.26e14, "s": 1e16, "m": 1.6e17, "l": 8.12e18}
-    sweeps = {"xs": 1_500, "s": 5_000, "m": 6_000, "l": 10_000}
+    embs = {"s": 128, "m": 256, "l": 384}
+    heads = {"s": 8, "m": 8, "l": 12}
+    flops = {"s": 1e16, "m": 1.6e17, "l": 8.12e18}
+    sweeps = {"s": 5_000, "m": 6_000, "l": 10_000}
 
     size = "s"
-    for block in [10, 11, 12, 13, 14]:
+    for block in [4, 5, 6, 7, 8]:
         # Setup.
         emb = embs[size]
         head = heads[size]
