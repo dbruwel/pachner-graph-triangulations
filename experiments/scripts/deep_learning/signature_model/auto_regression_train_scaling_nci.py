@@ -292,6 +292,7 @@ def train_model(
     sweep: int = 300,
     learning_rate: float = 1e-4,
     resume=False,
+    resume_from: int | None = None,
     model_setup: tuple = (),
 ) -> list:
     dataset = model_setup[0]
@@ -312,7 +313,7 @@ def train_model(
         num_train_steps,
         sweep,
         resume,
-        force_resume=resume,
+        resume_from=resume_from,
     )
 
     logger.debug("Initialising train state")
@@ -412,8 +413,7 @@ def fine_tune_model(
         num_fine_tune_steps,
         num_fine_tune_steps,
         resume=True,
-        force_resume=True,
-        params_tag=f"_{initial_train_itts:,}",
+        resume_from=initial_train_itts,
     )
 
     logger.debug("Initialising train state")

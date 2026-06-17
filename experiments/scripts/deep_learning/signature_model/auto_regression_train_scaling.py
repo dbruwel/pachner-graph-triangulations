@@ -291,6 +291,7 @@ def train_model(
     sweep: int = 300,
     learning_rate: float = 1e-4,
     resume=False,
+    resume_from: int | None = None,
     model_setup: tuple = (),
 ) -> list:
     dataset = model_setup[0]
@@ -311,7 +312,7 @@ def train_model(
         num_train_steps,
         sweep,
         resume,
-        force_resume=resume,
+        resume_from=resume_from,
     )
 
     logger.debug("Initialising train state")
@@ -411,8 +412,7 @@ def fine_tune_model(
         num_fine_tune_steps,
         num_fine_tune_steps,
         resume=True,
-        force_resume=True,
-        params_tag=f"_{initial_train_itts:,}",
+        resume_from=initial_train_itts,
     )
 
     logger.debug("Initialising train state")
@@ -494,10 +494,10 @@ def main_train_scale(lr):
     blocks = {"xs": 4, "s": 6, "m": 12, "l": 16, "xl": 24}
     heads = {"xs": 4, "s": 6, "m": 8, "l": 12, "xl": 16}
     # itts = {"xs": 10_000, "s": 40_000, "m": 110_000, "l": 300_000, "xl": 300_000}
-    itts = {"xs": 48_000, "s": 160_000, "m": 192_000, "l": 320_000, "xl": 320_000}
+    itts = {"xs": 96_000, "s": 160_000, "m": 192_000, "l": 320_000, "xl": 320_000}
     sweeps = {"xs": 1_500, "s": 5_000, "m": 6_000, "l": 10_000, "xl": 10_000}
 
-    sizes = ["s", "m"]
+    sizes = ["xs"]
     for size in sizes:
         # Setup.
         emb = embs[size]
@@ -536,7 +536,7 @@ def main_train_scale(lr):
             num_train_steps=itts[size],
             sweep=sweeps[size],
             learning_rate=lr,
-            resume=False,
+            resume=True,
             model_setup=model_setup,
         )
         toc = time.time()

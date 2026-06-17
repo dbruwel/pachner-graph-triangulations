@@ -10,7 +10,7 @@ from flax.linen.initializers import normal
 from flax.training import train_state
 
 from pachner_traversal.data_io_dehydration import Dataset, Encoder
-from pachner_traversal.utils import get_last_csv_row, get_random_sample_idx, load_model
+from pachner_traversal.utils import get_random_sample_idx, load_model
 
 
 class MinimalTrainState(train_state.TrainState):
@@ -489,23 +489,23 @@ def init_params(
     batch_size: int,
     num_train_steps: int,
     sweep: int,
-    resume: bool,
-    force_resume: bool = False,
-    params_tag: str | None = None,
+    resume: bool = False,
+    resume_from: int | None = None,
 ):
-    fname = f"params{params_tag}.pkl" if params_tag else "params.pkl"
-    resumed = (load_path / fname).exists() and resume
-    if resumed:
-        params = load_model(load_path, fname)
-        last_step = int(get_last_csv_row(load_path / "train_losses.csv")[0])
-        steps = range(last_step, num_train_steps, sweep)
-        meta = last_step
-    else:
-        if force_resume:
+    if resume:
+        if resume_from is None:
+            raise TypeError("`resume_from` must be an integer.")
+        fname = f"params_{resume_from:,}.pkl" if resume else "params.pkl"
+        if not (load_path / fname).exists():
             raise RuntimeError(
                 f"The model should have resumed but it did not. {(load_path / 'params.pkl')} {(load_path / 'params.pkl').exists()}"
             )
 
+        params = load_model(load_path, fname)
+        last_step = resume_from
+        steps = range(last_step, num_train_steps, sweep)
+        meta = last_step
+    else:
         # Clear path if it exists.
         if load_path.exists() and load_path.is_dir():
             shutil.rmtree(load_path)
@@ -523,4 +523,4 @@ def init_params(
 
         steps = range(0, num_train_steps, sweep)
 
-    return resumed, meta, steps, params
+    return resume, meta, steps, params
