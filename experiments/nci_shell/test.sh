@@ -1,5 +1,5 @@
 #!/bin/bash
-#PBS -P ab12
+#PBS -P io00
 #PBS -q normal
 #PBS -l walltime=00:15:00
 #PBS -l ncpus=12
@@ -11,10 +11,10 @@
 #PBS -m abe
 
 # Path to script.
-cd /g/data/ab12/my_ml_project/
+cd /g/data/io00/js1886/
 
 # Activate the venv.
-source /g/data/ab12/my_venv/bin/activate
+source /g/data/io00/js1886/trig/bin/activate
 
 # Run the test.
-python auto_regression_train_scaling_nci.py test
+python ./pachner-graph-triangulations/experiments/scripts/deep_learning/signature_model/auto_regression_train_scaling_nci.py test
