@@ -1,7 +1,10 @@
+import logging
 import pathlib
 
 import h5py
 import numpy as np
+
+logger = logging.getLogger(__name__)
 
 
 def get_max_len_txt(input_text_file):
@@ -143,6 +146,7 @@ class Dataset:
         sorted_indices = np.sort(unique_indices)
 
         if self.store_in_memory:
+            logger.debug("Reading from memory.")
             unique_lines = self.all_lines[sorted_indices]
             restored_lines = unique_lines[inverse_map]
             if dset_name == "isos":
