@@ -265,8 +265,11 @@ def setup_batch(
         sample_idx_sweep.append(sample_idx)
 
     sample_idx_sweep_flat = np.array(sample_idx_sweep).flatten()
+
+    logger.debug("Setting up read_idx")
+    read_idx = train_idx[sample_idx_sweep_flat]
     logger.debug(f"Reading {len(sample_idx_sweep_flat):,} lines")
-    sweep_samples = dataset.read_lines(np.array(train_idx)[sample_idx_sweep_flat])
+    sweep_samples = dataset.read_lines(read_idx)
 
     logger.debug("Encoding")
     sweep_samples = np.array(sweep_samples).reshape(-1, batch_size)
@@ -294,7 +297,7 @@ def train_model(
     model = model_setup[2]
     params_key = model_setup[3]
     dropout_key = model_setup[4]
-    train_idx = model_setup[5]
+    train_idx = np.array(model_setup[5])
     test_input = model_setup[6]
     test_label = model_setup[7]
     vocab_size = model_setup[8]
