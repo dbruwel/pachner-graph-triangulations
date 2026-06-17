@@ -438,7 +438,7 @@ def main_train_scale(lr):
     logging.getLogger("absl").setLevel(logging.WARNING)
 
     embs = {"xs": 32, "s": 128, "m": 256, "l": 384}
-    heads = {"xs": 4, "s": 6, "m": 8, "l": 12}
+    heads = {"xs": 4, "s": 8, "m": 8, "l": 12}
     flops = {"xs": 6.26e14, "s": 1e16, "m": 1.6e17, "l": 8.12e18}
     sweeps = {"xs": 1_500, "s": 5_000, "m": 6_000, "l": 10_000}
 
