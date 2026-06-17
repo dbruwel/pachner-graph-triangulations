@@ -348,6 +348,7 @@ def train_model(
             continue
 
         # Train sweep.
+        logger.debug("Training...")
         state, losses = train_sweep_steps(
             train_step_auto_regression,
             state,

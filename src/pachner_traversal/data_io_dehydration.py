@@ -142,6 +142,7 @@ class Dataset:
         return data_size
 
     def read_lines(self, indices, dset_name="isos"):
+        logger.debug("Setting up mapping.")
         unique_indices, inverse_map = np.unique(indices, return_inverse=True)
         sorted_indices = np.sort(unique_indices)
 
