@@ -6,7 +6,7 @@ import flax.linen as nn
 import jax
 import jax.numpy as jnp
 import optax
-from flax.linen.initializers import normal
+from flax import traverse_util
 from flax.training import train_state
 
 from pachner_traversal.data_io_dehydration import Dataset, Encoder
@@ -18,23 +18,27 @@ class MinimalTrainState(train_state.TrainState):
 
 
 class CausalSelfAttention(nn.Module):
-    # (B, L, D) -> (B, L, D)
     d_model: int
     num_heads: int
+    base_d_model: int = 64
     use_mask: bool = True
     dropout_rate: float = 0.1
 
     @nn.compact
     def __call__(self, x: jax.Array, training: bool = False) -> jax.Array:
         B, L, D = x.shape
-
         assert D % self.num_heads == 0
         head_size = D // self.num_heads
+
+        # Calculate muP initialization scale
+        width_mult = self.d_model / self.base_d_model
+        init_std = 0.02 / jnp.sqrt(width_mult)
+        mup_init = nn.initializers.normal(init_std)
 
         qkv = nn.Dense(
             features=3 * D,
             name="c_attn",
-            kernel_init=normal(0.02),
+            kernel_init=mup_init,  # Scaled for muP
             dtype=jnp.bfloat16,
             param_dtype=jnp.float32,
         )(x)
@@ -57,7 +61,7 @@ class CausalSelfAttention(nn.Module):
         y = nn.Dense(
             features=self.d_model,
             name="c_proj",
-            kernel_init=normal(0.02),
+            kernel_init=mup_init,  # Scaled for muP
             dtype=jnp.bfloat16,
             param_dtype=jnp.float32,
         )(y)
@@ -66,9 +70,9 @@ class CausalSelfAttention(nn.Module):
 
 
 class Block(nn.Module):
-    # (B, L, D) -> (B, L, D)
     d_model: int
     num_heads: int
+    base_d_model: int = 64
     use_mask: bool = True
     dropout_rate: float = 0.1
 
@@ -77,7 +81,9 @@ class Block(nn.Module):
         attn = CausalSelfAttention(
             d_model=self.d_model,
             num_heads=self.num_heads,
+            base_d_model=self.base_d_model,
             use_mask=self.use_mask,
+            dropout_rate=self.dropout_rate,
             name="attn",
         )
 
@@ -95,14 +101,24 @@ class Block(nn.Module):
         return x
 
     def mlp(self, x: jax.Array) -> jax.Array:
-        # (B, L, D) -> (B, L, D)
         d_ff = 4 * self.d_model
+
+        # Calculate muP initialization scale
+        width_mult = self.d_model / self.base_d_model
+        init_std = 0.02 / jnp.sqrt(width_mult)
+        mup_init = nn.initializers.normal(init_std)
+
         c_fc = nn.Dense(
-            features=d_ff, name="c_fc", dtype=jnp.bfloat16, param_dtype=jnp.float32
+            features=d_ff,
+            name="c_fc",
+            kernel_init=mup_init,  # Scaled for muP
+            dtype=jnp.bfloat16,
+            param_dtype=jnp.float32,
         )
         c_proj = nn.Dense(
             features=self.d_model,
             name="c_proj",
+            kernel_init=mup_init,  # Scaled for muP
             dtype=jnp.bfloat16,
             param_dtype=jnp.float32,
         )
@@ -116,9 +132,10 @@ class Block(nn.Module):
 class Transformer(nn.Module):
     vocab_size: int
     d_model: int
-    block_size: int  # Max sequence length.
+    block_size: int
     num_layers: int
     num_heads: int
+    base_d_model: int = 64
     use_mask: bool = True
     output_size: int | None = None
     dropout_rate: float = 0.1
@@ -126,13 +143,11 @@ class Transformer(nn.Module):
     @nn.compact
     def __call__(self, idx: jax.Array, training: bool = False) -> jax.Array:
         output_size = self.output_size or self.vocab_size
-
         _, L = idx.shape
         assert L <= self.block_size, (
-            f"Cannot forward sequence of length {L}, block size is only {self.block_size}"
+            f"Sequence length {L} exceeds block size {self.block_size}"
         )
-        # Token embedding.
-        # (B, L) -> (B, L, D)
+
         wte = nn.Embed(
             num_embeddings=self.vocab_size,
             features=self.d_model,
@@ -142,8 +157,6 @@ class Transformer(nn.Module):
         )
         tok_emb = wte(idx)
 
-        # Learned positional embedding.
-        # (L) -> (L, D)
         wpe = nn.Embed(
             num_embeddings=self.block_size,
             features=self.d_model,
@@ -158,24 +171,24 @@ class Transformer(nn.Module):
         x = tok_emb + pos_emb  # Broadcasting (B, L, D) + (L, D) -> (B, L, D)
         x = nn.Dropout(rate=self.dropout_rate, deterministic=not training)(x)
 
-        # Transformer Blocks.
-        # (B, L, D) -> (B, L, D)
         for i in range(self.num_layers):
             x = Block(
                 d_model=self.d_model,
                 num_heads=self.num_heads,
+                base_d_model=self.base_d_model,
                 use_mask=self.use_mask,
+                dropout_rate=self.dropout_rate,
                 name=f"h_{i}",
             )(x, training=training)
 
-        # Final Layers.
         x = nn.LayerNorm(name="ln_f", dtype=jnp.bfloat16, param_dtype=jnp.float32)(x)
 
-        # (B, L, D) -> (B, L, output_size)
+        # Output Head (muP rule: Zero-initialization is mathematically optimal)
         logits = nn.Dense(
             features=output_size,
             use_bias=False,
             name="lm_head",
+            kernel_init=nn.initializers.zeros,  # Zeroed out for clean muP boundary
             dtype=jnp.bfloat16,
             param_dtype=jnp.float32,
         )(x)
@@ -368,6 +381,38 @@ def generate_samples(
     return samples
 
 
+def create_mup_optimizer(
+    base_schedule, d_model: int, base_d_model: int = 64, weight_decay: float = 0.01
+):
+    width_mult = d_model / base_d_model
+
+    def scaled_schedule(step):
+        return base_schedule(step) / width_mult
+
+    optimizers = {
+        "standard": optax.adamw(learning_rate=base_schedule, weight_decay=weight_decay),
+        "scaled": optax.adamw(learning_rate=scaled_schedule, weight_decay=weight_decay),
+    }
+
+    def map_params_to_optimizer(params):
+        flat_params = traverse_util.flatten_dict(params)
+        label_dict = {}
+        for path, param in flat_params.items():
+            path_str = "/".join(path)
+            if (
+                "wte" in path_str
+                or "wpe" in path_str
+                or "ln" in path_str
+                or "bias" in path_str
+            ):
+                label_dict[path] = "standard"
+            else:
+                label_dict[path] = "scaled"
+        return traverse_util.unflatten_dict(label_dict)
+
+    return optax.multi_transform(optimizers, map_params_to_optimizer)
+
+
 def init_train_state(
     model,
     params,
@@ -376,6 +421,7 @@ def init_train_state(
     peak_learning_rate=0.0005,
     final_learning_rate_frac=0.1,
     warmup_frac=0.05,
+    d_model=64,
 ):
     lr_schedule = optax.warmup_cosine_decay_schedule(
         init_value=0.0,
@@ -385,7 +431,9 @@ def init_train_state(
         end_value=peak_learning_rate * final_learning_rate_frac,
     )
 
-    tx = optax.adamw(learning_rate=lr_schedule, weight_decay=0.01)
+    tx = create_mup_optimizer(
+        base_schedule=lr_schedule, d_model=d_model, base_d_model=64, weight_decay=0.01
+    )
 
     state = MinimalTrainState.create(
         params=params,

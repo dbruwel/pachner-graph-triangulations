@@ -1,11 +1,13 @@
 #!/bin/bash
 #PBS -P io00
 #PBS -q normal
-#PBS -l walltime=00:15:00
 #PBS -l ncpus=12
 #PBS -l mem=48GB
 #PBS -l jobfs=10GB
-#PBS -l storage=gdata/io00+scratch/io00
+#PBS -l walltime=00:15:00
+#PBS -l storage=scratch/io00+gdata/io00
+#PBS -l wd
+
 #PBS -N test_io
 #PBS -M dbru8728@uni.sydney.edu.au
 #PBS -m abe

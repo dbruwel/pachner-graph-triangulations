@@ -291,6 +291,7 @@ def train_model(
     sweep: int = 300,
     learning_rate: float = 1e-4,
     model_setup: tuple = (),
+    d_model: int = 64,
 ) -> None:
     dataset = model_setup[0]
     encoder = model_setup[1]
@@ -324,6 +325,7 @@ def train_model(
         dropout_key,
         train_steps=num_train_steps,
         peak_learning_rate=learning_rate,
+        d_model=d_model,
     )
 
     if resumed:
@@ -441,7 +443,7 @@ def main_train_scale(lr):
     sweeps = {"xs": 1_500, "s": 5_000, "m": 6_000, "l": 10_000}
 
     size = "xs"
-    for block in [10, 11, 12, 13, 14]:
+    for block in [4, 7, 8, 9]:
         # Setup.
         emb = embs[size]
         head = heads[size]
@@ -483,6 +485,7 @@ def main_train_scale(lr):
             sweep=sweeps[size],
             learning_rate=lr,
             model_setup=model_setup,
+            d_model=emb,
         )
         toc = time.time()
 
