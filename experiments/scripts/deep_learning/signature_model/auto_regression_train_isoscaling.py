@@ -442,7 +442,7 @@ def main_train_scale(lr):
     flops = {"xs": 6.26e14, "s": 1e16, "m": 1.6e17, "l": 8.12e18}
     sweeps = {"xs": 1_500, "s": 5_000, "m": 6_000, "l": 10_000}
 
-    size = "xs"
+    size = "s"
     for block in [10, 11, 12, 13, 14]:
         # Setup.
         emb = embs[size]
