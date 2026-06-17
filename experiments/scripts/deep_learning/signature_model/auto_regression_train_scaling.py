@@ -293,6 +293,7 @@ def train_model(
     resume=False,
     resume_from: int | None = None,
     model_setup: tuple = (),
+    save_at: list = [1, 2, 4, 8, 16, 32],
 ) -> list:
     dataset = model_setup[0]
     encoder = model_setup[1]
@@ -334,6 +335,7 @@ def train_model(
     logger.info("\n--- Starting Training ---")
     sam_counter = 0
     save_itts = []
+    logger.debug(f"`steps`: {steps}")
     for step in steps:
         sam_counter += 1
 
@@ -372,7 +374,7 @@ def train_model(
         del loss
         del losses
 
-        if sam_counter in [1, 2, 4, 8, 16, 32]:
+        if sam_counter in save_at:
             # Save if needed.
             save_model(save_path, state, f"_{step + sweep:,}")
             save_itts.append(step + sweep)
@@ -539,6 +541,7 @@ def main_train_scale(lr):
             resume=True,
             resume_from=48_000,
             model_setup=model_setup,
+            save_at=[32],
         )
         toc = time.time()
 
