@@ -432,7 +432,7 @@ def train_model(
     return test_loss_float, meta
 
 
-def main_train_scale(lr):
+def main_train_scale(blocks):
     import os
 
     os.environ["TF_CPP_MIN_LOG_LEVEL"] = "2"
@@ -444,30 +444,13 @@ def main_train_scale(lr):
     logging.getLogger("jax").setLevel(logging.WARNING)
     logging.getLogger("absl").setLevel(logging.WARNING)
 
-    embs = {16: 192, 36: 256, 64: 320, 80: 320, 128: 384}
-    blocks = {16: 12, 36: 7, 64: 5, 80: 4, 128: 3}
-
-    for ar in [64]:
-        emb = embs[ar]
-        block = blocks[ar]
-        head = emb // 64
-        itts = 15_000
-
-        logger.info(f"number of iterations: {itts:,}")
-
+    for block in blocks:
         processed_data_home = data_root / "input_data" / "dehydration" / "processed"
         data_path = processed_data_home / "spheres_15_170m.hdf5"
-        global_save_path = (
-            data_root / "results" / "sgd_models_dehydration" / "aspect_ratio_scale"
-        )
 
-        save_path = (
-            global_save_path
-            / f"{lr}"
-            / f"spheres_{emb}emb_{block}block_{head}head_15tet"
-        )
-        save_path.mkdir(parents=True, exist_ok=True)
-        logger.info(f"Created directoy: {save_path.resolve()}")
+        emb = 256
+        head = 4
+        itts = 5_000
 
         model_setup = setup_model(
             data_path=data_path,
@@ -477,36 +460,51 @@ def main_train_scale(lr):
             num_test_samps=16_000,
         )
 
-        # Train model.
-        tic = time.time()
-        res = train_model(
-            save_path,
-            batch_size=512,
-            num_train_steps=itts,
-            sweep=1_500,
-            learning_rate=lr,
-            model_setup=model_setup,
-            d_model=emb,
-        )
-        toc = time.time()
+        for lr in [6e-3, 12e-3, 7e-3, 8e-3, 9e-3, 10e-3, 11e-3]:
+            logger.info(f"number of iterations: {itts:,}")
 
-        if not (global_save_path / "all_res.csv").exists():
-            with open(global_save_path / "all_res.csv", "a") as f:
-                f.write("emb, block, lr, n_params, test_loss\n")
+            global_save_path = (
+                data_root / "results" / "sgd_models_dehydration" / "learning_rate_train"
+            )
 
-        if res is not None:
-            test_loss_float, meta = res
-            with open(global_save_path / "all_res.csv", "a") as f:
-                f.write(f"{emb}, {block}, {lr}, {meta}, {test_loss_float}\n")
+            save_path = (
+                global_save_path
+                / f"{lr}"
+                / f"spheres_{emb}emb_{block}block_{head}head_15tet"
+            )
+            save_path.mkdir(parents=True, exist_ok=True)
+            logger.info(f"Created directoy: {save_path.resolve()}")
 
-        train_time = toc - tic
-        logger.info(f"Training time: {train_time:.2f} seconds")
+            # Train model.
+            tic = time.time()
+            res = train_model(
+                save_path,
+                batch_size=512,
+                num_train_steps=itts,
+                sweep=100,
+                learning_rate=lr,
+                model_setup=model_setup,
+                d_model=emb,
+            )
+            toc = time.time()
+
+            if not (global_save_path / "all_res.csv").exists():
+                with open(global_save_path / "all_res.csv", "a") as f:
+                    f.write("emb, block, lr, n_params, test_loss\n")
+
+            if res is not None:
+                test_loss_float, meta = res
+                with open(global_save_path / "all_res.csv", "a") as f:
+                    f.write(f"{emb}, {block}, {lr}, {meta}, {test_loss_float}\n")
+
+            train_time = toc - tic
+            logger.info(f"Training time: {train_time:.2f} seconds")
 
 
 if __name__ == "__main__":
     if "scale_low" in sys.argv:
-        main_train_scale(1e-2)
+        main_train_scale([4, 9])
     if "scale_med" in sys.argv:
-        main_train_scale(6e-3)
+        main_train_scale([5, 8])
     if "scale_high" in sys.argv:
-        main_train_scale(3e-3)
+        main_train_scale([6, 7])
