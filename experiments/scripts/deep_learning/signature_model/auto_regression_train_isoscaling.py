@@ -444,10 +444,10 @@ def main_train_scale(lr):
     logging.getLogger("jax").setLevel(logging.WARNING)
     logging.getLogger("absl").setLevel(logging.WARNING)
 
-    embs = {16: 192, 36: 256, 80: 320, 128: 384}
-    blocks = {16: 12, 36: 7, 80: 4, 128: 3}
+    embs = {16: 192, 36: 256, 64: 320, 80: 320, 128: 384}
+    blocks = {16: 12, 36: 7, 64: 5, 80: 4, 128: 3}
 
-    for ar in [16, 36, 80, 128]:
+    for ar in [64]:
         emb = embs[ar]
         block = blocks[ar]
         head = emb // 64
@@ -507,6 +507,6 @@ if __name__ == "__main__":
     if "scale_low" in sys.argv:
         main_train_scale(1e-2)
     if "scale_med" in sys.argv:
-        main_train_scale(3e-2)
+        main_train_scale(6e-3)
     if "scale_high" in sys.argv:
-        main_train_scale(6e-2)
+        main_train_scale(3e-3)
