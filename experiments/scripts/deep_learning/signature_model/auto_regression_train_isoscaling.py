@@ -481,7 +481,7 @@ def main_train_scale(blocks):
                 save_path,
                 batch_size=512,
                 num_train_steps=itts,
-                sweep=100,
+                sweep=5_000,
                 learning_rate=lr,
                 model_setup=model_setup,
                 d_model=emb,
