@@ -177,6 +177,7 @@ class Dataset:
             self.all_lines = all_lines
 
     def setup_train_test(self):
+        np.random.seed(42)
         self.test_idx = np.random.choice(
             len(self), size=self.num_test_samps, replace=False
         )

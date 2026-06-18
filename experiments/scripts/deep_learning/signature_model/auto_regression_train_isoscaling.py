@@ -505,8 +505,8 @@ def main_train_scale(lr):
 
 if __name__ == "__main__":
     if "scale_low" in sys.argv:
-        main_train_scale(1e-3)
+        main_train_scale(1e-2)
     if "scale_med" in sys.argv:
-        main_train_scale(3e-3)
+        main_train_scale(3e-2)
     if "scale_high" in sys.argv:
-        main_train_scale(6e-3)
+        main_train_scale(6e-2)
