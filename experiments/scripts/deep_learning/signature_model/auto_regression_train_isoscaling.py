@@ -297,7 +297,7 @@ def train_model(
     learning_rate: float = 1e-4,
     model_setup: tuple = (),
     d_model: int = 64,
-) -> None:
+) -> tuple[float, int] | None:
     dataset = model_setup[0]
     encoder = model_setup[1]
     model = model_setup[2]
@@ -307,7 +307,6 @@ def train_model(
     test_input = model_setup[6]
     test_label = model_setup[7]
     vocab_size = model_setup[8]
-    seq_len = model_setup[9]
 
     bulk_num_train_steps = sweep * (num_train_steps // sweep)
 
@@ -409,25 +408,27 @@ def train_model(
         test_label,
         vocab_size,
     )
+    test_loss_float = float(test_loss)
+    del test_loss
 
     write_loss(
         save_path / "test_losses.csv",
         num_train_steps,
-        float(test_loss),
+        test_loss_float,
     )
 
-    del test_loss
-
-    sample_model(
-        encoder,
-        state,
-        seq_len,
-        save_path,
-        gen_its=16,
-        samps_to_gen=1_000,
-    )
+    # sample_model(
+    #     encoder,
+    #     state,
+    #     seq_len,
+    #     save_path,
+    #     gen_its=16,
+    #     samps_to_gen=1_000,
+    # )
 
     logger.info("\n Training finished.")
+
+    return test_loss_float, meta
 
 
 def main_train_scale(lr):
@@ -442,36 +443,30 @@ def main_train_scale(lr):
     logging.getLogger("jax").setLevel(logging.WARNING)
     logging.getLogger("absl").setLevel(logging.WARNING)
 
-    embs = {"s": 128, "m": 256, "l": 384}
-    heads = {"s": 8, "m": 8, "l": 12}
-    flops = {"s": 1e16, "m": 1.6e17, "l": 8.12e18}
-    sweeps = {"s": 5_000, "m": 6_000, "l": 10_000}
+    embs = {16: 192, 36: 256, 80: 320, 128: 384}
+    blocks = {16: 12, 36: 7, 80: 4, 128: 3}
 
-    size = "s"
-    for block in [4, 5, 6, 7, 8]:
-        # Setup.
-        emb = embs[size]
-        head = heads[size]
-        n_params = 12 * emb**2 * block
+    for ar in [16, 36, 80, 128]:
+        emb = embs[ar]
+        block = blocks[ar]
+        head = emb // 64
+        itts = 15_000
 
-        itts = int(flops[size] / (6 * n_params) / 41 / 512)
         logger.info(f"number of iterations: {itts:,}")
 
         processed_data_home = data_root / "input_data" / "dehydration" / "processed"
         data_path = processed_data_home / "spheres_15_170m.hdf5"
+        global_save_path = (
+            data_root / "results" / "sgd_models_dehydration" / "aspect_ratio_scale"
+        )
 
         save_path = (
-            data_root
-            / "results"
-            / "sgd_models_dehydration"
-            / "isoflop_scale"
-            / f"{size}"
+            global_save_path
             / f"{lr}"
             / f"spheres_{emb}emb_{block}block_{head}head_15tet"
         )
         save_path.mkdir(parents=True, exist_ok=True)
         logger.info(f"Created directoy: {save_path.resolve()}")
-        write_stat(save_path / "stats.txt", "size:", size)
 
         model_setup = setup_model(
             data_path=data_path,
@@ -483,27 +478,34 @@ def main_train_scale(lr):
 
         # Train model.
         tic = time.time()
-        train_model(
+        res = train_model(
             save_path,
             batch_size=512,
             num_train_steps=itts,
-            sweep=sweeps[size],
+            sweep=1_500,
             learning_rate=lr,
             model_setup=model_setup,
             d_model=emb,
         )
         toc = time.time()
 
+        if not (global_save_path / "all_res.csv").exists():
+            with open(global_save_path / "all_res.csv", "a") as f:
+                f.write("emb, block, lr, n_params, test_loss\n")
+
+        if res is not None:
+            test_loss_float, meta = res
+            with open(global_save_path / "all_res.csv", "a") as f:
+                f.write(f"{emb}, {block}, {lr}, {meta}, {test_loss_float}\n")
+
         train_time = toc - tic
         logger.info(f"Training time: {train_time:.2f} seconds")
 
 
 if __name__ == "__main__":
-    # if "scale_xlo" in sys.argv:
-    #     main_train_scale(1e-4)
     if "scale_low" in sys.argv:
         main_train_scale(1e-3)
     if "scale_med" in sys.argv:
         main_train_scale(3e-3)
-    # if "scale_high" in sys.argv:
-    #     main_train_scale(1e-2)
+    if "scale_high" in sys.argv:
+        main_train_scale(6e-3)
