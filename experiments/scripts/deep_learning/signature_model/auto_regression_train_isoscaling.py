@@ -460,7 +460,7 @@ def main_train_scale(blocks):
             num_test_samps=16_000,
         )
 
-        for lr in [6e-3, 12e-3, 7e-3, 8e-3, 9e-3, 10e-3, 11e-3]:
+        for lr in [12e-3, 30e-3, 20e-3]:
             logger.info(f"number of iterations: {itts:,}")
 
             global_save_path = (
