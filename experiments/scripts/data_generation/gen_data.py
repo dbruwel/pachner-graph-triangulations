@@ -57,7 +57,7 @@ def main():
 
     # Pathing.
     save_path = data_root / "input_data" / "dehydration" / "raw" / "mcmc_samples"
-    fname = f"samps{size}_16m.txt"
+    fname = f"samps{size}_170m.txt"
 
     # Loads existing samples into memory.
     if (save_path / fname).exists():
@@ -71,7 +71,7 @@ def main():
 
     # Opens file once in append mode.
     with open(save_path / fname, "a") as f:
-        while len(unique_set) <= 160_005_000:
+        while len(unique_set) <= 500_000_000:
             # Randomly samples seeds from existing samples. This reduces warmup time.
             if len(unique_list) > num_chains:
                 seeds = random.sample(unique_list, num_chains)
