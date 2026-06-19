@@ -512,8 +512,8 @@ def main_train_scale(models):
 
 if __name__ == "__main__":
     if "scale_low" in sys.argv:
-        main_train_scale([(256, 4), (448, 7)])
+        main_train_scale([(320, 6)])
     if "scale_med" in sys.argv:
-        main_train_scale([(320, 5)])
+        main_train_scale([(320, 7)])
     if "scale_high" in sys.argv:
-        main_train_scale([(384, 6)])
+        main_train_scale([(384, 5)])
