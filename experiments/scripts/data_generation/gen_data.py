@@ -57,7 +57,7 @@ def main():
 
     # Pathing.
     save_path = data_root / "input_data" / "dehydration" / "raw" / "mcmc_samples"
-    fname = f"samps{size}_170m.txt"
+    fname = f"samps{size}_500m.txt"
 
     # Loads existing samples into memory.
     if (save_path / fname).exists():
