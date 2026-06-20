@@ -460,6 +460,11 @@ def main_train_scale(models):
         samps = toks / 41
         itts = int(samps / 512)
 
+        if samps >= 150_000_000:
+            msg = f"Skipping model {model} as it requires {samps:,.0f} samples."
+            logger.warning(msg)
+            continue
+
         logger.info(f"Training model {model} for {itts:,} iterations.")
 
         model_setup = setup_model(
@@ -578,7 +583,7 @@ if __name__ == "__main__":
     ]
 
     if "scale_low" in sys.argv:
-        main_train_scale(all_runs[0:15])
+        main_train_scale(all_runs[15:])
     # if "scale_med" in sys.argv:
     #     main_train_scale()
     # if "scale_high" in sys.argv:
