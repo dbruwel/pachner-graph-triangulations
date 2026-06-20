@@ -450,10 +450,10 @@ def main_train_scale(models):
 
         lr = 2.5e-3
 
-        flops = 1e17
-
         emb = model[0]
         block = model[1]
+        flops = model[2]
+
         head = emb // 64
         n_params = 12 * block * emb**2
         toks = flops / (6 * n_params)
@@ -473,7 +473,7 @@ def main_train_scale(models):
         logger.info(f"number of iterations: {itts:,}")
 
         global_save_path = (
-            data_root / "results" / "sgd_models_dehydration" / "isoflop_scale_dev"
+            data_root / "results" / "sgd_models_dehydration" / "isoflop_scale"
         )
 
         save_path = (
@@ -499,21 +499,87 @@ def main_train_scale(models):
 
         if not (global_save_path / "all_res.csv").exists():
             with open(global_save_path / "all_res.csv", "a") as f:
-                f.write("emb, block, lr, n_params, test_loss\n")
+                f.write("emb, block, lr, n_params, test_loss, flops\n")
 
         if res is not None:
             test_loss_float, meta = res
             with open(global_save_path / "all_res.csv", "a") as f:
-                f.write(f"{emb}, {block}, {lr}, {meta}, {test_loss_float}\n")
+                f.write(f"{emb}, {block}, {lr}, {meta}, {test_loss_float}, {flops}\n")
 
         train_time = toc - tic
         logger.info(f"Training time: {train_time:.2f} seconds")
 
 
 if __name__ == "__main__":
+    all_runs = [
+        (128, 2, 6e15),
+        (192, 3, 6e15),
+        (256, 4, 6e15),
+        (320, 5, 6e15),
+        (384, 6, 6e15),
+        (128, 2, 10e15),
+        (192, 3, 10e15),
+        (256, 4, 10e15),
+        (320, 5, 10e15),
+        (384, 6, 10e15),
+        (192, 3, 30e15),
+        (256, 4, 30e15),
+        (320, 5, 30e15),
+        (384, 6, 30e15),
+        (448, 7, 30e15),
+        (192, 3, 60e15),
+        (256, 4, 60e15),
+        (320, 5, 60e15),
+        (384, 6, 60e15),
+        (448, 7, 60e15),
+        (512, 8, 60e15),
+        (256, 4, 100e15),
+        (320, 5, 100e15),
+        (384, 6, 100e15),
+        (448, 7, 100e15),
+        (512, 8, 100e15),
+        (576, 9, 100e15),
+        (256, 4, 300e15),
+        (320, 5, 300e15),
+        (384, 6, 300e15),
+        (448, 7, 300e15),
+        (512, 8, 300e15),
+        (576, 9, 300e15),
+        (640, 10, 300e15),
+        (704, 11, 300e15),
+        (320, 5, 600e15),
+        (384, 6, 600e15),
+        (448, 7, 600e15),
+        (512, 8, 600e15),
+        (576, 9, 600e15),
+        (640, 10, 600e15),
+        (704, 11, 600e15),
+        (768, 12, 600e15),
+        (320, 5, 1000e15),
+        (384, 6, 1000e15),
+        (448, 7, 1000e15),
+        (512, 8, 1000e15),
+        (576, 9, 1000e15),
+        (640, 10, 1000e15),
+        (704, 11, 1000e15),
+        (768, 12, 1000e15),
+        (832, 13, 1000e15),
+        (384, 6, 3000e15),
+        (448, 7, 3000e15),
+        (512, 8, 3000e15),
+        (576, 9, 3000e15),
+        (640, 10, 3000e15),
+        (704, 11, 3000e15),
+        (768, 12, 3000e15),
+        (832, 13, 3000e15),
+        (896, 14, 3000e15),
+        (960, 15, 3000e15),
+        (1024, 16, 3000e15),
+    ]
+
     if "scale_low" in sys.argv:
-        main_train_scale([(320, 6)])
-    if "scale_med" in sys.argv:
-        main_train_scale([(320, 7)])
-    if "scale_high" in sys.argv:
-        main_train_scale([(384, 5)])
+        main_train_scale(all_runs[0:15])
+    # if "scale_med" in sys.argv:
+    #     main_train_scale()
+    # if "scale_high" in sys.argv:
+    #     main_train_scale()
