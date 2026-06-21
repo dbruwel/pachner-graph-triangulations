@@ -159,10 +159,11 @@ def main():
     save_path.mkdir(parents=True, exist_ok=True)
     fname = f"samps_{size}_worker_{args.worker_id}.txt"
 
-    logger.info(f"Starting worker {args.worker_id}...")
-
     with open(save_path / fname, "a") as f:
         for loop in range(args.iterations):
+            logger.info(
+                f"Worker {args.worker_id} starting batch {loop}/{args.iterations}"
+            )
             seed = random.choice(tuple(seed_buffer))
 
             samples = generate_samples(
@@ -178,11 +179,11 @@ def main():
                 f.writelines(f"{s}\n" for s in samples)
                 f.flush()
 
-            if loop % 10 == 0:
-                logger.info(
-                    f"Worker {args.worker_id} completed batch {loop}/{args.iterations}"
-                )
+    logger.info(f"Worker {args.worker_id} finished generation.")
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except Exception as e:
+        logger.error(e)
