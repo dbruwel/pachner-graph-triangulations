@@ -464,6 +464,9 @@ def main_train_scale(models):
             msg = f"Skipping model {model} as it requires {samps:,.0f} samples."
             logger.warning(msg)
             continue
+        if block >= 9:
+            msg = f"Skipping model {model} as it is too big."
+            logger.warning(msg)
 
         logger.info(f"Training model {model} for {itts:,} iterations.")
 
@@ -583,7 +586,7 @@ if __name__ == "__main__":
     ]
 
     if "scale_low" in sys.argv:
-        main_train_scale(all_runs[15:])
+        main_train_scale(all_runs[26:])
     # if "scale_med" in sys.argv:
     #     main_train_scale()
     # if "scale_high" in sys.argv:
