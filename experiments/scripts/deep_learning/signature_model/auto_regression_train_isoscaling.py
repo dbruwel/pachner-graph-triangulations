@@ -467,6 +467,7 @@ def main_train_scale(models):
         if block >= 9:
             msg = f"Skipping model {model} as it is too big."
             logger.warning(msg)
+            continue
 
         logger.info(f"Training model {model} for {itts:,} iterations.")
 
