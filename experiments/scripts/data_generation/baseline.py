@@ -97,6 +97,7 @@ def main():
     )
     args = parser.parse_args()
     size = args.size
+    print(f"startign {size}")
 
     p = get_acceptable(size)
     print(f"{size}: {p}")
