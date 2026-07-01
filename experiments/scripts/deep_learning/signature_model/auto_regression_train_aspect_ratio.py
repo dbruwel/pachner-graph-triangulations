@@ -526,7 +526,7 @@ if __name__ == "__main__":
         (224, 10, 10e15),
     ]
 
-    if "scale_low" in sys.argv:
+    if "low" in sys.argv:
         main_train_scale(all_runs, 0.006)
-    if "scale_med" in sys.argv:
+    if "med" in sys.argv:
         main_train_scale(all_runs, 0.01)
