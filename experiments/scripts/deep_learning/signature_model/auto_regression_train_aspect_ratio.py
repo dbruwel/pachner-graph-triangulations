@@ -451,7 +451,7 @@ def main_train_scale(models, lr):
         block = model[1]
         flops = model[2]
 
-        head = emb // 64
+        head = emb // 32
         n_params = 12 * block * emb**2
         toks = flops / (6 * n_params)
         samps = toks / 41
