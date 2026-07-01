@@ -253,13 +253,5 @@ def main_train(lr):
 
 
 if __name__ == "__main__":
-    if "xhi" in sys.argv:
-        main_train(1e-3)
-    if "high" in sys.argv:
-        main_train(3e-4)
-    if "med" in sys.argv:
-        main_train(1e-4)
     if "low" in sys.argv:
-        main_train(3e-5)
-    if "xlo" in sys.argv:
-        main_train(1e-5)
+        main_train(1e-2)
