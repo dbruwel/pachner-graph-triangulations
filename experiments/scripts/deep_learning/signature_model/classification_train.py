@@ -234,7 +234,7 @@ def main_train(lr):
         output_size=64,
         batch_size=512,
         epochs=8,
-        num_train_steps=250,
+        num_train_steps=60_000,
         sweep=250,
         learning_rate=lr,
         resume=False,
