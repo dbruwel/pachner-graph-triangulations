@@ -254,4 +254,4 @@ def main_train(lr):
 
 if __name__ == "__main__":
     if "low" in sys.argv:
-        main_train(1e-2)
+        main_train(3e-3)
