@@ -1,8 +1,11 @@
 import logging
 import pathlib
+from pathlib import Path
 
 import h5py
 import numpy as np
+
+from pachner_traversal.utils import data_root
 
 logger = logging.getLogger(__name__)
 
@@ -19,14 +22,16 @@ def get_max_len_txt(input_text_file):
     return max_len
 
 
-def convert_to_hdf5(input_text_file, output_hdf5_file):
-    max_len = get_max_len_txt(input_text_file)
+def convert_to_hdf5(input_text_file, output_hdf5_file, max_len=None):
+    i = 1
+    if max_len is None:
+        max_len = get_max_len_txt(input_text_file)
     with open(input_text_file, "r", encoding="utf-8") as f:
         with h5py.File(output_hdf5_file, "w") as hf:
             dt = h5py.string_dtype(encoding="utf-8", length=max_len)
             dset = hf.create_dataset("isos", shape=(0,), maxshape=(None,), dtype=dt)
 
-            chunk_size = 10000
+            chunk_size = 1_000_000
             lines_buffer = []
 
             for line in f:
@@ -34,9 +39,11 @@ def convert_to_hdf5(input_text_file, output_hdf5_file):
                 lines_buffer.append(line)
 
                 if len(lines_buffer) >= chunk_size:
+                    logger.info(f"Writing Chunk {i}.")
                     dset.resize(dset.shape[0] + len(lines_buffer), axis=0)
                     dset[-len(lines_buffer) :] = lines_buffer
                     lines_buffer = []
+                    i += 1
 
             if lines_buffer:
                 dset.resize(dset.shape[0] + len(lines_buffer), axis=0)
@@ -76,10 +83,12 @@ class Dataset:
         chars: list | None = None,
         max_len: int | None = None,
         store_in_memory=False,
+        test_idx: list | None = None,
     ):
         self.hdf5_file = hdf5_file
         self.num_test_samps = num_test_samps
         self.store_in_memory = store_in_memory
+        self.test_idx = test_idx
 
         if data_size is None:
             self.data_size = self.get_data_size()
@@ -177,11 +186,12 @@ class Dataset:
             self.all_lines = all_lines
 
     def setup_train_test(self):
-        np.random.seed(42)
-        self.test_idx = np.random.choice(
-            len(self), size=self.num_test_samps, replace=False
-        )
-        self.test_idx = np.sort(self.test_idx)
+        if self.test_idx is None:
+            np.random.seed(42)
+            self.test_idx = np.random.choice(
+                len(self), size=self.num_test_samps, replace=False
+            )
+            self.test_idx = np.sort(self.test_idx)
         idx_map_dict = {
             t: len(self) - self.num_test_samps + i for i, t in enumerate(self.test_idx)
         }
@@ -192,6 +202,7 @@ class Dataset:
         train_idx = np.random.choice(
             len(self) - self.num_test_samps, size=batch_size, replace=replace
         )
+        assert self.test_idx is not None, "`test_idx` must be defined."
         remap_idx = np.intersect1d(train_idx, self.test_idx)
         if len(remap_idx) > 0:
             remap_idx = self.idx_map(remap_idx)
@@ -263,11 +274,12 @@ class Encoder:
 
 
 if __name__ == "__main__":
-    from pachner_traversal.utils import data_root
+    logging.basicConfig(level=logging.INFO)
+    logger.info("Starting.")
 
     dehydration_root = data_root / "input_data" / "dehydration"
 
-    input_path = dehydration_root / "raw" / "mcmc_samples" / "samps15_170m.txt"
-    hdf5_file = dehydration_root / "processed" / "spheres_15_170m.hdf5"
+    input_path = Path.home() / "final_unique.txt"
+    hdf5_file = dehydration_root / "processed" / "spheres_15_1b.hdf5"
 
-    convert_to_hdf5(input_path, hdf5_file)
+    convert_to_hdf5(input_path, hdf5_file, max_len=41)

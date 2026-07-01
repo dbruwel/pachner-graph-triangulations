@@ -283,6 +283,56 @@ def train_step_auto_regression(
 
 
 @jax.jit
+def train_step_classification(
+    state: MinimalTrainState,
+    batch_input: jax.Array,
+    batch_labels: jax.Array,
+    num_microbatches: int = 32,
+) -> tuple[MinimalTrainState, jax.Array]:
+    mb_input = batch_input.reshape(num_microbatches, -1, *batch_input.shape[1:])
+    mb_labels = batch_labels.reshape(num_microbatches, -1, *batch_labels.shape[1:])
+
+    def microbatch_step(carry, xs):
+        key, grad_acc, loss_acc = carry
+        x, y = xs
+
+        key, subkey = jax.random.split(key)
+
+        def loss_fn(params):
+            pred = state.apply_fn(
+                {"params": params},
+                x,
+                training=True,
+                rngs={"dropout": subkey},
+            )
+            pred_fp32 = pred.astype(jnp.float32)
+            loss = (
+                optax.sigmoid_binary_cross_entropy(pred_fp32, y).mean()
+                / num_microbatches
+            )
+            return loss
+
+        loss, grads = jax.value_and_grad(loss_fn)(state.params)
+
+        grad_acc = jax.tree_util.tree_map(lambda a, b: a + b, grad_acc, grads)
+        loss_acc += loss
+
+        return (key, grad_acc, loss_acc), None
+
+    init_grads = jax.tree_util.tree_map(jnp.zeros_like, state.params)
+    init_carry = (state.dropout_key, init_grads, jnp.array(0.0))
+
+    (new_dropout_key, total_grads, total_loss), _ = jax.lax.scan(
+        microbatch_step, init_carry, (mb_input, mb_labels)
+    )
+
+    new_state = state.apply_gradients(grads=total_grads)
+    new_state = new_state.replace(dropout_key=new_dropout_key)
+
+    return new_state, total_loss
+
+
+@jax.jit
 def train_step_scalar_regression(
     state: MinimalTrainState,
     batch_input: jax.Array,
