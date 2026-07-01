@@ -142,6 +142,11 @@ class Transformer(nn.Module):
 
     @nn.compact
     def __call__(self, idx: jax.Array, training: bool = False) -> jax.Array:
+        width_mult = self.d_model / self.base_d_model
+        init_std = 0.02 / jnp.sqrt(width_mult)
+        mup_init = nn.initializers.normal(init_std)
+        final_init = nn.initializers.zeros if self.output_size is None else mup_init
+
         output_size = self.output_size or self.vocab_size
         _, L = idx.shape
         assert L <= self.block_size, (
@@ -183,12 +188,11 @@ class Transformer(nn.Module):
 
         x = nn.LayerNorm(name="ln_f", dtype=jnp.bfloat16, param_dtype=jnp.float32)(x)
 
-        # Output Head (muP rule: Zero-initialization is mathematically optimal)
         logits = nn.Dense(
             features=output_size,
             use_bias=False,
             name="lm_head",
-            kernel_init=nn.initializers.zeros,  # Zeroed out for clean muP boundary
+            kernel_init=final_init,
             dtype=jnp.bfloat16,
             param_dtype=jnp.float32,
         )(x)
