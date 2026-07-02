@@ -254,7 +254,7 @@ def train_model(
 
 
 # Main functions.
-def main_train(config_path: pathlib.Path, nci: bool = False):
+def main_train(config_path: pathlib.Path, run_model_tag: str, nci: bool = False):
     logging.basicConfig(**logger_config)
     silence_jax()
 
@@ -263,6 +263,11 @@ def main_train(config_path: pathlib.Path, nci: bool = False):
     config_data["data_path"] = data_root / config_data["data_path_stem"]
     config_data["save_path"] = data_root / config_data["save_path_stem"]
     config_data["nci"] = nci
+    if (
+        config_data["run_model_tag"] != run_model_tag
+        or config_data["run_model_tag"] == "ignore"
+    ):
+        return
 
     config = ClassificationConfig.from_dict(config_data)
 
@@ -287,4 +292,4 @@ if __name__ == "__main__":
     data_root = get_data_root(nci)
     config_path = data_root.parent / "experiments" / "configs" / "classification"
     for config_file in config_path.glob("*.yaml"):
-        main_train(config_file, nci=nci)
+        main_train(config_file, "run", nci=nci)
