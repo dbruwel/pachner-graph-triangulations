@@ -212,7 +212,7 @@ def train_model(
         batch_size,
         num_train_steps,
         sweep,
-        flops=float(flops),
+        flops=float(flops) if flops else None,
         seq_len=seq_len,
     )
 
@@ -284,6 +284,9 @@ def train_model(
 
         jnp_inputs = jnp.stack(inputs_sweep)
         jnp_labels = jnp.stack(labels_sweep)
+
+        jax.debug.print(jnp_inputs.shape)
+        jax.debug.print(jnp_labels.shape)
 
         # Train sweep.
         logger.debug("Training...")

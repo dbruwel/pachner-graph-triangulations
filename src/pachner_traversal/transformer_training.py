@@ -286,7 +286,7 @@ def init_params(
     batch_size: int,
     num_train_steps: int | None,
     sweep: int,
-    flops: int | None = None,
+    flops: float | None = None,
     seq_len: int | None = None,
 ):
     # Clear path if it exists.
