@@ -10,10 +10,12 @@ from pachner_traversal.potential_functions import (
     Potential,
     VarianceEdgeDegree,
 )
-from pachner_traversal.utils import data_root
+from pachner_traversal.utils import get_data_root
 from regina import Triangulation3
 
 logger = logging.getLogger(__name__)
+
+data_root = get_data_root()
 
 
 def compute_potential_var(iso: str) -> float | np.floating:
@@ -85,6 +87,7 @@ def compute_potential_3_degree(iso: str) -> float:
 
     return potential_val
 
+
 def compute_potential_3_degree_regular(iso: str) -> float:
     tri = Triangulation3.rehydrate(iso)
     potential_val = 0.0
@@ -100,6 +103,7 @@ def compute_potential_3_degree_regular(iso: str) -> float:
         potential_val = potential_val + unit_degree
 
     return potential_val
+
 
 def compute_potential_3_degree_folded(iso: str) -> float:
     tri = Triangulation3.rehydrate(iso)

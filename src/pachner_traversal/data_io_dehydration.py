@@ -5,9 +5,10 @@ from pathlib import Path
 import h5py
 import numpy as np
 
-from pachner_traversal.utils import data_root
+from pachner_traversal.utils import get_data_root
 
 logger = logging.getLogger(__name__)
+data_root = get_data_root()
 
 
 def get_max_len_txt(input_text_file):

@@ -14,10 +14,12 @@ import jax.numpy as jnp
 import numpy as np
 from pachner_traversal.dit_discrete import DiscreteDiT
 from pachner_traversal.glue_encoding import encode, gluing_to_tri, jax_encode
-from pachner_traversal.utils import data_root
+from pachner_traversal.utils import get_data_root
 from scipy.optimize import linear_sum_assignment
 
 logger = logging.getLogger(__name__)
+
+data_root = get_data_root()
 
 
 # diffusion schedule

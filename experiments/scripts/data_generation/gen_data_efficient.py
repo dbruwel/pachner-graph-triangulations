@@ -4,7 +4,9 @@ import logging
 import random
 
 from pachner_traversal.mcmc import iterate
-from pachner_traversal.utils import data_root
+from pachner_traversal.utils import get_data_root
+
+data_root = get_data_root()
 
 logger = logging.getLogger(__name__)
 
