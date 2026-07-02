@@ -284,8 +284,8 @@ def init_params(
     dataset: Dataset,
     encoder: Encoder,
     batch_size: int,
-    num_train_steps: int | None,
     sweep: int,
+    num_train_steps: int | None = None,
     flops: float | None = None,
     seq_len: int | None = None,
 ):
@@ -308,7 +308,7 @@ def init_params(
         if flops is None or seq_len is None:
             raise TypeError("Must specify `num_train_steps` or `flops` and `seq_len`")
         else:
-            token_count = int(flops / 6 / model_size)
+            token_count = flops / 6 / model_size
             num_train_steps = int(token_count / seq_len / batch_size)
 
     steps = range(0, num_train_steps, sweep)

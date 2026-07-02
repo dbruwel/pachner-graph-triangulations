@@ -33,6 +33,7 @@ from pachner_traversal.utils import (
     get_sample_idx,
     load_model,
     logger_config,
+    name_to_fname,
     read_config,
     save_model,
     send_ntfy,
@@ -168,11 +169,11 @@ def train_model(
     base_d_model: int,
     batch_size: int,
     epochs: int,
-    num_train_steps: int,
+    num_train_steps: int | None,
+    flops: float | None,
     learning_rate: float,
     sweep: int,
     num_test_samps: int | None,
-    flops: int | None,
     intrem_sample_size: int | None,
     final_sample_size: int | None,
     intrem_train_loss: bool,
@@ -180,7 +181,7 @@ def train_model(
     final_test_loss: bool,
     final_save_model: bool,
     **kwargs,
-) -> tuple[float | None, int] | None:
+) -> tuple[float | None, int]:
     # Load data.
     dataset, encoder, test_input, test_label = load_data(data_path, num_test_samps)
     assert dataset.num_test_samps is not None, "`num_test_samps` is not defined."
@@ -198,7 +199,7 @@ def train_model(
         base_d_model=base_d_model,
     )
     _, params_key, dropout_key = keys
-    vocab_size, seq_len = meta
+    _, seq_len = meta
 
     # Initialise parameters.
     logger.debug("Initialising parameters")
@@ -209,9 +210,9 @@ def train_model(
         dataset,
         encoder,
         batch_size,
-        num_train_steps,
         sweep,
-        flops=float(flops) if flops else None,
+        num_train_steps=num_train_steps,
+        flops=flops,
         seq_len=seq_len,
     )
 
@@ -372,7 +373,10 @@ def main_train(config_path: pathlib.Path, run_model_tag: str, nci: bool = False)
     config_data = read_config(config_path)
     data_root = get_data_root(nci)
     config_data["data_path"] = data_root / config_data["data_path_stem"]
-    config_data["save_path"] = data_root / config_data["save_path_stem"]
+
+    fname = name_to_fname(config_data["dname"])
+    save_path = data_root / config_data["save_path_stem"] / fname
+    config_data["save_path"] = save_path
     config_data["num_train_steps"] = None
     config_data["nci"] = nci
     if (
@@ -381,9 +385,6 @@ def main_train(config_path: pathlib.Path, run_model_tag: str, nci: bool = False)
     ):
         return
 
-    config_data["save_path"].mkdir(parents=True, exist_ok=True)
-    shutil.copy(config_path, config_data["save_path"] / config_path.name)
-
     if "base_d_model" not in config_data:
         config_data["base_d_model"] = config_data["d_model"]
     if "num_heads" not in config_data:
@@ -391,15 +392,23 @@ def main_train(config_path: pathlib.Path, run_model_tag: str, nci: bool = False)
     if "flops" in config_data:
         config_data["flops"] = float(config_data["flops"])
 
-    logger.debug("Setting up config object")
     config = AutoRegressionConfig.from_dict(config_data)
+    assert isinstance(config.flops, float) or config.flops is None, "Bad type `flops`"
 
     tic = time.time()
-    train_model(**asdict(config))
+    test_loss_float, model_size = train_model(**asdict(config))
+    shutil.copy(config_path, config_data["save_path"] / config_path.name)
     toc = time.time()
 
     train_time = toc - tic
     logger.info(f"Training time: {train_time:.2f} seconds")
+
+    if not (data_root / config_data["save_path_stem"] / "all.csv").exists():
+        with open(data_root / config_data["save_path_stem"] / "all.csv", "a") as f:
+            f.write("name, test_loss, n_params\n")
+
+    with open(data_root / config_data["save_path_stem"] / "all.csv", "a") as f:
+        f.write(f"{fname}, {test_loss_float}, {model_size}\n")
 
     if not nci:
         message = f"Training time: {train_time:.2f} seconds."

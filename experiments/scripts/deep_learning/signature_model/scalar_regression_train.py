@@ -1,5 +1,6 @@
 import logging
 import pathlib
+import shutil
 import sys
 import time
 from dataclasses import asdict, dataclass
@@ -136,8 +137,8 @@ def train_model(
         dataset,
         encoder,
         batch_size,
-        num_train_steps,
         sweep,
+        num_train_steps=num_train_steps,
     )
 
     # Initialise train state.
@@ -256,6 +257,7 @@ def main_train(config_path: pathlib.Path, run_model_tag: str, nci: bool = False)
 
     tic = time.time()
     train_model(**asdict(config))
+    shutil.copy(config_path, config_data["save_path"] / config_path.name)
     toc = time.time()
 
     train_time = toc - tic

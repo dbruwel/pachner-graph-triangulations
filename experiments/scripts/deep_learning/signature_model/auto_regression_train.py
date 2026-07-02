@@ -172,7 +172,7 @@ def train_model(
     final_test_loss: bool,
     final_save_model: bool,
     **kwargs,
-) -> tuple[float | None, int] | None:
+) -> tuple[float | None, int]:
     # Load data.
     logger.info("Loading data.")
     dataset, encoder, train_input, train_label, test_input, test_label = load_data(
@@ -203,8 +203,8 @@ def train_model(
         dataset,
         encoder,
         batch_size,
-        num_train_steps,
         sweep,
+        num_train_steps=num_train_steps,
         flops=flops,
         seq_len=seq_len,
     )
@@ -351,19 +351,19 @@ def main_train(config_path: pathlib.Path, run_model_tag: str, nci: bool = False)
     ):
         return
 
-    config_data["save_path"].mkdir(parents=True, exist_ok=True)
-    shutil.copy(config_path, config_data["save_path"] / config_path.name)
-
     if "base_d_model" not in config_data:
         config_data["base_d_model"] = config_data["d_model"]
     if "num_heads" not in config_data:
         config_data["num_heads"] = config_data["d_model"] // config_data["head_size"]
+    if "flops" in config_data:
+        config_data["flops"] = float(config_data["flops"])
 
-    logger.debug("Setting up config object")
     config = AutoRegressionConfig.from_dict(config_data)
+    assert isinstance(config.flops, float) or config.flops is None, "Bad type `flops`"
 
     tic = time.time()
     train_model(**asdict(config))
+    shutil.copy(config_path, config_data["save_path"] / config_path.name)
     toc = time.time()
 
     train_time = toc - tic

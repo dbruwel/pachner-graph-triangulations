@@ -185,3 +185,7 @@ def train_to_raw_indices(train_batch_idx, test_indices_sorted):
         k = np.searchsorted(test_idxs, raw_batch, side="right")
 
     return raw_batch
+
+
+def name_to_fname(name):
+    return name.lower().replace(" ", "_")
