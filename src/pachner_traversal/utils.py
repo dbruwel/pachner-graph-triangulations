@@ -1,31 +1,34 @@
 import csv
+import logging
 import os
-import pathlib
 import pickle
 from datetime import datetime
+from pathlib import Path
+from typing import Any
 
 import matplotlib.pyplot as plt
 import numpy as np
 import requests
+import yaml
 
-data_root = pathlib.Path(__file__).parent.parent.parent / "data"
-
-leading_chars = {
-    10: "k",
-    11: "l",
-    12: "m",
-    13: "n",
-    14: "o",
-    15: "p",
-    16: "q",
-    17: "r",
-    18: "s",
-    19: "t",
-    20: "u",
+logger_config = {
+    "format": "%(asctime)s [%(levelname)s] %(name)s: %(message)s",
+    "datefmt": "%Y-%m-%d %H:%M:%S",
+    "level": logging.DEBUG,
 }
 
 
-def create_results_path(res_name: str | pathlib.Path) -> pathlib.Path:
+def get_data_root(nci: bool = False) -> Path:
+    if nci:
+        return Path("/g/data/io00/js1886/pachner-graph-triangulations/data")
+    else:
+        return Path(__file__).parent.parent.parent / "data"
+
+
+def create_results_path(
+    res_name: str | Path,
+    data_root: Path,
+) -> Path:
     res_path = data_root / "results" / res_name
 
     path = res_path / datetime.now().strftime("%Y%m%d_%H%M")
@@ -34,7 +37,7 @@ def create_results_path(res_name: str | pathlib.Path) -> pathlib.Path:
 
 
 def set_style() -> None:
-    style_path = pathlib.Path(__file__).parent / "stylelib" / "journal.mplstyle"
+    style_path = Path(__file__).parent / "stylelib" / "journal.mplstyle"
 
     plt.style.use(style_path)
 
@@ -84,7 +87,7 @@ def write_loss(save_path, step, loss):
 
 
 def save_model(save_path, state, tag=None):
-    fname = f"params{tag}.pkl" if tag else "params.pkl"
+    fname = f"params_{tag}.pkl" if tag else "params.pkl"
 
     with open(save_path / fname, "wb") as file:
         pickle.dump(state.params, file)
@@ -152,3 +155,15 @@ def get_last_csv_row(filepath):
 
 def normalize(x):
     return (x - x.mean()) / x.std()
+
+
+def silence_jax():
+    os.environ["TF_CPP_MIN_LOG_LEVEL"] = "2"
+    logging.getLogger("jax").setLevel(logging.WARNING)
+    logging.getLogger("absl").setLevel(logging.WARNING)
+
+
+def read_config(config_path: Path) -> dict[str, Any]:
+    with open(config_path, "r") as f:
+        config = yaml.safe_load(f)
+    return config

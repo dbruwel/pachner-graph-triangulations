@@ -1,69 +1,51 @@
 import logging
 import pathlib
-import sys
 import time
-from functools import partial
+from dataclasses import asdict, dataclass
 
-import jax
 import jax.numpy as jnp
 import numpy as np
 import optax
 from pachner_traversal.data_io_dehydration import Dataset, Encoder
-from pachner_traversal.transformer import (
-    MinimalTrainState,
-    ScalarTransformer,
+from pachner_traversal.transformer import ScalarTransformer
+from pachner_traversal.transformer_training import (
+    BaseConfig,
+    create_get_test_loss,
+    create_train_step,
     init_model,
     init_params,
     init_train_state,
-    train_step_classification,
     train_sweep_steps,
 )
 from pachner_traversal.utils import (
     create_sample_schedule,
-    data_root,
+    get_data_root,
     get_sample_idx,
+    logger_config,
+    read_config,
     save_model,
     send_ntfy,
+    silence_jax,
     write_loss,
     write_stat,
 )
 
+
+@dataclass
+class ClassificationConfig(BaseConfig):
+    output_size: int
+    use_mask: bool
+
+
 logger = logging.getLogger(__name__)
+loss_metric_fn = optax.sigmoid_binary_cross_entropy
+
+get_test_loss = create_get_test_loss(loss_metric_fn)
+train_step = create_train_step(loss_metric_fn)
 
 
-# jax utility
-@partial(jax.jit)
-def get_test_loss(
-    state: MinimalTrainState,
-    test_batch_input: jax.Array,
-    test_batch_label: jax.Array,
-) -> jax.Array:
-    logits = state.apply_fn(
-        {"params": state.params},
-        test_batch_input,
-        training=False,
-    )
-    test_loss = optax.sigmoid_binary_cross_entropy(logits, test_batch_label).mean()
-    return test_loss
-
-
-# critical functions
-def train_model(
-    data_path: pathlib.Path,
-    save_path: pathlib.Path,
-    d_model: int = 512,
-    num_layers: int = 6,
-    num_heads: int = 4,
-    use_mask: bool = True,
-    output_size: int | None = None,
-    batch_size: int = 64,
-    epochs: int = 64,
-    num_train_steps: int = 1_000_000,
-    sweep: int = 10_000,
-    learning_rate: float = 0.0005,
-    resume: bool = True,
-) -> None:
-
+# Helper functions.
+def load_data(data_path):
     # Dataset and Encoder.
     dataset = Dataset(data_path, 1)
     encoder = Encoder(dataset)
@@ -96,7 +78,51 @@ def train_model(
     train_input = all_data_input[all_data_is_test == 0]
     train_target_value = all_data_target_value[all_data_is_test == 0]
 
-    # Setup model.
+    return (
+        dataset,
+        encoder,
+        train_input,
+        train_target_value,
+        test_inputs,
+        test_target_values,
+        unique_tri_types,
+    )
+
+
+# critical functions
+def train_model(
+    data_path: pathlib.Path,
+    save_path: pathlib.Path,
+    d_model: int = 512,
+    num_layers: int = 6,
+    num_heads: int = 4,
+    use_mask: bool = True,
+    output_size: int | None = None,
+    batch_size: int = 64,
+    epochs: int = 64,
+    num_train_steps: int = 1_000_000,
+    sweep: int = 10_000,
+    learning_rate: float = 0.0005,
+    use_mup: bool = False,
+    base_d_model: int = 64,
+    intrem_train_loss: bool = True,
+    intrem_test_loss: bool = False,
+    final_test_loss: bool = True,
+    final_save_model: bool = True,
+) -> tuple[dict[str, float] | None, int]:
+
+    # Load data.
+    (
+        dataset,
+        encoder,
+        train_input,
+        train_target_value,
+        test_inputs,
+        test_target_values,
+        unique_tri_types,
+    ) = load_data(data_path)
+
+    # Initialise model.
     model, keys, _ = init_model(
         ScalarTransformer,
         dataset,
@@ -106,11 +132,13 @@ def train_model(
         num_heads=num_heads,
         use_mask=use_mask,
         output_size=output_size,
+        use_mup=False,
+        base_d_model=base_d_model,
     )
     _, params_key, dropout_key = keys
 
-    # Resume / init parameters.
-    resumed, meta, steps, params = init_params(
+    # Initialise parameters.
+    model_size, steps, params = init_params(
         model,
         params_key,
         save_path,
@@ -119,22 +147,21 @@ def train_model(
         batch_size,
         num_train_steps,
         sweep,
-        resume,
     )
 
+    # Initialise train state.
     state = init_train_state(
         model,
         params,
         dropout_key,
         train_steps=num_train_steps,
         peak_learning_rate=learning_rate,
+        use_mup=use_mup,
+        base_d_model=base_d_model,
     )
 
-    if resumed:
-        logger.info(f"Training resume from {meta:,}")
-    else:
-        write_stat(save_path / "stats.txt", "n_params", f"{meta:,}")
-        logger.info(f"Model initialized. Parameter count: {meta}")
+    write_stat(save_path / "stats.txt", "n_params", f"{model_size:,}")
+    logger.info(f"Model initialized. Parameter count: {model_size:,}")
 
     schedule = create_sample_schedule(
         batch_size,
@@ -152,20 +179,21 @@ def train_model(
 
         for i in range(sweep):
             sample_idx = get_sample_idx(schedule, batch_size, step + i)
-            inputs_sweep.append(train_input[sample_idx])
-            target_values_sweep.append(train_target_value[sample_idx])
+            if len(sample_idx) == batch_size:
+                inputs_sweep.append(train_input[sample_idx])
+                target_values_sweep.append(train_target_value[sample_idx])
+            else:
+                awk_size = len(sample_idx)
+                logger.warning(f"{awk_size} akward samples found, discarding.")
+                break
 
-        try:
-            jnp_inputs = jnp.stack(inputs_sweep)
-            jnp_target_values = jnp.stack(target_values_sweep)
-        except Exception as _:
-            m = "Error stacking inputs or target values. Likely incomplete sweep size."
-            logger.error(m)
-            continue
+        actual_sweep = len(inputs_sweep)
+        jnp_inputs = jnp.stack(inputs_sweep)
+        jnp_target_values = jnp.stack(target_values_sweep)
 
         # Run training steps.
         state, losses = train_sweep_steps(
-            train_step_classification,
+            train_step,
             state,
             jnp_inputs,
             jnp_target_values,
@@ -173,10 +201,38 @@ def train_model(
         loss = jnp.mean(losses)
 
         # Log progress.
-        msg = f"Step {step + sweep:,}/{num_train_steps:,}, Loss: {float(loss):.4f}"
+        snum = step + actual_sweep
+        msg = f"Step {snum:,}/{num_train_steps:,}, Loss: {float(loss):.4f}"
         logger.info(msg)
 
-        # Get test loss.
+        # Intrem results.
+        if intrem_train_loss:
+            write_loss(
+                save_path / "train_losses.csv",
+                step + actual_sweep,
+                float(loss),
+            )
+        del loss
+        del losses
+
+        if intrem_test_loss:
+            for tri_type in unique_tri_types:
+                test_input = test_inputs[tri_type]
+                test_target_value = test_target_values[tri_type]
+                test_loss = get_test_loss(
+                    state,
+                    test_input,
+                    test_target_value,
+                )
+                write_loss(
+                    save_path / f"test_losses_{tri_type}.csv",
+                    step + actual_sweep,
+                    float(test_loss),
+                )
+                del test_loss
+
+    if final_test_loss:
+        test_losses = {}
         for tri_type in unique_tri_types:
             test_input = test_inputs[tri_type]
             test_target_value = test_target_values[tri_type]
@@ -185,73 +241,49 @@ def train_model(
                 test_input,
                 test_target_value,
             )
-            write_loss(
-                save_path / f"test_losses_{tri_type}.csv",
-                step + sweep,
-                float(test_loss),
-            )
+            test_losses[tri_type] = float(test_loss)
             del test_loss
+    else:
+        test_losses = None
 
-        # Write data.
-        write_loss(
-            save_path / "train_losses.csv",
-            step + sweep,
-            float(loss),
-        )
-
+    if final_save_model:
         save_model(save_path, state)
 
-        del loss
-        del losses
+    return test_losses, model_size
 
 
 # Main functions.
-def main_train(lr):
-    N = 10
+def main_train(config_path: pathlib.Path, nci: bool = False):
+    logging.basicConfig(**logger_config)
+    silence_jax()
 
-    logging.basicConfig(level=logging.INFO)
+    config_data = read_config(config_path)
+    data_root = get_data_root(nci)
+    config_data["data_path"] = data_root / config_data["data_path_stem"]
+    config_data["save_path"] = data_root / config_data["save_path_stem"]
+    config_data["nci"] = nci
 
-    processed_data_home = data_root / "input_data" / "dehydration" / "processed"
-    data_path = processed_data_home / f"classification_{N}.hdf5"
-
-    save_path = (
-        data_root
-        / "results"
-        / "sgd_models_dehydration"
-        / "classification"
-        / f"{lr}lr_8epoch_512batch"
-        / f"512emb_6block_4head_{N}tet"
-    )
+    config = ClassificationConfig.from_dict(**config_data)
 
     tic = time.time()
-    train_model(
-        data_path,
-        save_path,
-        d_model=512,
-        num_layers=6,
-        num_heads=4,
-        use_mask=True,
-        output_size=64,
-        batch_size=512,
-        epochs=8,
-        num_train_steps=60_000,
-        sweep=250,
-        learning_rate=lr,
-        resume=False,
-    )
+    train_model(**asdict(config))
     toc = time.time()
 
     train_time = toc - tic
     logger.info(f"Training time: {train_time:.2f} seconds")
 
-    message = f"Training time: {train_time:.2f} seconds."
-    send_ntfy(
-        "usyd-knottedness",
-        "Finished training for classification.",
-        message,
-    )
+    if not nci:
+        message = f"Training time: {train_time:.2f} seconds."
+        send_ntfy(
+            "usyd-knottedness",
+            f"Finished training for {config.dname}.",
+            message,
+        )
 
 
 if __name__ == "__main__":
-    if "low" in sys.argv:
-        main_train(3e-4)
+    nci = False
+    data_root = get_data_root(nci)
+    config_path = data_root.parent / "experiments" / "configs" / "classification"
+    for config_file in config_path.glob("*.yaml"):
+        main_train(config_file, nci=nci)

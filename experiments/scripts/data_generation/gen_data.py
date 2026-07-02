@@ -2,8 +2,9 @@ import logging
 import random
 
 import numpy as np
+from pachner_traversal.data import leading_chars
 from pachner_traversal.mcmc import run_chain_multi_arg
-from pachner_traversal.utils import data_root, leading_chars
+from pachner_traversal.utils import get_data_root
 
 logger = logging.getLogger(__name__)
 
@@ -56,6 +57,7 @@ def main():
     unique_list = []
 
     # Pathing.
+    data_root = get_data_root()
     save_path = data_root / "input_data" / "dehydration" / "raw" / "mcmc_samples"
     fname = f"samps{size}_500m.txt"
 

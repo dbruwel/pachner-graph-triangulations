@@ -1,192 +1,42 @@
+"""
+Specialised version of auto regression train to specifically train for 15 tetrahedra.
+The only difference with this file is that some of the data for the dataset is precomputed
+to reduce loading time.
+"""
+
 import logging
 import pathlib
 import sys
 import time
-from functools import partial
 
-import jax
 import jax.numpy as jnp
 import numpy as np
-import optax
+from pachner_traversal.data import char_list15
 from pachner_traversal.data_io_dehydration import Dataset, Encoder
 from pachner_traversal.transformer import (
-    MinimalTrainState,
     Transformer,
-    generate_samples,
+)
+from pachner_traversal.transformer_training import (
     init_model,
     init_params,
     init_train_state,
     train_step_auto_regression,
     train_sweep_steps,
 )
-from pachner_traversal.utils import data_root as data_root
 from pachner_traversal.utils import (
-    load_model,
+    get_data_root,
+    logger_config,
+    silence_jax,
     write_loss,
     write_stat,
 )
 
+from .auto_regression_train import get_test_loss
+
 logger = logging.getLogger(__name__)
-
-char_list = [
-    "Ha",
-    "Hb",
-    "Hc",
-    "Hd",
-    "He",
-    "Hf",
-    "Hg",
-    "Hh",
-    "Hi",
-    "Hj",
-    "Hk",
-    "Hl",
-    "Hm",
-    "Hn",
-    "Ho",
-    "Hp",
-    "Hq",
-    "Hr",
-    "Hs",
-    "Ht",
-    "Hu",
-    "Hv",
-    "Hw",
-    "Hx",
-    "Na",
-    "Nb",
-    "Nc",
-    "Nd",
-    "Ne",
-    "Nf",
-    "Ng",
-    "Nh",
-    "Ni",
-    "Nj",
-    "Nk",
-    "Nl",
-    "Nm",
-    "Nn",
-    "No",
-    "Np",
-    "Wa",
-    "Wb",
-    "Wc",
-    "Wd",
-    "We",
-    "Wf",
-    "Wg",
-    "Wh",
-    "Wi",
-    "Wj",
-    "Wk",
-    "Wl",
-    "Wm",
-    "Wn",
-    "Wo",
-    "p",
-]
-
-
-# jax utility
-@partial(jax.jit, static_argnames=["vocab_size"])
-def get_test_loss(
-    state: MinimalTrainState,
-    test_batch_input: jax.Array,
-    test_batch_label: jax.Array,
-    vocab_size: int,
-) -> jax.Array:
-    test_logits = state.apply_fn(
-        {"params": state.params},
-        test_batch_input,
-        training=False,
-    )
-
-    test_one_hot_labels = jax.nn.one_hot(test_batch_label, num_classes=vocab_size)
-    test_loss = optax.softmax_cross_entropy(test_logits, test_one_hot_labels).mean()
-    return test_loss
 
 
 # critical functions
-def sample_model_from_save(
-    data_path: pathlib.Path,
-    save_path: pathlib.Path,
-    d_model: int = 512,
-    num_layers: int = 6,
-    num_heads: int = 4,
-    num_test_samps: int = 1_000,
-    gen_its: int = 10,
-    samps_to_gen: int = 1_000,
-    tag: str | None = None,
-    params_fname: str = "params.pkl",
-) -> None:
-    # setup model
-    dataset = Dataset(
-        data_path,
-        num_test_samps,
-        data_size=160_036_916,
-        chars=char_list,
-        max_len=41,
-        store_in_memory=True,
-    )
-    encoder = Encoder(dataset)
-
-    params = load_model(save_path, params_fname)
-
-    model, keys, meta = init_model(
-        Transformer,
-        dataset,
-        encoder,
-        d_model=d_model,
-        num_layers=num_layers,
-        num_heads=num_heads,
-    )
-    _, _, dropout_key = keys
-    _, seq_len = meta
-
-    state = init_train_state(model, params, dropout_key)
-
-    # generate samples
-    sample_model(
-        encoder=encoder,
-        state=state,
-        seq_len=seq_len,
-        save_path=save_path,
-        gen_its=gen_its,
-        samps_to_gen=samps_to_gen,
-        tag=tag,
-    )
-
-
-def sample_model(
-    encoder: Encoder,
-    state,
-    seq_len,
-    save_path: pathlib.Path,
-    gen_its: int = 10,
-    samps_to_gen: int = 1_000,
-    tag: str | None = None,
-) -> None:
-    # generate samples
-    bos_id = encoder.char_to_id["[BOS]"]
-    subkey = jax.random.PRNGKey(42)
-
-    samps_str = []
-    for i in range(gen_its):
-        logger.info(f"Generating samples... Iteration {i + 1}/{gen_its}")
-        subkey = jax.random.split(subkey, 1)[0]
-        samps = generate_samples(state, samps_to_gen, seq_len, subkey, bos_id)
-        samps_str = samps_str + encoder.decode(np.array(samps))
-
-    # save samps
-    fname = f"generated_samples_{tag}.txt" if tag else "generated_samples.txt"
-    samp_save_path = save_path / fname
-
-    with open(samp_save_path, "w") as f:
-        for samp in samps_str:
-            f.write(samp + "\n")
-
-
 def setup_model(
     data_path: pathlib.Path,
     d_model: int = 512,
@@ -201,7 +51,7 @@ def setup_model(
         data_path,
         num_test_samps,
         data_size=160_036_916,
-        chars=char_list,
+        chars=char_list15,
         max_len=41,
         store_in_memory=True,
     )
@@ -311,7 +161,7 @@ def train_model(
     bulk_num_train_steps = sweep * (num_train_steps // sweep)
 
     logger.debug("Initialising parameters")
-    resumed, meta, steps, params = init_params(
+    meta, steps, params = init_params(
         model,
         params_key,
         save_path,
@@ -332,11 +182,8 @@ def train_model(
         d_model=d_model,
     )
 
-    if resumed:
-        logger.info(f"Training resume from {meta:,}")
-    else:
-        write_stat(save_path / "stats.txt", "n_params", f"{meta:,}")
-        logger.info(f"Model initialized. Parameter count: {meta:,}")
+    write_stat(save_path / "stats.txt", "n_params", f"{meta:,}")
+    logger.info(f"Model initialized. Parameter count: {meta:,}")
 
     # Training.
     logger.info("\n--- Starting Training ---")
@@ -433,16 +280,10 @@ def train_model(
 
 
 def main_train_scale(models):
-    import os
+    logging.basicConfig(**logger_config)
+    silence_jax()
 
-    os.environ["TF_CPP_MIN_LOG_LEVEL"] = "2"
-    logging.basicConfig(
-        format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
-        datefmt="%Y-%m-%d %H:%M:%S",
-        level=logging.DEBUG,
-    )
-    logging.getLogger("jax").setLevel(logging.WARNING)
-    logging.getLogger("absl").setLevel(logging.WARNING)
+    data_root = get_data_root()
 
     for model in models:
         processed_data_home = data_root / "input_data" / "dehydration" / "processed"
@@ -520,6 +361,16 @@ def main_train_scale(models):
 
 
 if __name__ == "__main__":
+    all_runs_aspect = [
+        (512, 2, 10e15),
+        (416, 3, 10e15),
+        (352, 4, 10e15),
+        (320, 5, 10e15),
+        (288, 6, 10e15),
+        (256, 8, 10e15),
+        (224, 10, 10e15),
+    ]
+
     all_runs = [
         (128, 2, 6e15),
         (192, 3, 6e15),
