@@ -381,5 +381,5 @@ if __name__ == "__main__":
     data_root = get_data_root(nci)
     config_path = data_root.parent / "experiments" / "configs" / "isoflop_aspect_ratio"
     tag = sys.argv[1] if len(sys.argv) > 1 else "run"
-    for config_file in config_path.glob("*.yaml"):
+    for config_file in config_path.rglob("*.yaml"):
         main_train(config_file, tag, nci=nci)
