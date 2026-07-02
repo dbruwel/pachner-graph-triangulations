@@ -284,9 +284,6 @@ def train_model(
         jnp_inputs = jnp.stack(inputs_sweep)
         jnp_labels = jnp.stack(labels_sweep)
 
-        jax.debug.print("input shape {x}", x=jnp_inputs.shape)
-        jax.debug.print("label shape {x}", x=jnp_labels.shape)
-
         # Train sweep.
         logger.debug("Training...")
         state, losses = train_sweep_steps(
@@ -317,7 +314,6 @@ def train_model(
                 state,
                 test_input,
                 test_label,
-                vocab_size,
             )
             write_loss(
                 save_path / "test_losses.csv",
@@ -343,7 +339,6 @@ def train_model(
             state,
             test_input,
             test_label,
-            vocab_size,
         )
         test_loss_float = float(test_loss)
         del test_loss

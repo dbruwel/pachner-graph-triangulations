@@ -284,7 +284,6 @@ def train_model(
                 state,
                 test_input,
                 test_label,
-                vocab_size,
             )
             write_loss(
                 save_path / "test_losses.csv",
@@ -310,7 +309,6 @@ def train_model(
             state,
             test_input,
             test_label,
-            vocab_size,
         )
         test_loss_float = float(test_loss)
         del test_loss
