@@ -174,6 +174,7 @@ def train_model(
     **kwargs,
 ) -> tuple[float | None, int] | None:
     # Load data.
+    logger.info("Loading data.")
     dataset, encoder, train_input, train_label, test_input, test_label = load_data(
         data_path, num_test_samps
     )
@@ -339,6 +340,8 @@ def main_train(config_path: pathlib.Path, run_model_tag: str, nci: bool = False)
     logging.basicConfig(**logger_config)
     silence_jax()
 
+    logger.info(f"Considering job {config_path}")
+
     config_data = read_config(config_path)
     data_root = get_data_root(nci)
     config_data["data_path"] = data_root / config_data["data_path_stem"]
@@ -359,6 +362,7 @@ def main_train(config_path: pathlib.Path, run_model_tag: str, nci: bool = False)
     if "num_heads" not in config_data:
         config_data["num_heads"] = config_data["d_model"] // config_data["head_size"]
 
+    logger.debug("Setting up config object")
     config = AutoRegressionConfig.from_dict(config_data)
 
     tic = time.time()

@@ -5,6 +5,8 @@ memory ussage etc. specific for the 15 tetrahedra scaling law work.
 
 import logging
 import pathlib
+import shutil
+import sys
 import time
 from dataclasses import asdict, dataclass
 
@@ -361,16 +363,33 @@ def train_model(
     return test_loss_float, model_size
 
 
-def main_train(config_path: pathlib.Path, nci: bool = False):
+def main_train(config_path: pathlib.Path, run_model_tag: str, nci: bool = False):
     logging.basicConfig(**logger_config)
     silence_jax()
+
+    logger.info(f"Considering job {config_path}")
 
     config_data = read_config(config_path)
     data_root = get_data_root(nci)
     config_data["data_path"] = data_root / config_data["data_path_stem"]
     config_data["save_path"] = data_root / config_data["save_path_stem"]
+    config_data["num_train_steps"] = None
     config_data["nci"] = nci
+    if (
+        config_data["run_model_tag"] != run_model_tag
+        or config_data["run_model_tag"] == "ignore"
+    ):
+        return
 
+    config_data["save_path"].mkdir(parents=True, exist_ok=True)
+    shutil.copy(config_path, config_data["save_path"] / config_path.name)
+
+    if "base_d_model" not in config_data:
+        config_data["base_d_model"] = config_data["d_model"]
+    if "num_heads" not in config_data:
+        config_data["num_heads"] = config_data["d_model"] // config_data["head_size"]
+
+    logger.debug("Setting up config object")
     config = AutoRegressionConfig.from_dict(config_data)
 
     tic = time.time()
@@ -390,4 +409,9 @@ def main_train(config_path: pathlib.Path, nci: bool = False):
 
 
 if __name__ == "__main__":
-    pass
+    nci = False
+    data_root = get_data_root(nci)
+    config_path = data_root.parent / "experiments" / "configs" / "isoflop_aspect_ratio"
+    tag = sys.argv[1] if len(sys.argv) > 1 else "run"
+    for config_file in config_path.rglob("*.yaml"):
+        main_train(config_file, tag, nci=nci)

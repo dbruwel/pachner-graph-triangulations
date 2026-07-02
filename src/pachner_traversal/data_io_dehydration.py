@@ -96,9 +96,11 @@ class Dataset:
         self.store_in_memory = store_in_memory
         self.test_rng_seed = test_rng_seed
 
+        logger.debug("Getting data size")
         self.data_size = self.get_data_size()
 
         if (chars is None) or (max_len is None):
+            logger.info("Getting chars and max length.")
             self.chars, self.max_len = self.get_chars_and_max_len()
         else:
             self.chars = chars
