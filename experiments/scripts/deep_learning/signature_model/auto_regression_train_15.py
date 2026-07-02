@@ -285,8 +285,8 @@ def train_model(
         jnp_inputs = jnp.stack(inputs_sweep)
         jnp_labels = jnp.stack(labels_sweep)
 
-        jax.debug.print(jnp_inputs.shape)
-        jax.debug.print(jnp_labels.shape)
+        jax.debug.print("input shape {x}", x=jnp_inputs.shape)
+        jax.debug.print("label shape {x}", x=jnp_labels.shape)
 
         # Train sweep.
         logger.debug("Training...")
