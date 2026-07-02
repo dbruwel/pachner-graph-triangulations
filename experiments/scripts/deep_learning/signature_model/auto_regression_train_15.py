@@ -171,7 +171,8 @@ def train_model(
     num_train_steps: int,
     learning_rate: float,
     sweep: int,
-    num_test_samps: int,
+    num_test_samps: int | None,
+    flops: int | None,
     intrem_sample_size: int | None,
     final_sample_size: int | None,
     intrem_train_loss: bool,
@@ -211,6 +212,8 @@ def train_model(
         batch_size,
         num_train_steps,
         sweep,
+        flops=flops,
+        seq_len=seq_len,
     )
 
     # Initialise train state.
