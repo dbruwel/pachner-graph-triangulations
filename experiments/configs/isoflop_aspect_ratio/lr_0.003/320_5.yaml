@@ -1,0 +1,20 @@
+dname: Ratio train 320_5 0.003
+data_path_stem: input_data/dehydration/processed/spheres_15_170m.hdf5
+save_path_stem: results/sgd_models_dehydration/isoflop_aspect_ratio_scale/lr_0.0001
+d_model: 320
+num_layers: 5
+head_size: 32
+batch_size: 512
+epochs: 1
+num_test_samps: 5000
+flops: 1e16
+sweep: 5000
+learning_rate: 0.003
+use_mup: false
+intrem_train_loss: false
+intrem_test_loss: false
+final_test_loss: true
+final_save_model: false
+intrem_sample_size: null
+final_sample_size: null
+run_model_tag: run_0.003

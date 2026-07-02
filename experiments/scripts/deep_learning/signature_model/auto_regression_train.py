@@ -1,5 +1,7 @@
 import logging
 import pathlib
+import shutil
+import sys
 import time
 from dataclasses import asdict, dataclass
 
@@ -158,7 +160,8 @@ def train_model(
     base_d_model: int,
     batch_size: int,
     epochs: int,
-    num_train_steps: int,
+    num_train_steps: int | None,
+    flops: int | None,
     learning_rate: float,
     sweep: int,
     num_test_samps: int,
@@ -191,19 +194,19 @@ def train_model(
     vocab_size, seq_len = meta
     test_one_hot_labels = jax.nn.one_hot(test_label, num_classes=vocab_size)
 
-    bulk_num_train_steps = sweep * (num_train_steps // sweep)
-
     # Initialise parameters.
     logger.debug("Initialising parameters")
-    model_size, steps, params = init_params(
+    model_size, steps, params, num_train_steps = init_params(
         model,
         params_key,
         save_path,
         dataset,
         encoder,
         batch_size,
-        bulk_num_train_steps,
+        num_train_steps,
         sweep,
+        flops=flops,
+        seq_len=seq_len,
     )
 
     # Initialise train state.
@@ -332,7 +335,7 @@ def train_model(
     return test_loss_float, model_size
 
 
-def main_train(config_path: pathlib.Path, nci: bool = False):
+def main_train(config_path: pathlib.Path, run_model_tag: str, nci: bool = False):
     logging.basicConfig(**logger_config)
     silence_jax()
 
@@ -341,6 +344,19 @@ def main_train(config_path: pathlib.Path, nci: bool = False):
     config_data["data_path"] = data_root / config_data["data_path_stem"]
     config_data["save_path"] = data_root / config_data["save_path_stem"]
     config_data["nci"] = nci
+    if (
+        config_data["run_model_tag"] != run_model_tag
+        or config_data["run_model_tag"] == "ignore"
+    ):
+        return
+
+    config_data["save_path"].mkdir(parents=True, exists_ok=True)
+    shutil.copy(config_path, config_data["save_path"] / config_path.name)
+
+    if "base_d_model" not in config_data:
+        config_data["base_d_model"] = config_data["d_model"]
+    if "num_heads" not in config_data:
+        config_data["num_heads"] = config_data["d_model"] // config_data["head_size"]
 
     config = AutoRegressionConfig.from_dict(config_data)
 
@@ -361,4 +377,9 @@ def main_train(config_path: pathlib.Path, nci: bool = False):
 
 
 if __name__ == "__main__":
-    pass
+    nci = False
+    data_root = get_data_root(nci)
+    config_path = data_root.parent / "experiments" / "configs" / "classification"
+    tag = sys.argv[1] if len(sys.argv) > 1 else "run"
+    for config_file in config_path.glob("*.yaml"):
+        main_train(config_file, tag, nci=nci)

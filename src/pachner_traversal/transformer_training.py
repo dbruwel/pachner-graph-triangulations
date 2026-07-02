@@ -29,7 +29,7 @@ class BaseConfig:
     batch_size: int
     epochs: int
     num_test_samps: int | None
-    num_train_steps: int
+    num_train_steps: int | None
     sweep: int
     learning_rate: float
     use_mup: bool
@@ -39,6 +39,7 @@ class BaseConfig:
     final_test_loss: bool
     final_save_model: bool
     nci: bool
+    flops: int | None
 
     @classmethod
     def from_dict(cls, data: dict):
@@ -283,8 +284,10 @@ def init_params(
     dataset: Dataset,
     encoder: Encoder,
     batch_size: int,
-    num_train_steps: int,
+    num_train_steps: int | None,
     sweep: int,
+    flops: int | None = None,
+    seq_len: int | None = None,
 ):
     # Clear path if it exists.
     if load_path.exists() and load_path.is_dir():
@@ -301,6 +304,13 @@ def init_params(
 
     model_size = sum(x.size for x in jax.tree_util.tree_leaves(params))
 
+    if num_train_steps is None:
+        if flops is None or seq_len is None:
+            raise TypeError("Must specify `num_train_steps` or `flops` and `seq_len`")
+        else:
+            token_count = int(flops / 6 / model_size)
+            num_train_steps = int(token_count / seq_len / batch_size)
+
     steps = range(0, num_train_steps, sweep)
 
-    return model_size, steps, params
+    return model_size, steps, params, num_train_steps

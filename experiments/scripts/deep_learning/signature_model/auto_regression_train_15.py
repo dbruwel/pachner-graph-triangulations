@@ -198,18 +198,16 @@ def train_model(
     vocab_size, seq_len = meta
     test_one_hot_labels = jax.nn.one_hot(test_label, num_classes=vocab_size)
 
-    bulk_num_train_steps = sweep * (num_train_steps // sweep)
-
     # Initialise parameters.
     logger.debug("Initialising parameters")
-    model_size, steps, params = init_params(
+    model_size, steps, params, num_train_steps = init_params(
         model,
         params_key,
         save_path,
         dataset,
         encoder,
         batch_size,
-        bulk_num_train_steps,
+        num_train_steps,
         sweep,
     )
 

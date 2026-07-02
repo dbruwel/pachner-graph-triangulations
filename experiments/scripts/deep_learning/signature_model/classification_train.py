@@ -141,7 +141,7 @@ def train_model(
     _, params_key, dropout_key = keys
 
     # Initialise parameters.
-    model_size, steps, params = init_params(
+    model_size, steps, params, num_train_steps = init_params(
         model,
         params_key,
         save_path,
