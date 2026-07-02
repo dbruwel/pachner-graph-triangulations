@@ -1,5 +1,6 @@
 import logging
 import pathlib
+import sys
 import time
 from dataclasses import asdict, dataclass
 
@@ -87,24 +88,24 @@ def load_data(data_path, num_test_samps, dset_name):
 def train_model(
     data_path: pathlib.Path,
     save_path: pathlib.Path,
-    dset_name: ObjType = "edge_degree_variance",
-    d_model: int = 512,
-    num_layers: int = 6,
-    num_heads: int = 4,
-    use_mask: bool = True,
-    output_size: int | None = None,
-    batch_size: int = 64,
-    epochs: int = 64,
-    num_test_samps: int = 1_000,
-    num_train_steps: int = 1_000_000,
-    sweep: int = 10_000,
-    learning_rate: float = 0.0005,
-    use_mup: bool = False,
-    base_d_model: int = 64,
-    intrem_train_loss: bool = True,
-    intrem_test_loss: bool = False,
-    final_test_loss: bool = True,
-    final_save_model: bool = True,
+    dset_name: ObjType,
+    d_model: int,
+    num_layers: int,
+    num_heads: int,
+    use_mask: bool,
+    output_size: int | None,
+    use_mup: bool,
+    base_d_model: int,
+    batch_size: int,
+    epochs: int,
+    num_train_steps: int,
+    learning_rate: float,
+    sweep: int,
+    num_test_samps: int,
+    intrem_train_loss: bool,
+    intrem_test_loss: bool,
+    final_test_loss: bool,
+    final_save_model: bool,
     **kwargs,
 ) -> tuple[float | None, int]:
     # Load data.
@@ -236,7 +237,7 @@ def train_model(
 
 
 # Main functions.
-def main_train(config_path: pathlib.Path, nci: bool = False):
+def main_train(config_path: pathlib.Path, run_model_tag: str, nci: bool = False):
     logging.basicConfig(**logger_config)
     silence_jax()
 
@@ -245,6 +246,11 @@ def main_train(config_path: pathlib.Path, nci: bool = False):
     config_data["data_path"] = data_root / config_data["data_path_stem"]
     config_data["save_path"] = data_root / config_data["save_path_stem"]
     config_data["nci"] = nci
+    if (
+        config_data["run_model_tag"] != run_model_tag
+        or config_data["run_model_tag"] == "ignore"
+    ):
+        return
 
     config = ScalarRegressionConfig.from_dict(config_data)
 
@@ -265,16 +271,9 @@ def main_train(config_path: pathlib.Path, nci: bool = False):
 
 
 if __name__ == "__main__":
-    N = 10
-
-    obj_funcs: list[ObjType] = [
-        "count_5_deg",
-        "count_4_deg",
-        "count_3_deg",
-        "count_2_deg",
-        "count_1_deg",
-        "edge_degree_variance",
-        "loop_count",
-        "det_alexander",
-    ]
-    pass
+    nci = False
+    data_root = get_data_root(nci)
+    config_path = data_root.parent / "experiments" / "configs" / "scalar_regression"
+    tag = sys.argv[1] if len(sys.argv) > 1 else "run"
+    for config_file in config_path.glob("*.yaml"):
+        main_train(config_file, tag, nci=nci)

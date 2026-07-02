@@ -1,5 +1,6 @@
 import logging
 import pathlib
+import sys
 import time
 from dataclasses import asdict, dataclass
 
@@ -61,6 +62,7 @@ def load_data(data_path):
     # Read in triangulation type, test status.
     all_data_tri_type_raw = dataset.read_all_data(dset_name="triangulation_type")
     all_data_tri_type = np.array(all_data_tri_type_raw)
+    all_data_tri_type = np.char.decode(all_data_tri_type, "utf-8")
     unique_tri_types = np.unique(all_data_tri_type)
     all_data_is_test_raw = dataset.read_all_data(dset_name="is_test")
     all_data_is_test = np.array(all_data_is_test_raw)
@@ -93,22 +95,22 @@ def load_data(data_path):
 def train_model(
     data_path: pathlib.Path,
     save_path: pathlib.Path,
-    d_model: int = 512,
-    num_layers: int = 6,
-    num_heads: int = 4,
-    use_mask: bool = True,
-    output_size: int | None = None,
-    batch_size: int = 64,
-    epochs: int = 64,
-    num_train_steps: int = 1_000_000,
-    sweep: int = 10_000,
-    learning_rate: float = 0.0005,
-    use_mup: bool = False,
-    base_d_model: int = 64,
-    intrem_train_loss: bool = True,
-    intrem_test_loss: bool = False,
-    final_test_loss: bool = True,
-    final_save_model: bool = True,
+    d_model: int,
+    num_layers: int,
+    num_heads: int,
+    use_mask: bool,
+    output_size: int | None,
+    use_mup: bool,
+    base_d_model: int,
+    batch_size: int,
+    epochs: int,
+    num_train_steps: int,
+    learning_rate: float,
+    sweep: int,
+    intrem_train_loss: bool,
+    intrem_test_loss: bool,
+    final_test_loss: bool,
+    final_save_model: bool,
     **kwargs,
 ) -> tuple[dict[str, float] | None, int]:
 
@@ -291,5 +293,6 @@ if __name__ == "__main__":
     nci = False
     data_root = get_data_root(nci)
     config_path = data_root.parent / "experiments" / "configs" / "classification"
+    tag = sys.argv[1] if len(sys.argv) > 1 else "run"
     for config_file in config_path.glob("*.yaml"):
-        main_train(config_file, "run", nci=nci)
+        main_train(config_file, tag, nci=nci)

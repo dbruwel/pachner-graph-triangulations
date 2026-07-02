@@ -7,7 +7,6 @@ import jax
 import jax.numpy as jnp
 import numpy as np
 import optax
-from pachner_traversal.data import char_list15
 from pachner_traversal.data_io_dehydration import Dataset, Encoder
 from pachner_traversal.transformer import Transformer
 from pachner_traversal.transformer_training import (
@@ -94,9 +93,6 @@ def sample_model_from_save(
     dataset = Dataset(
         data_path,
         num_test_samps,
-        data_size=160_036_916,
-        chars=char_list15,
-        max_len=41,
         store_in_memory=True,
     )
     encoder = Encoder(dataset)
@@ -153,25 +149,25 @@ def load_data(data_path, num_test_samps):
 
 
 def train_model(
-    num_layers,
-    num_heads,
-    epochs,
-    use_mup,
-    base_d_model,
-    data_path,
-    num_test_samps,
+    data_path: pathlib.Path,
     save_path: pathlib.Path,
-    batch_size=512,
-    num_train_steps=30_000,
-    sweep: int = 300,
-    learning_rate: float = 1e-4,
-    d_model: int = 64,
-    intrem_sample_size: int | None = None,
-    final_sample_size: int | None = 1_000,
-    intrem_train_loss: bool = True,
-    intrem_test_loss: bool = False,
-    final_test_loss: bool = True,
-    final_save_model: bool = True,
+    d_model: int,
+    num_layers: int,
+    num_heads: int,
+    use_mup: bool,
+    base_d_model: int,
+    batch_size: int,
+    epochs: int,
+    num_train_steps: int,
+    learning_rate: float,
+    sweep: int,
+    num_test_samps: int,
+    intrem_sample_size: int | None,
+    final_sample_size: int | None,
+    intrem_train_loss: bool,
+    intrem_test_loss: bool,
+    final_test_loss: bool,
+    final_save_model: bool,
     **kwargs,
 ) -> tuple[float | None, int] | None:
     # Load data.

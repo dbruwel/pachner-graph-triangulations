@@ -167,3 +167,21 @@ def read_config(config_path: Path) -> dict[str, Any]:
     with open(config_path, "r") as f:
         config = yaml.safe_load(f)
     return config
+
+
+def train_to_raw_indices(train_batch_idx, test_indices_sorted):
+    train_batch = np.asarray(train_batch_idx)
+    test_idxs = np.asarray(test_indices_sorted)
+
+    raw_batch = train_batch.copy()
+    k = np.searchsorted(test_idxs, raw_batch, side="right")
+
+    while True:
+        next_raw_batch = train_batch + k
+        if np.array_equal(next_raw_batch, raw_batch):
+            break
+
+        raw_batch = next_raw_batch
+        k = np.searchsorted(test_idxs, raw_batch, side="right")
+
+    return raw_batch

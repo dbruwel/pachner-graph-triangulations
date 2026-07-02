@@ -30,7 +30,13 @@ def convert_to_hdf5(input_text_file, output_hdf5_file, max_len=None):
     with open(input_text_file, "r", encoding="utf-8") as f:
         with h5py.File(output_hdf5_file, "w") as hf:
             dt = h5py.string_dtype(encoding="utf-8", length=max_len)
-            dset = hf.create_dataset("isos", shape=(0,), maxshape=(None,), dtype=dt)
+            dset = hf.create_dataset(
+                "isos",
+                shape=(0,),
+                maxshape=(None,),
+                dtype=dt,
+                chunks=(100_000,),
+            )
 
             chunk_size = 1_000_000
             lines_buffer = []
@@ -79,22 +85,18 @@ class Dataset:
     def __init__(
         self,
         hdf5_file: pathlib.Path,
-        num_test_samps: int = 1_000,
-        data_size: int | None = None,
+        num_test_samps: int | None = None,
         chars: list | None = None,
         max_len: int | None = None,
-        store_in_memory=False,
-        test_idx: list | None = None,
+        store_in_memory: bool = False,
+        test_rng_seed: int = 42,
     ):
         self.hdf5_file = hdf5_file
         self.num_test_samps = num_test_samps
         self.store_in_memory = store_in_memory
-        self.test_idx = test_idx
+        self.test_rng_seed = test_rng_seed
 
-        if data_size is None:
-            self.data_size = self.get_data_size()
-        else:
-            self.data_size = data_size
+        self.data_size = self.get_data_size()
 
         if (chars is None) or (max_len is None):
             self.chars, self.max_len = self.get_chars_and_max_len()
@@ -105,7 +107,8 @@ class Dataset:
         if self.store_in_memory:
             self.read_into_memory()
 
-        self.setup_train_test()
+        if self.num_test_samps is not None:
+            self.setup_train_test()
 
     def __len__(self):
         return self.data_size
@@ -167,12 +170,12 @@ class Dataset:
             return res
 
         else:
-            with h5py.File(self.hdf5_file, "r") as hf:
+            with h5py.File(self.hdf5_file, "r", rdcc_nbytes=4 * (1024**3)) as hf:
                 dset = hf[dset_name]
-                unique_lines = dset[sorted_indices]  # type: ignore
-                restored_lines = unique_lines[inverse_map]  # type: ignore
+                unique_lines = np.array(dset[sorted_indices])  # type: ignore
+                restored_lines = unique_lines[inverse_map]
                 if dset_name == "isos":
-                    res = [line.decode("utf-8") for line in restored_lines]  # type: ignore
+                    res = np.array([line.decode("utf-8") for line in restored_lines])
                 else:
                     res = restored_lines
                 return res
@@ -182,43 +185,15 @@ class Dataset:
             dset = hf[dset_name]
             all_lines = dset[:]  # type: ignore
             all_lines = np.array(all_lines)
-            # if dset_name == "isos":
-            #     all_lines = [line.decode("utf-8") for line in all_lines]  # type: ignore
             self.all_lines = all_lines
 
     def setup_train_test(self):
-        if self.test_idx is None:
-            np.random.seed(42)
-            self.test_idx = np.random.choice(
-                len(self), size=self.num_test_samps, replace=False
-            )
-            self.test_idx = np.sort(self.test_idx)
-        idx_map_dict = {
-            t: len(self) - self.num_test_samps + i for i, t in enumerate(self.test_idx)
-        }
-        self.idx_map = np.vectorize(lambda x: idx_map_dict.get(x, x))
+        assert self.num_test_samps is not None, "`num_test_samps` must be defined."
+
+        rng = np.random.default_rng(seed=self.test_rng_seed)
+        self.test_idx = rng.choice(len(self), size=self.num_test_samps, replace=False)
+        self.test_idx = np.sort(self.test_idx)
         self.test_data = self.read_lines(self.test_idx)
-
-    def samp_batch_idx(self, batch_size: int = 32, replace: bool = True):
-        train_idx = np.random.choice(
-            len(self) - self.num_test_samps, size=batch_size, replace=replace
-        )
-        assert self.test_idx is not None, "`test_idx` must be defined."
-        remap_idx = np.intersect1d(train_idx, self.test_idx)
-        if len(remap_idx) > 0:
-            remap_idx = self.idx_map(remap_idx)
-        valid_idx = np.setdiff1d(train_idx, self.test_idx)
-
-        batch_idx = np.concatenate([valid_idx, remap_idx])
-        batch_idx = np.sort(batch_idx)
-
-        return batch_idx
-
-    def samp_batch(self, batch_size: int = 32, replace: bool = True):
-        batch_idx = self.samp_batch_idx(batch_size, replace=replace)
-        batch_data = self.read_lines(batch_idx)
-
-        return batch_data
 
     def read_all_data(self, dset_name="isos"):
         return self.read_lines(np.arange(len(self)), dset_name=dset_name)
