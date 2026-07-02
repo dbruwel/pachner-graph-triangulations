@@ -212,7 +212,7 @@ def train_model(
         batch_size,
         num_train_steps,
         sweep,
-        flops=flops,
+        flops=float(flops),
         seq_len=seq_len,
     )
 
