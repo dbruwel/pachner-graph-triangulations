@@ -350,7 +350,7 @@ def main_train(config_path: pathlib.Path, run_model_tag: str, nci: bool = False)
     ):
         return
 
-    config_data["save_path"].mkdir(parents=True, exists_ok=True)
+    config_data["save_path"].mkdir(parents=True, exist_ok=True)
     shutil.copy(config_path, config_data["save_path"] / config_path.name)
 
     if "base_d_model" not in config_data:
