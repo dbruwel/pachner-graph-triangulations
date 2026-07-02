@@ -43,7 +43,7 @@ class AutoRegressionConfig(BaseConfig):
 
 
 logger = logging.getLogger(__name__)
-loss_metric_fn = optax.softmax_cross_entropy
+loss_metric_fn = optax.softmax_cross_entropy_with_integer_labels
 
 get_test_loss = create_get_test_loss(loss_metric_fn)
 train_step = create_train_step(loss_metric_fn)
@@ -193,7 +193,6 @@ def train_model(
     )
     _, params_key, dropout_key = keys
     vocab_size, seq_len = meta
-    test_one_hot_labels = jax.nn.one_hot(test_label, num_classes=vocab_size)
 
     # Initialise parameters.
     logger.debug("Initialising parameters")
@@ -284,7 +283,7 @@ def train_model(
             test_loss = get_test_loss(
                 state,
                 test_input,
-                test_one_hot_labels,
+                test_label,
                 vocab_size,
             )
             write_loss(
@@ -310,7 +309,7 @@ def train_model(
         test_loss = get_test_loss(
             state,
             test_input,
-            test_one_hot_labels,
+            test_label,
             vocab_size,
         )
         test_loss_float = float(test_loss)
