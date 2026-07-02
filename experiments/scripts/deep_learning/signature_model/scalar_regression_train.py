@@ -245,7 +245,7 @@ def main_train(config_path: pathlib.Path, nci: bool = False):
     config_data["save_path"] = data_root / config_data["save_path_stem"]
     config_data["nci"] = nci
 
-    config = ScalarRegressionConfig.from_dict(**config_data)
+    config = ScalarRegressionConfig.from_dict(config_data)
 
     tic = time.time()
     train_model(**asdict(config))
