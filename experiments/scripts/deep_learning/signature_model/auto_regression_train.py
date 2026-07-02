@@ -172,6 +172,7 @@ def train_model(
     intrem_test_loss: bool = False,
     final_test_loss: bool = True,
     final_save_model: bool = True,
+    **kwargs,
 ) -> tuple[float | None, int] | None:
     # Load data.
     dataset, encoder, train_input, train_label, test_input, test_label = load_data(

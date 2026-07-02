@@ -109,6 +109,7 @@ def train_model(
     intrem_test_loss: bool = False,
     final_test_loss: bool = True,
     final_save_model: bool = True,
+    **kwargs,
 ) -> tuple[dict[str, float] | None, int]:
 
     # Load data.
