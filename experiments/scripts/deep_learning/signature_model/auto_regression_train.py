@@ -335,31 +335,38 @@ def train_model(
 
 
 def main_train(config_path: pathlib.Path, run_model_tag: str, nci: bool = False):
+    # Set logging.
     logging.basicConfig(**logger_config)
     silence_jax()
 
-    logger.info(f"Considering job {config_path}")
-
+    # Read config data.
     config_data = read_config(config_path)
     data_root = get_data_root(nci)
+
+    # Set data path.
     config_data["data_path"] = data_root / config_data["data_path_stem"]
 
+    # Set save path.
     fname = name_to_fname(config_data["dname"])
     save_path = data_root / config_data["save_path_stem"] / fname
     config_data["save_path"] = save_path
+
+    # Set NCI.
     config_data["nci"] = nci
+
+    # Check tag.
     if config_data["run_model_tag"] != run_model_tag:
         return
 
+    # Fix config.
     if "num_heads" not in config_data:
         config_data["num_heads"] = config_data["d_model"] // config_data["head_size"]
     if "flops" in config_data:
         config_data["flops"] = float(config_data["flops"])
 
-    config = AutoRegressionConfig.from_dict(config_data)
-    assert isinstance(config.flops, float) or config.flops is None, "Bad type `flops`"
-
+    # Setup config and run model.
     tic = time.time()
+    config = AutoRegressionConfig.from_dict(config_data)
     train_model(**asdict(config))
     shutil.copy(config_path, config_data["save_path"] / config_path.name)
     toc = time.time()
@@ -367,6 +374,7 @@ def main_train(config_path: pathlib.Path, run_model_tag: str, nci: bool = False)
     train_time = toc - tic
     logger.info(f"Training time: {train_time:.2f} seconds")
 
+    # NTFY.
     if not nci:
         message = f"Training time: {train_time:.2f} seconds."
         send_ntfy(

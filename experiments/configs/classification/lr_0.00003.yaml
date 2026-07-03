@@ -1,4 +1,4 @@
-dname: Classification lr_0.0001
+dname: Classification lr_0.00003
 data_path_stem: input_data/dehydration/processed/classification_10.hdf5
 save_path_stem: results/sgd_models_dehydration.classification
 d_model: 512
@@ -10,7 +10,7 @@ num_train_steps: null
 flops: null
 num_test_samps: null
 sweep: 500
-learning_rate: 0.0001
+learning_rate: 0.00003
 use_mup: false
 base_d_model: 512
 intrem_train_loss: true
@@ -19,4 +19,4 @@ final_test_loss: true
 final_save_model: false
 output_size: 64
 use_mask: true
-run_model_tag: skip
+run_model_tag: run

@@ -1,6 +1,6 @@
-dname: Classification lr_0.0001
-data_path_stem: input_data/dehydration/processed/classification_10.hdf5
-save_path_stem: results/sgd_models_dehydration.classification
+dname: Regression Count 2 Degree
+data_path_stem: input_data/dehydration/processed/spheres_10_regression.hdf5
+save_path_stem: results/sgd_models_dehydration/scalar_regression
 d_model: 512
 num_layers: 8
 num_heads: 8
@@ -8,9 +8,9 @@ batch_size: 512
 epochs: 2
 num_train_steps: null
 flops: null
-num_test_samps: null
+num_test_samps: 5000
 sweep: 500
-learning_rate: 0.0001
+learning_rate: 0.0003
 use_mup: false
 base_d_model: 512
 intrem_train_loss: true
@@ -19,4 +19,5 @@ final_test_loss: true
 final_save_model: false
 output_size: 64
 use_mask: true
-run_model_tag: skip
+run_model_tag: run
+dset_name: count_2_deg

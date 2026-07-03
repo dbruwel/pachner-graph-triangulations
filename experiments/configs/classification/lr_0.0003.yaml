@@ -1,6 +1,6 @@
 dname: Classification lr_0.0003
 data_path_stem: input_data/dehydration/processed/classification_10.hdf5
-save_path_stem: results/sgd_models_dehydration
+save_path_stem: results/sgd_models_dehydration/classification
 d_model: 512
 num_layers: 8
 num_heads: 8
@@ -19,4 +19,4 @@ final_test_loss: true
 final_save_model: false
 output_size: 64
 use_mask: true
-run_model_tag: run
+run_model_tag: skip
