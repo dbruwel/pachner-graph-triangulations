@@ -105,7 +105,8 @@ def train_model(
     base_d_model: int,
     batch_size: int,
     epochs: int,
-    num_train_steps: int,
+    num_train_steps: int | None,
+    flops: float | None,
     learning_rate: float,
     sweep: int,
     intrem_train_loss: bool,
@@ -125,6 +126,9 @@ def train_model(
         test_target_values,
         unique_tri_types,
     ) = load_data(data_path)
+
+    if (flops is None) and (num_train_steps is None):
+        num_train_steps = int(len(train_input) * epochs / batch_size)
 
     # Initialise model.
     model, keys, _ = init_model(
@@ -266,10 +270,8 @@ def main_train(config_path: pathlib.Path, run_model_tag: str, nci: bool = False)
     config_data["data_path"] = data_root / config_data["data_path_stem"]
     config_data["save_path"] = data_root / config_data["save_path_stem"]
     config_data["nci"] = nci
-    if (
-        config_data["run_model_tag"] != run_model_tag
-        or config_data["run_model_tag"] == "ignore"
-    ):
+
+    if config_data["run_model_tag"] != run_model_tag:
         return
 
     config = ClassificationConfig.from_dict(config_data)

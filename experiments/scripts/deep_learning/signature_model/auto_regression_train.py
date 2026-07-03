@@ -343,16 +343,10 @@ def main_train(config_path: pathlib.Path, run_model_tag: str, nci: bool = False)
     data_root = get_data_root(nci)
     config_data["data_path"] = data_root / config_data["data_path_stem"]
     config_data["save_path"] = data_root / config_data["save_path_stem"]
-    config_data["num_train_steps"] = None
     config_data["nci"] = nci
-    if (
-        config_data["run_model_tag"] != run_model_tag
-        or config_data["run_model_tag"] == "ignore"
-    ):
+    if config_data["run_model_tag"] != run_model_tag:
         return
 
-    if "base_d_model" not in config_data:
-        config_data["base_d_model"] = config_data["d_model"]
     if "num_heads" not in config_data:
         config_data["num_heads"] = config_data["d_model"] // config_data["head_size"]
     if "flops" in config_data:

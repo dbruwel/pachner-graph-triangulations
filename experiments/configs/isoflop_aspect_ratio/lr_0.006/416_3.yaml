@@ -6,8 +6,9 @@ num_layers: 3
 head_size: 32
 batch_size: 512
 epochs: 1
-num_test_samps: 5000
+num_train_steps: null
 flops: 1e16
+num_test_samps: 5000
 sweep: 5000
 learning_rate: 0.006
 use_mup: false

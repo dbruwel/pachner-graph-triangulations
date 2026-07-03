@@ -99,7 +99,8 @@ def train_model(
     base_d_model: int,
     batch_size: int,
     epochs: int,
-    num_train_steps: int,
+    num_train_steps: int | None,
+    flops: float | None,
     learning_rate: float,
     sweep: int,
     num_test_samps: int,
@@ -113,6 +114,9 @@ def train_model(
     dataset, encoder, train_input, train_target_value, test_input, test_target_value = (
         load_data(data_path, num_test_samps, dset_name)
     )
+
+    if (flops is None) and (num_train_steps is None):
+        num_train_steps = int(len(train_input) * epochs / batch_size)
 
     # Initialise model.
     model, keys, _ = init_model(
@@ -247,10 +251,8 @@ def main_train(config_path: pathlib.Path, run_model_tag: str, nci: bool = False)
     config_data["data_path"] = data_root / config_data["data_path_stem"]
     config_data["save_path"] = data_root / config_data["save_path_stem"]
     config_data["nci"] = nci
-    if (
-        config_data["run_model_tag"] != run_model_tag
-        or config_data["run_model_tag"] == "ignore"
-    ):
+
+    if config_data["run_model_tag"] != run_model_tag:
         return
 
     config = ScalarRegressionConfig.from_dict(config_data)
