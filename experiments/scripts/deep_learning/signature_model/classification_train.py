@@ -62,8 +62,8 @@ def load_data(data_path):
 
     # Read in triangulation type, test status.
     all_data_tri_type_raw = dataset.read_all_data(dset_name="triangulation_type")
+    all_data_tri_type_raw = [line.decode("utf-8") for line in all_data_tri_type_raw]
     all_data_tri_type = np.array(all_data_tri_type_raw)
-    all_data_tri_type = np.char.decode(all_data_tri_type, "utf-8")
     unique_tri_types = np.unique(all_data_tri_type)
     all_data_is_test_raw = dataset.read_all_data(dset_name="is_test")
     all_data_is_test = np.array(all_data_is_test_raw)
