@@ -27,6 +27,7 @@ from pachner_traversal.utils import (
     get_sample_idx,
     load_model,
     logger_config,
+    name_to_fname,
     read_config,
     save_model,
     send_ntfy,
@@ -342,7 +343,10 @@ def main_train(config_path: pathlib.Path, run_model_tag: str, nci: bool = False)
     config_data = read_config(config_path)
     data_root = get_data_root(nci)
     config_data["data_path"] = data_root / config_data["data_path_stem"]
-    config_data["save_path"] = data_root / config_data["save_path_stem"]
+
+    fname = name_to_fname(config_data["dname"])
+    save_path = data_root / config_data["save_path_stem"] / fname
+    config_data["save_path"] = save_path
     config_data["nci"] = nci
     if config_data["run_model_tag"] != run_model_tag:
         return
