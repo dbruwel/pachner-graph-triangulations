@@ -1,35 +1,87 @@
 import logging
-import os
-import time
-from concurrent.futures import ProcessPoolExecutor
+import multiprocessing
 
 import h5py
 import numpy as np
-from pachner_traversal.potential_functions import (
-    DeterminantAlexanderPolynomial,
-    Potential,
-    VarianceEdgeDegree,
-)
-from pachner_traversal.utils import get_data_root
+from pachner_traversal.utils import get_data_root, logger_config
 from regina import Triangulation3
+from snappy import Manifold
 
 logger = logging.getLogger(__name__)
 
 data_root = get_data_root()
 
 
+def compute_potential_degree_composite(iso: str) -> dict:
+    tri = Triangulation3.rehydrate(iso)
+    degs = []
+
+    for edge in tri.edges():
+        degs.append(edge.degree())
+
+    degs = np.array(degs)
+
+    res = {}
+
+    res["edge_degree_variance"] = np.var(degs)
+    res["count_1_deg"] = (degs == 1).sum()
+    res["count_2_deg"] = (degs == 2).sum()
+    res["count_3_deg"] = (degs == 3).sum()
+    res["count_4_deg"] = (degs == 4).sum()
+    res["count_5_deg"] = (degs == 5).sum()
+
+    return res
+
+
 def compute_potential_var(iso: str) -> float | np.floating:
-    iso_sig = Triangulation3.rehydrate(iso).isoSig()
-    potential_val = Potential(VarianceEdgeDegree).calc_potential(iso_sig, 1)[0]
-    return potential_val
+    tri = Triangulation3.rehydrate(iso)
+    degs = []
+
+    for edge in tri.edges():
+        degs.append(edge.degree())
+
+    potential_value = np.var(degs)
+    return potential_value
 
 
 def compute_potential_det(iso: str) -> float | np.floating:
-    iso_sig = Triangulation3.rehydrate(iso).isoSig()
-    potential_val = Potential(DeterminantAlexanderPolynomial).calc_potential(
-        iso_sig, 1
-    )[0]
-    return potential_val
+    tri = Triangulation3.rehydrate(iso)
+    n_edges = len(tri.edges())
+    scores = []
+
+    for i_edge in range(n_edges):
+        temp_tri = Triangulation3.rehydrate(iso)
+        edge = temp_tri.edge(i_edge)
+        temp_tri.pinchEdge(edge)
+        m = Manifold(temp_tri)
+        alex_poly = m.alexander_polynomial()
+        score = np.abs(alex_poly(-1))
+        scores.append(score)
+
+    potential_value = np.mean(scores)
+    return potential_value
+
+
+def compute_potential_det_safe(iso: str) -> float | np.floating:
+    result = None
+    for _ in range(10):
+        pool = multiprocessing.Pool(processes=1)
+        async_result = pool.apply_async(compute_potential_det, (iso,))
+        try:
+            result = async_result.get(timeout=3)
+
+            pool.close()
+            pool.join()
+            break
+
+        except multiprocessing.TimeoutError:
+            pool.terminate()
+            pool.join()
+
+    if result is None:
+        raise RuntimeError(f"`{iso}` failed to run.")
+
+    return result
 
 
 def compute_potential_loops(iso: str):
@@ -144,82 +196,47 @@ def compute_potential_5_degree(iso: str) -> float:
     return potential_val
 
 
-def score_data(dataset_name):
-    if dataset_name == "edge_degree_variance":
-        compute_potential = compute_potential_var
-    elif dataset_name == "det_alexander":
-        compute_potential = compute_potential_det
-    elif dataset_name == "loop_count":
-        compute_potential = compute_potential_loops
-    elif dataset_name == "unit_deg":
-        compute_potential = compute_potential_unit_degree
-    elif dataset_name == "count_1_deg":
-        compute_potential = compute_potential_1_degree
-    elif dataset_name == "count_2_deg":
-        compute_potential = compute_potential_2_degree
-    elif dataset_name == "count_3_deg":
-        compute_potential = compute_potential_3_degree
-    elif dataset_name == "count_4_deg":
-        compute_potential = compute_potential_4_degree
-    elif dataset_name == "count_5_deg":
-        compute_potential = compute_potential_5_degree
-    elif dataset_name == "count_3_deg_regular":
-        compute_potential = compute_potential_3_degree_regular
-    elif dataset_name == "count_3_deg_folded":
-        compute_potential = compute_potential_3_degree_folded
-    else:
-        raise TypeError(f"invalid option {dataset_name}")
+potential_map = {
+    # "det_alexander": compute_potential_det_safe,
+    "loop_count": compute_potential_loops,
+}
 
-    data_path = (
-        data_root / "input_data" / "dehydration" / "processed" / "spheres_10.hdf5"
-    )
+
+def main(raw_data_path, save_path):
+    logging.basicConfig(**logger_config)
 
     logger.info("loading data")
-    with h5py.File(data_path, "r") as f:
-        data = f["isos"]
-        isos = np.array(data[:])  # type: ignore
-        isos = [iso.decode("utf-8") for iso in isos]
+    with open(raw_data_path, "r") as f:
+        sigs = f.readlines()
+        sigs = [sig.strip() for sig in sigs]
 
-    isos_to_process = isos
+    max_len = len(sigs[0])
 
-    num_cores = int(os.environ.get("SLURM_CPUS_PER_TASK", os.cpu_count() or 1))
-    num_cores = min(100, num_cores)
-    logger.info(f"number of workers: {num_cores}")
+    scores = {}
 
-    tic = time.time()
+    for dataset_name in potential_map:
+        logger.info(f"Scoring `{dataset_name}`")
+        scores[dataset_name] = []
+        for i, sig in enumerate(sigs):
+            if i % 1_000 == 0:
+                logger.info(f"Processing signature {i:,} / {len(sigs):,}")
 
-    if num_cores == 1:
-        ved_list = [compute_potential(iso) for iso in isos_to_process]
-    else:
-        with ProcessPoolExecutor(max_workers=num_cores) as executor:
-            ved_list = list(executor.map(compute_potential, isos_to_process))
+            result = potential_map[dataset_name](sig)
+            scores[dataset_name].append(result)
 
-    ved = np.array(ved_list)
+    data = [compute_potential_degree_composite(sig) for sig in sigs]
+    scores_degree = {k: [d[k] for d in data] for k in data[0]}
 
-    toc = time.time()
-    time_taken = toc - tic
-
-    logger.info(f"processed {len(isos_to_process)} items in {time_taken:,.2f} seconds.")
-
-    logger.info("saving")
-
-    with h5py.File(data_path, "r+") as f:
-        if dataset_name in f:
-            logger.info("overwriting")
-            del f[dataset_name]
-
-        f.create_dataset(dataset_name, data=ved, compression="gzip", compression_opts=4)
-
-
-def main():
-    logging.basicConfig(level=logging.INFO)
-    score_data("count_3_deg_regular")
-    score_data("count_3_deg_folded")
-    # score_data("count_2_deg")
-    # score_data("count_3_deg")
-    # score_data("count_4_deg")
-    # score_data("count_5_deg")
+    with h5py.File(save_path, "w") as f:
+        dt = h5py.string_dtype(encoding="utf-8", length=max_len)
+        f.create_dataset("isos", data=sigs, dtype=dt)
+        for dataset_name in scores:
+            f.create_dataset(dataset_name, data=scores[dataset_name])
+        for dataset_name in scores_degree:
+            f.create_dataset(dataset_name, data=scores_degree[dataset_name])
 
 
 if __name__ == "__main__":
-    main()
+    raw_data_path = "/home/dbruwel/main/honours/pachner_graph_triangulations/data/input_data/dehydration/raw/spheres_10_4m.txt"
+    save_path = "/home/dbruwel/main/honours/pachner_graph_triangulations/data/input_data/dehydration/processed/spheres_10_scored.hdf5"
+    main(raw_data_path, save_path)

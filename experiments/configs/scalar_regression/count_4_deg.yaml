@@ -1,5 +1,5 @@
 dname: Regression Count 4 Degree
-data_path_stem: input_data/dehydration/processed/spheres_10_regression.hdf5
+data_path_stem: input_data/dehydration/processed/spheres_10_scored.hdf5
 save_path_stem: results/sgd_models_dehydration/scalar_regression
 d_model: 512
 num_layers: 8
