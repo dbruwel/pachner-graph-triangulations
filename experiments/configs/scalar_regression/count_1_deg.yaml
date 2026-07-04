@@ -8,7 +8,7 @@ batch_size: 512
 epochs: 2
 num_train_steps: null
 flops: null
-num_test_samps: 5000
+num_test_samps: 4000
 sweep: 500
 learning_rate: 0.0003
 use_mup: false

@@ -5,7 +5,7 @@ d_model: 512
 num_layers: 8
 num_heads: 8
 batch_size: 512
-epochs: 2
+epochs: 16
 num_train_steps: null
 flops: null
 num_test_samps: null
