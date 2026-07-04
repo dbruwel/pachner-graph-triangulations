@@ -19,4 +19,4 @@ final_test_loss: true
 final_save_model: false
 output_size: 64
 use_mask: true
-run_model_tag: run
+run_model_tag: skip
