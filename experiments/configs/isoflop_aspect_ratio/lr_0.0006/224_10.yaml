@@ -1,9 +1,9 @@
-dname: Ratio train 352_4 0.006
+dname: Ratio train 224_10 0.0006
 data_path_stem: input_data/dehydration/processed/spheres_15_170m.hdf5
 save_path_stem: results/sgd_models_dehydration/isoflop_aspect_ratio
-d_model: 352
-base_d_model: 352
-num_layers: 4
+d_model: 224
+base_d_model: 224
+num_layers: 10
 head_size: 32
 batch_size: 512
 epochs: 1
@@ -11,7 +11,7 @@ num_train_steps: null
 flops: 1e16
 num_test_samps: 5000
 sweep: 5000
-learning_rate: 0.006
+learning_rate: 0.0006
 use_mup: false
 intrem_train_loss: false
 intrem_test_loss: false
@@ -19,4 +19,4 @@ final_test_loss: true
 final_save_model: false
 intrem_sample_size: null
 final_sample_size: null
-run_model_tag: run_0.006
+run_model_tag: run_0.0006
