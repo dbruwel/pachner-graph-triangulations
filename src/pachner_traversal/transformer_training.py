@@ -55,12 +55,14 @@ def create_get_test_loss(loss_metric_fn: Callable) -> Callable:
         test_batch_input: jax.Array,
         test_batch_label: jax.Array,
     ) -> jax.Array:
-        logits = state.apply_fn(
+        pred = state.apply_fn(
             {"params": state.params},
             test_batch_input,
             training=False,
         )
-        test_loss = loss_metric_fn(logits, test_batch_label).mean()
+        pred_fp32 = pred.astype(jnp.float32)
+
+        test_loss = loss_metric_fn(pred_fp32, test_batch_label).mean()
         return test_loss
 
     return get_test_loss
