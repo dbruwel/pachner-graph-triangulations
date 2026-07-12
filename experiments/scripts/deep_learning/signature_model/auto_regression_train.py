@@ -189,7 +189,7 @@ def train_model(
     if num_train_steps is None and flops is None:
         if epochs is not None:
             if epochs >= 1:
-                num_train_steps = len(dataset) * epochs // batch_size
+                num_train_steps = (len(dataset) - num_test_samps) * epochs // batch_size
 
     # Initialise model.
     logger.debug("Initialising model")
