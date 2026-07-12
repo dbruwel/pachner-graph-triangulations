@@ -186,6 +186,10 @@ def train_model(
     dataset, encoder, train_input, train_label, test_input, test_label = load_data(
         data_path, num_test_samps
     )
+    if num_train_steps is None and flops is None:
+        if epochs is not None:
+            if epochs >= 1:
+                num_train_steps = len(dataset) * epochs // batch_size
 
     # Initialise model.
     logger.debug("Initialising model")
