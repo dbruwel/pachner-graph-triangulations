@@ -1,0 +1,22 @@
+dname: Ratio train 256_10 0.003
+data_path_stem: input_data/dehydration/processed/spheres_15_170m.hdf5
+save_path_stem: results/sgd_models_dehydration/mup_learning_rate_tune
+d_model: 256
+base_d_model: 256
+num_layers: 10
+head_size: 64
+batch_size: 512
+epochs: 1
+num_train_steps: 15360
+flops: null
+num_test_samps: 5000
+sweep: 1536
+learning_rate: 0.003
+use_mup: true
+intrem_train_loss: false
+intrem_test_loss: false
+final_test_loss: true
+final_save_model: false
+intrem_sample_size: null
+final_sample_size: null
+run_model_tag: run_10
