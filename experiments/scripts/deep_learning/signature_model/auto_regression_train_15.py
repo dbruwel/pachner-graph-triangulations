@@ -425,7 +425,9 @@ def main_train(config_path: pathlib.Path, run_model_tag: str, nci: bool = False)
 if __name__ == "__main__":
     nci = False
     data_root = get_data_root(nci)
-    config_path = data_root.parent / "experiments" / "configs" / "isoflop_aspect_ratio"
+    config_path = (
+        data_root.parent / "experiments" / "configs" / "mup_learning_rate_tune"
+    )
     tag = sys.argv[1] if len(sys.argv) > 1 else "run"
     for config_file in config_path.rglob("*.yaml"):
         main_train(config_file, tag, nci=nci)
