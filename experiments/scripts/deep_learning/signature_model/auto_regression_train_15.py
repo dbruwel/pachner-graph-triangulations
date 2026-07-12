@@ -392,7 +392,9 @@ def main_train(config_path: pathlib.Path, run_model_tag: str, nci: bool = False)
     if "num_heads" not in config_data:
         config_data["num_heads"] = config_data["d_model"] // config_data["head_size"]
     if "flops" in config_data:
-        config_data["flops"] = float(config_data["flops"])
+        config_data["flops"] = (
+            float(config_data["flops"]) if config_data["flops"] is not None else None
+        )
 
     # Set config and run model.
     tic = time.time()
