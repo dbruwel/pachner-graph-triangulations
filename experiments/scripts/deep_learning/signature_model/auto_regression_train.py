@@ -367,12 +367,20 @@ def main_train(config_path: pathlib.Path, run_model_tag: str, nci: bool = False)
     # Setup config and run model.
     tic = time.time()
     config = AutoRegressionConfig.from_dict(config_data)
-    train_model(**asdict(config))
+    test_loss_float, model_size = train_model(**asdict(config))
     shutil.copy(config_path, config_data["save_path"] / config_path.name)
     toc = time.time()
 
     train_time = toc - tic
     logger.info(f"Training time: {train_time:.2f} seconds")
+
+    # Write all data.
+    if not (data_root / config_data["save_path_stem"] / "all.csv").exists():
+        with open(data_root / config_data["save_path_stem"] / "all.csv", "a") as f:
+            f.write("name, test_loss, n_params\n")
+
+    with open(data_root / config_data["save_path_stem"] / "all.csv", "a") as f:
+        f.write(f"{fname}, {test_loss_float}, {model_size}\n")
 
     # NTFY.
     if not nci:
