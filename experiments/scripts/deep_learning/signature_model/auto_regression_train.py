@@ -130,21 +130,28 @@ def sample_model_from_save(
 # Critical functions.
 def load_data(data_path, num_test_samps):
     # Dataset and Encoder.
+    logger.debug("Setting up dataset.")
     dataset = Dataset(data_path, num_test_samps, store_in_memory=True)
+    logger.debug("Setting up encoder.")
     encoder = Encoder(dataset)
 
     # Read in signatures and Encode.
+    logger.debug("Reading all lines.")
     all_data_input_str = dataset.read_all_data()
+    logger.debug("Encoding all lines.")
     all_data_input, all_data_label = encoder.encode(all_data_input_str)
 
     # Split train and test data.
+    logger.debug("Splitting train and test")
     test_input = all_data_input[dataset.test_idx]
     test_label = all_data_label[dataset.test_idx]
 
     assert dataset.test_idx is not None, "No test idx specified."
+    logger.debug("Getting train_idx.")
     train_idx = list(set(range(len(all_data_label))) - set(dataset.test_idx))
     train_idx.sort()
 
+    logger.debug("Getting train data.")
     train_input = all_data_input[train_idx]
     train_label = all_data_label[train_idx]
 
