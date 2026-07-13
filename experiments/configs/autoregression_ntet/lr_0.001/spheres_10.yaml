@@ -1,4 +1,4 @@
-dname: Autoregression 10 0.003
+dname: Autoregression 10 0.001
 data_path_stem: input_data/dehydration/processed/spheres_10.hdf5
 save_path_stem: results/sgd_models_dehydration/autoregression_ntet
 d_model: 512
@@ -10,7 +10,7 @@ num_train_steps: null
 flops: null
 num_test_samps: 4000
 sweep: 5000
-learning_rate: 0.003
+learning_rate: 0.001
 use_mup: false
 base_d_model: 512
 intrem_train_loss: false
@@ -20,4 +20,4 @@ final_save_model: false
 intrem_sample_size: null
 final_sample_size: 10000
 use_mask: true
-run_model_tag: run_0.003
+run_model_tag: run_0.001
