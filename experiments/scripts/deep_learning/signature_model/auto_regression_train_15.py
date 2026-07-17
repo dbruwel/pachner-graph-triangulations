@@ -386,7 +386,7 @@ def main_train(
 
     # Read config data.
     config_data = read_config(config_path)
-    data_root = get_data_root(nci)
+    data_root = get_data_root(nci, shm=True)
 
     # Set data path.
     config_data["data_path"] = data_root / config_data["data_path_stem"]
@@ -443,7 +443,7 @@ if __name__ == "__main__":
     tag = sys.argv[1] if len(sys.argv) > 1 else "run"
     nci = "nci" in tag
 
-    data_root = get_data_root(nci, shm=True)
+    data_root = get_data_root(nci)
     config_path = data_root.parent / "experiments" / "configs" / "isoflop_scaling"
 
     data_cache = {}
