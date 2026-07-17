@@ -442,13 +442,13 @@ def main_train(
 
 
 if __name__ == "__main__":
+    logger.info("Main script started.")
     tag = sys.argv[1] if len(sys.argv) > 1 else "run"
     nci = "nci" in tag
 
     data_root = get_data_root(nci)
     config_path = data_root.parent / "experiments" / "configs" / "isoflop_scaling"
-    print(tag)
-    logger.info(f"Checking {config_path} for {tag}")
+    logger.info(f"Checking {str(config_path)} for {str(tag)}")
 
     data_cache = {}
 
@@ -456,7 +456,7 @@ if __name__ == "__main__":
     config_files.sort()
 
     for config_file in config_files:
-        logger.info(f"{config_file}")
+        logger.info(f"{str(config_file)}")
         main_train(
             config_file,
             tag,
