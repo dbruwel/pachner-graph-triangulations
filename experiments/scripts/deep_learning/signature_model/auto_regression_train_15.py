@@ -442,12 +442,12 @@ def main_train(
 
 
 if __name__ == "__main__":
-    print("hi")
     tag = sys.argv[1] if len(sys.argv) > 1 else "run"
     nci = "nci" in tag
 
     data_root = get_data_root(nci)
     config_path = data_root.parent / "experiments" / "configs" / "isoflop_scaling"
+    print(tag)
     logger.info(f"Checking {config_path} for {tag}")
 
     data_cache = {}
