@@ -447,10 +447,12 @@ if __name__ == "__main__":
 
     data_root = get_data_root(nci)
     config_path = data_root.parent / "experiments" / "configs" / "isoflop_scaling"
+    logger.info(f"Checking {config_path}")
 
     data_cache = {}
 
     for config_file in config_path.rglob("*.yaml"):
+        logger.info(f"{config_file}")
         main_train(
             config_file,
             tag,
