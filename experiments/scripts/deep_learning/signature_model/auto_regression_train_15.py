@@ -379,6 +379,7 @@ def main_train(
     run_model_tag: str,
     nci: bool = False,
     data_cache: dict = {},
+    read_shm: bool = False,
 ):
     # Set logging.
     logging.basicConfig(**logger_config)
@@ -386,12 +387,13 @@ def main_train(
 
     # Read config data.
     config_data = read_config(config_path)
-    data_root = get_data_root(nci, shm=True)
 
     # Set data path.
+    data_root = get_data_root(nci, shm=read_shm)
     config_data["data_path"] = data_root / config_data["data_path_stem"]
 
     # Set save path.
+    data_root = get_data_root(nci)
     fname = name_to_fname(config_data["dname"])
     save_path = data_root / config_data["save_path_stem"] / fname
     config_data["save_path"] = save_path
@@ -449,4 +451,10 @@ if __name__ == "__main__":
     data_cache = {}
 
     for config_file in config_path.rglob("*.yaml"):
-        main_train(config_file, tag, nci=nci, data_cache=data_cache)
+        main_train(
+            config_file,
+            tag,
+            nci=nci,
+            data_cache=data_cache,
+            read_shm=False,
+        )

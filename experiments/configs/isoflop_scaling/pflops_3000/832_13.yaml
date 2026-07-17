@@ -1,6 +1,6 @@
 dname: IsoFlop 3000PFLOP 832_13
 data_path_stem: input_data/dehydration/processed/spheres_15_1b.hdf5
-save_path_stem: results/sgd_models_dehydration/isoflop_aspect_ratio
+save_path_stem: results/sgd_models_dehydration/isoflop_scaling
 d_model: 832
 base_d_model: 256
 num_layers: 13

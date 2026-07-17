@@ -1,4 +1,4 @@
-dname: Ratio train 256_8 0.005
+dname: LR tune 256_8 0.005
 data_path_stem: input_data/dehydration/processed/spheres_15_170m.hdf5
 save_path_stem: results/sgd_models_dehydration/mup_learning_rate_tune
 d_model: 256
