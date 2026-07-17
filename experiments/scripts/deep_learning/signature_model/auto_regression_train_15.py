@@ -180,10 +180,20 @@ def train_model(
     intrem_test_loss: bool,
     final_test_loss: bool,
     final_save_model: bool,
+    data_cache: dict,
     **kwargs,
 ) -> tuple[float | None, int]:
     # Load data.
-    dataset, encoder, test_input, test_label = load_data(data_path, num_test_samps)
+    cache_key = (str(data_path), num_test_samps)
+    if cache_key in data_cache:
+        logger.info("Reading data from cache.")
+        dataset, encoder, test_input, test_label = data_cache[cache_key]
+    else:
+        logger.warning("Reading data from file.")
+        dataset, encoder, test_input, test_label = load_data(data_path, num_test_samps)
+        data_cache.clear()
+        data_cache[cache_key] = (dataset, encoder, test_input, test_label)
+
     assert dataset.num_test_samps is not None, "`num_test_samps` is not defined."
 
     # Initialise model.
@@ -364,7 +374,12 @@ def train_model(
     return test_loss_float, model_size
 
 
-def main_train(config_path: pathlib.Path, run_model_tag: str, nci: bool = False):
+def main_train(
+    config_path: pathlib.Path,
+    run_model_tag: str,
+    nci: bool = False,
+    data_cache: dict = {},
+):
     # Set logging.
     logging.basicConfig(**logger_config)
     silence_jax()
@@ -399,7 +414,7 @@ def main_train(config_path: pathlib.Path, run_model_tag: str, nci: bool = False)
     # Set config and run model.
     tic = time.time()
     config = AutoRegressionConfig.from_dict(config_data)
-    test_loss_float, model_size = train_model(**asdict(config))
+    test_loss_float, model_size = train_model(**asdict(config), data_cache=data_cache)
     shutil.copy(config_path, config_data["save_path"] / config_path.name)
     toc = time.time()
 
@@ -425,11 +440,13 @@ def main_train(config_path: pathlib.Path, run_model_tag: str, nci: bool = False)
 
 
 if __name__ == "__main__":
-    nci = False
-    data_root = get_data_root(nci)
-    config_path = (
-        data_root.parent / "experiments" / "configs" / "mup_learning_rate_tune"
-    )
     tag = sys.argv[1] if len(sys.argv) > 1 else "run"
+    nci = "nci" in tag
+
+    data_root = get_data_root(nci, shm=True)
+    config_path = data_root.parent / "experiments" / "configs" / "isoflop_scaling"
+
+    data_cache = {}
+
     for config_file in config_path.rglob("*.yaml"):
-        main_train(config_file, tag, nci=nci)
+        main_train(config_file, tag, nci=nci, data_cache=data_cache)

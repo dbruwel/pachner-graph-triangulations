@@ -18,9 +18,11 @@ logger_config = {
 }
 
 
-def get_data_root(nci: bool = False) -> Path:
+def get_data_root(nci: bool = False, shm: bool = True) -> Path:
     if nci:
         return Path("/g/data/io00/js1886/pachner-graph-triangulations/data")
+    elif shm:
+        return Path("/dev/shm/danielb/data")
     else:
         return Path(__file__).parent.parent.parent / "data"
 
@@ -106,8 +108,6 @@ def write_stat(stat_file_path, stat_name, stat_value):
 
 
 def create_sample_schedule(batch_size, dataset_size, epochs, num_itts, seed=42):
-    np.random.seed(seed)
-
     num_samples = num_itts * batch_size
     num_unique_samples = num_samples // epochs
 
@@ -116,13 +116,15 @@ def create_sample_schedule(batch_size, dataset_size, epochs, num_itts, seed=42):
     if num_unique_samples > dataset_size:
         raise ValueError("Total unique samples exceeds dataset size.")
 
-    unique_samples = np.random.choice(
-        dataset_size, size=num_unique_samples, replace=False
-    )
+    rng = np.random.default_rng(seed=seed)
+    unique_samples = rng.choice(dataset_size, size=num_unique_samples, replace=False)
 
-    schedule = np.concatenate(
-        [np.random.permutation(unique_samples) for _ in range(epochs)]
-    )
+    if epochs == 1:
+        schedule = epochs
+    else:
+        schedule_matrix = np.tile(unique_samples, (epochs, 1))
+        shuffled_matrix = rng.permuted(schedule_matrix, axis=1)
+        schedule = shuffled_matrix.ravel()
 
     return schedule
 

@@ -1,0 +1,22 @@
+dname: IsoFlop 300PFLOP 512_8
+data_path_stem: input_data/dehydration/processed/spheres_15_1b.hdf5
+save_path_stem: results/sgd_models_dehydration/isoflop_aspect_ratio
+d_model: 512
+base_d_model: 256
+num_layers: 8
+head_size: 64
+batch_size: 512
+epochs: 1
+num_train_steps: null
+flops: 300e15
+num_test_samps: 10000
+sweep: 5000
+learning_rate: 0.0006
+use_mup: true
+intrem_train_loss: false
+intrem_test_loss: false
+final_test_loss: true
+final_save_model: false
+intrem_sample_size: null
+final_sample_size: 10000
+run_model_tag: run_300_school
