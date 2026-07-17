@@ -447,7 +447,7 @@ if __name__ == "__main__":
 
     data_root = get_data_root(nci)
     config_path = data_root.parent / "experiments" / "configs" / "isoflop_scaling"
-    logger.info(f"Checking {config_path}")
+    logger.info(f"Checking {config_path} for {tag}")
 
     data_cache = {}
 
