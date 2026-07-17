@@ -20,4 +20,4 @@ final_save_model: true
 intrem_sample_size: null
 final_sample_size: 10000
 use_mask: true
-run_model_tag: skip
+run_model_tag: rerun
