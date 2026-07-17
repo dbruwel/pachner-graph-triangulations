@@ -120,7 +120,7 @@ def create_sample_schedule(batch_size, dataset_size, epochs, num_itts, seed=42):
     unique_samples = rng.choice(dataset_size, size=num_unique_samples, replace=False)
 
     if epochs == 1:
-        schedule = epochs
+        schedule = unique_samples
     else:
         schedule_matrix = np.tile(unique_samples, (epochs, 1))
         shuffled_matrix = rng.permuted(schedule_matrix, axis=1)
