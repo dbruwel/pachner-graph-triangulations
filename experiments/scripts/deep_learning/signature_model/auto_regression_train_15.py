@@ -452,7 +452,10 @@ if __name__ == "__main__":
 
     data_cache = {}
 
-    for config_file in config_path.rglob("*.yaml"):
+    config_files = list(config_path.rglob("*.yaml"))
+    config_files.sort()
+
+    for config_file in config_files:
         logger.info(f"{config_file}")
         main_train(
             config_file,
