@@ -18,7 +18,7 @@ logger_config = {
 }
 
 
-def get_data_root(nci: bool = False, shm: bool = True) -> Path:
+def get_data_root(nci: bool = False, shm: bool = False) -> Path:
     if nci:
         return Path("/g/data/io00/js1886/pachner-graph-triangulations/data")
     elif shm:
