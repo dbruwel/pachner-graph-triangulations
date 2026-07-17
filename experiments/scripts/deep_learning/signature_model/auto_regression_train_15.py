@@ -382,7 +382,6 @@ def main_train(
     read_shm: bool = False,
 ):
     # Set logging.
-    logging.basicConfig(**logger_config)
     silence_jax()
 
     # Read config data.
@@ -442,6 +441,9 @@ def main_train(
 
 
 if __name__ == "__main__":
+    # Set logging.
+    logging.basicConfig(**logger_config)
+
     logger.info("Main script started.")
     tag = sys.argv[1] if len(sys.argv) > 1 else "run"
     nci = "nci" in tag
