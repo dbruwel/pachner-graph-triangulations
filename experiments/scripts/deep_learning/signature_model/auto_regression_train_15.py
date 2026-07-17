@@ -448,5 +448,8 @@ if __name__ == "__main__":
 
     data_cache = {}
 
+    logger.debug(config_path)
+
     for config_file in config_path.rglob("*.yaml"):
+        logger.debug(config_file)
         main_train(config_file, tag, nci=nci, data_cache=data_cache)
