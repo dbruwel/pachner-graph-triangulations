@@ -440,6 +440,7 @@ def main_train(
 
 
 if __name__ == "__main__":
+    print("in")
     tag = sys.argv[1] if len(sys.argv) > 1 else "run"
     nci = "nci" in tag
 
