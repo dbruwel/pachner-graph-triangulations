@@ -446,7 +446,9 @@ if __name__ == "__main__":
     nci = "nci" in tag
 
     data_root = get_data_root(nci)
-    config_path = data_root.parent / "experiments" / "configs" / "isoflop_scaling"
+    config_path = (
+        data_root.parent / "experiments" / "configs" / "mup_learning_rate_tune"
+    )
 
     data_cache = {}
 
