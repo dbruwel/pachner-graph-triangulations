@@ -19,4 +19,4 @@ final_test_loss: true
 final_save_model: false
 intrem_sample_size: null
 final_sample_size: 10000
-run_model_tag: run_3000_nci
+run_model_tag: run_nci

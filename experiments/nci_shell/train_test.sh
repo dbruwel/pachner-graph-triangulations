@@ -7,7 +7,7 @@
 #PBS -l mem=200GB
 #PBS -l jobfs=10GB
 #PBS -l storage=gdata/io00+scratch/io00
-#PBS -N xlo_oom_test
+#PBS -N oom_test
 #PBS -M dbru8728@uni.sydney.edu.au
 #PBS -m abe
 
@@ -18,4 +18,4 @@ cd /g/data/io00/js1886/
 source /g/data/io00/js1886/trig/bin/activate
 
 # Run the test.
-python ./pachner-graph-triangulations/experiments/scripts/deep_learning/signature_model/auto_regression_train_scaling_nci.py scale_xlo
+python ./pachner-graph-triangulations/experiments/scripts/deep_learning/signature_model/auto_regression_train_15.py run_test_nci

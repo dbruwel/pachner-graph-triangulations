@@ -393,6 +393,8 @@ def main_train(
 
     # Set save path.
     data_root = get_data_root(nci)
+    if nci:
+        config_data["save_path_stem"] = config_data["save_path_stem"] + "_nci"
     fname = name_to_fname(config_data["dname"])
     save_path = data_root / config_data["save_path_stem"] / fname
     config_data["save_path"] = save_path
@@ -449,9 +451,7 @@ if __name__ == "__main__":
     nci = "nci" in tag
 
     data_root = get_data_root(nci)
-    config_path = (
-        data_root.parent / "experiments" / "configs" / "mup_learning_rate_tune"
-    )
+    config_path = data_root.parent / "experiments" / "configs" / "isoflop_scaling"
     logger.info(f"Checking {str(config_path)} for {str(tag)}")
 
     data_cache = {}
