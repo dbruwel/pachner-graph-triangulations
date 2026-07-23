@@ -74,7 +74,7 @@ def create_train_step(loss_metric_fn: Callable) -> Callable:
         state: MinimalTrainState,
         batch_input: jax.Array,
         batch_labels: jax.Array,
-        num_microbatches: int = 8,
+        num_microbatches: int = 16,
     ) -> tuple[MinimalTrainState, jax.Array]:
 
         mb_input = batch_input.reshape(num_microbatches, -1, *batch_input.shape[1:])
