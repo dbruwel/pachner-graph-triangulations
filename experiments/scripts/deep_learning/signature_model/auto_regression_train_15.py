@@ -83,8 +83,7 @@ def sample_model(
     samp_save_path = save_path / fname
 
     with open(samp_save_path, "w") as f:
-        for samp in samps_str:
-            f.write(samp + "\n")
+        f.writelines(samp + "\n" for samp in samps_str)
 
 
 def sample_model_from_save(
@@ -451,8 +450,8 @@ if __name__ == "__main__":
     nci = "nci" in tag
 
     data_root = get_data_root(nci)
-    config_path = data_root.parent / "experiments" / "configs" / "isoflop_scaling"
-    logger.info(f"Checking {str(config_path)} for {str(tag)}")
+    config_path = data_root.parent / "experiments" / "configs" / "statistical_tests"
+    logger.info(f"Checking {config_path!s} for {tag!s}")
 
     data_cache = {}
 
@@ -460,7 +459,7 @@ if __name__ == "__main__":
     config_files.sort()
 
     for config_file in config_files:
-        logger.info(f"{str(config_file)}")
+        logger.info(f"{config_file!s}")
         main_train(
             config_file,
             tag,

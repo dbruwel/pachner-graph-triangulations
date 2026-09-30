@@ -1,8 +1,8 @@
 import shutil
+from collections.abc import Callable
 from dataclasses import dataclass, fields
 from functools import partial
 from pathlib import Path
-from typing import Callable
 
 import jax
 import jax.numpy as jnp
@@ -151,8 +151,8 @@ def generate_samples(
     initial_samples = jnp.zeros((samps_to_gen, seq_len), dtype=jnp.int32)
     initial_samples = initial_samples.at[:, 0].set(bos_id)
 
-    def generate_step(carry, i):
-        samples = carry
+    def generate_step(samples, i):
+        step_key = jax.random.fold_in(subkey, i)
 
         pred = state.apply_fn(
             {"params": state.params},
@@ -160,9 +160,9 @@ def generate_samples(
             training=False,
         )
         pred_fp32 = pred.astype(jnp.float32)
-
         pred_next_token = pred_fp32[:, i, :]
-        sampled_token = jax.random.categorical(subkey, pred_next_token, axis=-1)
+
+        sampled_token = jax.random.categorical(step_key, pred_next_token, axis=-1)
         samples = samples.at[:, i + 1].set(sampled_token)
 
         return samples, None
@@ -189,7 +189,7 @@ def create_mup_optimizer(
     def map_params_to_optimizer(params):
         flat_params = traverse_util.flatten_dict(params)
         label_dict = {}
-        for path, param in flat_params.items():
+        for path in flat_params:
             path_str = "/".join(path)
             if (
                 "wte" in path_str
