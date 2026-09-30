@@ -1,0 +1,22 @@
+dname: Statistical N9 384_6
+data_path_stem: input_data/dehydration/processed/spheres_9_20m.hdf5
+save_path_stem: results/sgd_models_dehydration/statistical_tests
+d_model: 384
+base_d_model: 256
+num_layers: 6
+head_size: 64
+batch_size: 512
+epochs: 1
+num_train_steps: null
+flops: null
+num_test_samps: 10000
+sweep: 5000
+learning_rate: 0.001
+use_mup: false
+intrem_train_loss: false
+intrem_test_loss: false
+final_test_loss: true
+final_save_model: true
+intrem_sample_size: null
+final_sample_size: null
+run_model_tag: skip
