@@ -216,3 +216,6 @@ data
 experiments/notebooks/dev.ipynb
 pull_rds.sh
 push_rds.sh
+*.csv
+*.pdf
+*.txt

@@ -1,5 +1,20 @@
 # Navigating the Pachner Graph: Algorithms for Searching and Sampling Triangulations
 
+> [!WARNING]
+> ## This is a work-in-progress research repository. Expect mess.
+>
+> **This code is under active development and will be until at least November 2027. It is a working research log, not a polished codebase.**
+>
+> **It is not written for collaboration.** It exists to track the history of the project and to keep files in sync between the different machines that run the experiments. As a result, you should expect:
+>
+> - **Messy, exploratory notebooks** that were written to try ideas quickly, not to be read
+> - **Undocumented or half-documented code**, dead ends, and experiments that were abandoned partway through
+> - **Inconsistent structure** as the project evolves
+>
+> **This is intentional, and part of the plan.** Research code moves fast, and tidying every experiment would slow the actual research down. Polished, cleaned-up code is written separately when the work is ready to be shared.
+>
+> The repository is public because it had to be for my Honours submission, and the work has continued on from there. You're very welcome to read through it, and there are some genuinely interesting ideas in here. Just don't expect all of it to make sense, and please don't judge my general coding standards by it.
+
 This repository contains a script that is an almost identical copy of a file from the repository `https://github.com/jspreer/MCMCForTriangulations`. Access to this script has been granted by its owner - Jonathan Spreer. The script is included at `src/pachner_graph_triangulations/functions3d.py`.
 
 ## Overview
