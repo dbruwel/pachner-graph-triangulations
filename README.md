@@ -15,7 +15,7 @@
 >
 > The repository is public because it had to be for my Honours submission, and the work has continued on from there. You're very welcome to read through it, and there are some genuinely interesting ideas in here. Just don't expect all of it to make sense.
 
-This repository contains a script that is an almost identical copy of a file from the repository `https://github.com/jspreer/MCMCForTriangulations`. Access to this script has been granted by its owner - Jonathan Spreer. The script is included at `src/pachner_graph_triangulations/mcmc.py`.
+This repository contains a script adapted from a file from the repository `https://github.com/jspreer/MCMCForTriangulations`. Access to this script has been granted by its owner - Jonathan Spreer. The script is included at `src/pachner_traversal/mcmc.py`.
 
 ## Overview
 This project was completed in partial fulfillment of the requirements for the degree of B.Sc. (Honours) under the supervision of Jonathan Spreer.
