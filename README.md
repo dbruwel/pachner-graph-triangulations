@@ -13,9 +13,9 @@
 >
 > **This is intentional, and part of the plan.** Research code moves fast, and tidying every experiment would slow the actual research down. Polished, cleaned-up code is written separately when the work is ready to be shared.
 >
-> The repository is public because it had to be for my Honours submission, and the work has continued on from there. You're very welcome to read through it, and there are some genuinely interesting ideas in here. Just don't expect all of it to make sense, and please don't judge my general coding standards by it.
+> The repository is public because it had to be for my Honours submission, and the work has continued on from there. You're very welcome to read through it, and there are some genuinely interesting ideas in here. Just don't expect all of it to make sense.
 
-This repository contains a script that is an almost identical copy of a file from the repository `https://github.com/jspreer/MCMCForTriangulations`. Access to this script has been granted by its owner - Jonathan Spreer. The script is included at `src/pachner_graph_triangulations/functions3d.py`.
+This repository contains a script that is an almost identical copy of a file from the repository `https://github.com/jspreer/MCMCForTriangulations`. Access to this script has been granted by its owner - Jonathan Spreer. The script is included at `src/pachner_graph_triangulations/mcmc.py`.
 
 ## Overview
 This project was completed in partial fulfillment of the requirements for the degree of B.Sc. (Honours) under the supervision of Jonathan Spreer.
@@ -28,8 +28,6 @@ This repository is not intended as a Python package but serves to showcase the w
 
 ### Thesis
 The outcomes of this research are documented in a PDF available in this repository under the `thesis` section, which also includes the raw `.tex`.
-
-There is a github action setup so that when this is changed, a new PDF is generated and added to the repository.
 
 
 ## Installation
