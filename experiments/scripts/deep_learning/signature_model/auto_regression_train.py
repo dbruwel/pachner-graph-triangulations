@@ -9,9 +9,10 @@ import jax
 import jax.numpy as jnp
 import numpy as np
 import optax
-from pachner_traversal.data_io_dehydration import Dataset, Encoder
-from pachner_traversal.transformer import Transformer
-from pachner_traversal.transformer_training import (
+
+from pachner_traversal.data.dehydration_io import Dataset, Encoder
+from pachner_traversal.deep_learning.transformer import Transformer
+from pachner_traversal.deep_learning.transformer_training import (
     BaseConfig,
     create_get_test_loss,
     create_train_step,
@@ -76,8 +77,7 @@ def sample_model(
     samp_save_path = save_path / fname
 
     with open(samp_save_path, "w") as f:
-        for samp in samps_str:
-            f.write(samp + "\n")
+        f.writelines(samp + "\n" for samp in samps_str)
 
 
 def sample_model_from_save(
@@ -186,10 +186,8 @@ def train_model(
     dataset, encoder, train_input, train_label, test_input, test_label = load_data(
         data_path, num_test_samps
     )
-    if num_train_steps is None and flops is None:
-        if epochs is not None:
-            if epochs >= 1:
-                num_train_steps = (len(dataset) - num_test_samps) * epochs // batch_size
+    if num_train_steps is None and flops is None and epochs is not None and epochs >= 1:
+        num_train_steps = (len(dataset) - num_test_samps) * epochs // batch_size
 
     # Initialise model.
     logger.debug("Initialising model")
@@ -204,7 +202,7 @@ def train_model(
         base_d_model=base_d_model,
     )
     _, params_key, dropout_key = keys
-    vocab_size, seq_len = meta
+    _vocab_size, seq_len = meta
 
     # Initialise parameters.
     logger.debug("Initialising parameters")

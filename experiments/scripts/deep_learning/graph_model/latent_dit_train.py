@@ -7,13 +7,13 @@ import jax
 import jax.numpy as jnp
 import numpy as np
 import optax
-from flax.core import freeze
 from flax.training import train_state
-from pachner_traversal.data_io_dehydration import Dataset
-from pachner_traversal.dit import DiT
-from pachner_traversal.glue_encoding import encode
-from pachner_traversal.utils import create_results_path, data_root
 from regina import Triangulation3
+
+from pachner_traversal.data.dehydration_io import Dataset
+from pachner_traversal.data.glue_encoding import encode
+from pachner_traversal.deep_learning.dit import DiT
+from pachner_traversal.utils import create_results_path, data_root
 
 logger = logging.getLogger(__name__)
 
@@ -156,7 +156,7 @@ def train_model(
         )
         state = state.apply_gradients(grads=grads)
         if (step + 1) % 500 == 0 or (step + 1) == num_train_steps:
-            logger.info(f"Step {step+1}/{num_train_steps}, Loss: {float(l):.4f}")
+            logger.info(f"Step {step + 1}/{num_train_steps}, Loss: {float(l):.4f}")
             with open(save_path / "params.pkl", "wb") as f:
                 pickle.dump(state.params, f)
     logger.info("Training finished.")

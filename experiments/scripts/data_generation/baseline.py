@@ -1,10 +1,35 @@
+"""Computes the baseline of acceptable strings given a random string.
+
+WARNING: This is old code that forms a biased estimate.
+
+This code generates a collection of acceptable triangulations and dehydrates them, it then uses these
+to form a list of the avaliable characters for each position and then randomly samples from them and checks
+if the resulting string is acceptable. The problem with this method is that the avaliable charecters are
+only correct for "encodable" strings, that is strings that results from the actual dehydration of a triangulation,
+not all parsable strings. Additionally, the method to determine the avaliable charecters at each step often
+misses characters. A more accurate tree search method exists and is the primary refference point for these
+statistics.
+"""
+
 import argparse
 import random
 
 from regina import Perm4, Triangulation3
 
 
-def gen_acceptable(size):
+def gen_acceptable(size: int) -> Triangulation3:
+    """Generates an acceptable triangulation through random gluings.
+
+    Parameters
+    ----------
+    size : int
+        The size of the triangulation (number of tetrahedra)
+
+    Returns
+    -------
+    Triangulation3
+        The triangulation.
+    """
     tri = Triangulation3()
     for _ in range(size):
         tri.newTetrahedron()
@@ -38,7 +63,20 @@ def gen_acceptable(size):
     return tri
 
 
-def isManifold(tri):
+def is_manifold(tri: Triangulation3) -> bool:
+    """Checks if a given triangulation is a manifold through a vertex link check.
+
+    Parameters
+    ----------
+    tri : Triangulation3
+        The triangulation to check.
+
+    Returns
+    -------
+    bool
+        If the triangulation is a valid manifold.
+    """
+
     is_manifold = True
     for i in range(tri.countVertices()):
         v = tri.vertex(i)
@@ -49,7 +87,21 @@ def isManifold(tri):
     return is_manifold
 
 
-def gen_av_chars(size, N=100_000):
+def gen_av_chars(size: int, N: int = 100_000) -> tuple[dict, int]:
+    """Generates a dictionary of the avaliable charecters at each position for a valid dehydration signature.
+
+    Parameters
+    ----------
+    size : int
+        The size of the triangulation to consider.
+    N : int, optional
+        The number of samples to generate for the check., by default 100_000
+
+    Returns
+    -------
+    tuple[dict, int]
+        The dictionary of position charecter pairs, and the length of the signature.
+    """
     sigs = []
     sig = ""
 
@@ -63,12 +115,28 @@ def gen_av_chars(size, N=100_000):
     seq_len = len(sig)
 
     for cid in range(seq_len):
-        av_chars[cid] = list(set([sig[cid] for sig in sigs]))
+        av_chars[cid] = list({sig[cid] for sig in sigs})
 
     return av_chars, seq_len
 
 
-def get_acceptable(size, N=100_000_000):
+def get_acceptable(size: int, N: int = 100_000_000) -> float:
+    """Estimates the proportion of random strings are valid dehydration signatures
+    when each string is generated from the avaliable charecters at each position.
+
+    Parameters
+    ----------
+    size : int
+        The size of the triangulation to conisder.
+    N : int, optional
+        The number of strings to generate and check, by default 100_000_000
+
+    Returns
+    -------
+    float
+        The estimated proprtion.
+    """
+
     acceptable_count = 0
     valid_count = 0
 
@@ -81,7 +149,7 @@ def get_acceptable(size, N=100_000_000):
             t = Triangulation3.rehydrate(word)
             valid_count += 1 if t.isValid() else 0
             acceptable_count += 1
-        except Exception:
+        except Exception:  # noqa: BLE001, S110
             pass
 
     p = acceptable_count / N

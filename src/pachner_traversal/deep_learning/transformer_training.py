@@ -10,7 +10,7 @@ import optax
 from flax import traverse_util
 from flax.training import train_state
 
-from pachner_traversal.data_io_dehydration import Dataset, Encoder
+from pachner_traversal.data.dehydration_io import Dataset, Encoder
 from pachner_traversal.utils import get_random_sample_idx
 
 

@@ -1,9 +1,14 @@
+"""Generates a list of triangulations of a target size.
+
+Designed for parallel processing on a high performance computer.
+"""
+
 import argparse
 import collections
 import logging
 import random
 
-from pachner_traversal.mcmc import iterate
+from pachner_traversal.classical_search.mcmc import iterate
 from pachner_traversal.utils import get_data_root
 
 data_root = get_data_root()
@@ -137,5 +142,5 @@ def main():
 if __name__ == "__main__":
     try:
         main()
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         logger.error(e)

@@ -28,7 +28,7 @@ def neighbours(iso: str, f: list[int], a: int) -> dict:
                     # add edge needed to flip to obtain this neighbour (in standard iso sig labelling)
                     if tiso not in nbrs:
                         nbrs[tiso] = t
-                except Exception:
+                except Exception:  # noqa
                     pass
         return nbrs
     # going down (3-2-move at every edge of degree three in three distinct tetrahedra)
@@ -45,7 +45,7 @@ def neighbours(iso: str, f: list[int], a: int) -> dict:
                     # add edge needed to flip to obtain this neighbour (in standard iso sig labelling)
                     if tiso not in nbrs:
                         nbrs[tiso] = e
-                except Exception:
+                except Exception:  # noqa
                     pass
         return nbrs
 
@@ -193,11 +193,10 @@ def sample_chain(
     isos = [seed]
 
     for itt in range(itts):
-        if itt % 10_000 == 0:
-            if chain_id == 0:
-                logger.info(
-                    f"Chain {chain_id}: iteration {itt:,.0f}/{itts:,.0f} at {datetime.now().strftime('%H:%M:%S')}"
-                )
+        if (itt % 10_000 == 0) and (chain_id == 0):
+            logger.info(
+                f"Chain {chain_id}: iteration {itt:,.0f}/{itts:,.0f} at {datetime.now().strftime('%H:%M:%S')}"
+            )
         current_iso = isos[-1]
 
         proposed_iso = iterate(current_iso, gamma_, steps=steps)

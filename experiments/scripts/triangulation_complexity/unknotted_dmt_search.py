@@ -1,22 +1,48 @@
+"""Experiment to search for triangulations of the 3-sphere with non-perfect critical count and all edges unknotted.
+
+This is an experiment script to run MCMC across the 3-sphere, and for each triangulation check if all the edges
+are unkontted. If they are all unknotted, we run a fast heuristic search to see if there is a perfect morse matching
+or not (this is done with random morse matchings). The motivation for this is that if a triangulation has a knot
+in it, it cannot have a perfect morse matching in it. There must be some critical face / edge that is forced by the
+knot. However, this is not the only obstruction to a perfect morse matching, this code generates such examples where
+no perfect morse matching exists, but it is not due to a knot obstruction.
+"""
+
 import logging
 import multiprocessing
 from datetime import datetime
 
-from pachner_traversal.mcmc import iterate
-from pachner_traversal.potential_functions import check_all_unknotted
-from pachner_traversal.dmt import estimate_critical_count
+from pachner_traversal.classical_search.mcmc import iterate
+from pachner_traversal.math.dmt import estimate_critical_count
+from pachner_traversal.math.potential_functions import check_all_unknotted
 
 logger = logging.getLogger(__name__)
 
 
 def check_perfect_critical(iso: str, base_itts=10, total_itts=10) -> bool:
+    """Heuristic check for if a given triangulation (IsoSig) has a perfect morse matching.
+    Achieved through random morse matching on the Hasse diagram.
+
+    Parameters
+    ----------
+    iso : str
+        The triangulation given by its isomorphism signature.
+    base_itts : int, optional
+        The base number of iterations for the critical count function, by default 10
+    total_itts : int, optional
+        The overall number of iterations, by default 10
+
+    Returns
+    -------
+    bool
+        If a perfect morse matching has been found for the triangulation.
+    """
     min_critical = float("inf")
     for _ in range(total_itts):
         critical = estimate_critical_count(iso, itts=base_itts)
         if critical == 2:
             return True
-        if critical < min_critical:
-            min_critical = critical
+        min_critical = min(min_critical, critical)
 
     return False
 
@@ -27,15 +53,34 @@ def sample_chain(
     itts: int,
     steps: int,
     chain_id: int,
-):
+) -> list:
+    """Runs an MCMC chain and checks all new triangulations for if they are an unknotted triangulation
+    with non-perfect morse matching.
+
+    Parameters
+    ----------
+    seed : str
+        The starting seed triangulation for the MCMC run.
+    gamma_ : float
+        The random walk growth parameter.
+    itts : int
+        The number of iterations to run.
+    steps : int
+        The number of steps per iteration.
+    chain_id : int
+        The chain ID for parallel and logging purposes.
+
+    Returns
+    -------
+    list
+        An empty list for compatibility purposes.
+    """
     isos = [seed]
 
     for itt in range(itts):
-        if (itt % 1_000 == 0) or (itt < 100 and itt % 10 == 0):
-            if chain_id == 0:
-                logger.info(
-                    f"Chain {chain_id}: iteration {itt:,.0f}/{itts:,.0f} at {datetime.now().strftime('%H:%M:%S')}"
-                )
+        if ((itt % 1_000 == 0) or (itt < 100 and itt % 10 == 0)) and (chain_id == 0):
+            msg = f"Chain {chain_id}: iteration {itt:,.0f}/{itts:,.0f} at {datetime.now().strftime('%H:%M:%S')}"
+            logger.info(msg)
         current_iso = isos[-1]
 
         proposed_iso = iterate(current_iso, gamma_, steps=steps)
@@ -62,6 +107,26 @@ def run_chains(
     itts: int,
     steps: int,
 ) -> list[list[str]]:
+    """Runs multiple chains of MCMC searching for a unknotted, non-perfect triangulation.
+
+    Parameters
+    ----------
+    num_chains : int
+        The number of chains to run.
+    seed : str
+        The seed triangulation for the MCMC runs.
+    gamma_ : float
+        The random walk growth control parameter.
+    itts : int
+        The number of iterations per chain.
+    steps : int
+        The number of steps per iteration.
+
+    Returns
+    -------
+    list[list[str]]
+        A list of empty lists, one per chain, for compatibility purposes.
+    """
     logger.info(f"Running {num_chains:,.0f} chains with {itts:,.0f} iterations each.")
 
     with multiprocessing.Pool(processes=num_chains) as pool:

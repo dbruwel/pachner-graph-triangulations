@@ -84,7 +84,7 @@ class Dataset:
                 for s in chunk:  # type: ignore
                     chars.update(s.decode("utf-8"))
 
-        chars = sorted(list(chars))
+        chars = sorted(chars)
 
         return chars
 

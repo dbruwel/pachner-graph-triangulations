@@ -1,9 +1,8 @@
 import flax.linen as nn
 import jax
 import jax.numpy as jnp
-from typing import Optional
 
-from pachner_traversal.dit import DiT, TimestepEmbedding, DiTBlock
+from pachner_traversal.deep_learning.dit import DiT
 
 
 class PairwiseMLP(nn.Module):
@@ -82,7 +81,7 @@ class DiscreteDiT(nn.Module):
     num_layers: int = 4
     num_heads: int = 4
     dropout_rate: float = 0.1
-    proj_dim: Optional[int] = 256
+    proj_dim: int | None = 256
     mlp_hidden_dim: int = 256
     mlp_num_layers: int = 2
     sinkhorn_iters: int = 20

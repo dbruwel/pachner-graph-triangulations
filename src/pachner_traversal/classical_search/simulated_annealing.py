@@ -1,7 +1,7 @@
 import logging
 from collections.abc import Callable
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 import numpy as np
 
@@ -22,7 +22,7 @@ def sample_chain(
     gamma_: float = 1 / 5,
     itts: int = 1_000,
     steps: int = 1,
-    chain_id: Optional[int] = None,
+    chain_id: int | None = None,
     lambda_: float = 1 / 5,
     alpha: float = 1 / 5,
     target_acceptance: float = 0.2,
@@ -40,9 +40,8 @@ def sample_chain(
     acceptances = [1]
 
     for itt in range(itts):
-        if itt % 1_000 == 0:
-            if chain_id == 0:
-                logger.info(f"Chain {chain_id}: iteration {itt:,.0f}/{itts:,.0f}")
+        if (itt % 1_000 == 0) and (chain_id == 0):
+            logger.info(f"Chain {chain_id}: iteration {itt:,.0f}/{itts:,.0f}")
         current_iso = isos[-1]
 
         current_score = scores[current_iso]
@@ -70,7 +69,7 @@ def sample_chain(
                         )
                         isos.append(proposed_iso)
                         break
-                except Exception as e:
+                except Exception as e:  # noqa
                     logger.error(
                         f"Error processing iso {proposed_iso} in score computation. Skipping."
                     )
@@ -94,7 +93,7 @@ def sample_chain(
                         isos.append(current_iso)
                         moving_average = (1 - alpha) * moving_average + alpha * 0.0
                         acceptances.append(0)
-                except Exception as e:
+                except Exception as e:  # noqa
                     logger.error(
                         f"Error in acceptance probability calculation for iso {proposed_iso}. Skipping."
                     )
@@ -130,8 +129,6 @@ def run_chains(
     target_acceptance: float = 0.2,
     path: Path | None = None,
 ) -> dict[str, Any]:
-    """"""
-
     scores = {}
     pns = {}
     counts_unknotted = {}

@@ -4,8 +4,8 @@ import jax
 import jax.numpy as jnp
 import numpy as np
 
+from ..data.isosig_io import Dataset, Encoder
 from .transformer import generate_samples
-from .data_io import Dataset, Encoder
 
 
 def get_scores(samples: np.ndarray, dataset: Dataset, encoder: Encoder) -> np.ndarray:
@@ -15,7 +15,9 @@ def get_scores(samples: np.ndarray, dataset: Dataset, encoder: Encoder) -> np.nd
 
 
 @partial(jax.jit, static_argnames=["dataset", "encoder"])
-def jax_get_scores(samples: np.ndarray, dataset: Dataset, encoder: Encoder) -> jax.Array:
+def jax_get_scores(
+    samples: np.ndarray, dataset: Dataset, encoder: Encoder
+) -> jax.Array:
     def wrapped_get_scores(samples):
         return get_scores(samples, dataset, encoder)
 

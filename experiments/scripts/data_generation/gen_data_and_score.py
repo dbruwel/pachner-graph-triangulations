@@ -1,3 +1,8 @@
+"""Generates data and scores the data.
+
+Designed for small runs on a laptop.
+"""
+
 import logging
 import time
 from pathlib import Path
@@ -5,9 +10,11 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-from pachner_traversal.mcmc import run_chains
-from pachner_traversal.potential_functions import calc_composite_potential
-from pachner_traversal.utils import create_results_path, data_root
+from pachner_traversal.classical_search.mcmc import run_chains
+from pachner_traversal.math.potential_functions import calc_composite_potential
+from pachner_traversal.utils import create_results_path, get_data_root
+
+data_root = get_data_root()
 
 logger = logging.getLogger(__name__)
 
@@ -66,7 +73,7 @@ def main():
     score_data = True
 
     if generate_data:
-        save_path = create_results_path(Path("mcmc") / "generic_samples")
+        save_path = create_results_path(Path("mcmc") / "generic_samples", data_root)
         num_chains = 7
         gamma_ = 1 / 10
         itts = 10_000

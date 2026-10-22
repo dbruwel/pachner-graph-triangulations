@@ -12,10 +12,11 @@ import time
 import jax
 import jax.numpy as jnp
 import numpy as np
-from pachner_traversal.dit_discrete import DiscreteDiT
-from pachner_traversal.glue_encoding import encode, gluing_to_tri, jax_encode
-from pachner_traversal.utils import get_data_root
 from scipy.optimize import linear_sum_assignment
+
+from pachner_traversal.data.glue_encoding import encode, gluing_to_tri, jax_encode
+from pachner_traversal.deep_learning.dit_discrete import DiscreteDiT
+from pachner_traversal.utils import get_data_root
 
 logger = logging.getLogger(__name__)
 
@@ -126,7 +127,7 @@ def compute_posterior_logits(
     Returns:
         logits_t_minus_1: [B, N, N] unnormalized log probabilities.
     """
-    B, N, _ = x_t.shape
+    _, N, _ = x_t.shape
 
     lam_t = lambda_t[:, None, None]
     lam_t_prev = lambda_t_minus_1[:, None, None]
@@ -199,7 +200,7 @@ def generate(
         timesteps_j = jnp.full((n_samples,), t_idx, dtype=jnp.int32)
 
         # Model predicts x0 (doubly-stochastic)
-        logits, x0_pred = model.apply(
+        _, x0_pred = model.apply(
             {"params": params}, x_t_encoded_j, timesteps_j, training=False
         )
         x0_pred_np = np.array(x0_pred)
@@ -226,7 +227,7 @@ def generate(
     x_t_encoded = jax_encode_gluing_batch(jnp.array(x_t_np, dtype=np.float32), n_tet)
     x_t_encoded_j = jnp.array(x_t_encoded)
     timesteps_j = jnp.zeros((n_samples,), dtype=jnp.int32)
-    logits, x0_pred = model.apply(
+    _, x0_pred = model.apply(
         {"params": params}, x_t_encoded_j, timesteps_j, training=False
     )
     x0_pred_np = np.array(x0_pred)
@@ -238,7 +239,7 @@ def generate(
         try:
             tri = gluing_to_tri(hard)
             triangulations.append(tri)
-        except Exception as e:
+        except Exception as e:  # noqa
             logger.warning(f"Sample {i}: failed to reconstruct triangulation: {e}")
             triangulations.append(None)
 

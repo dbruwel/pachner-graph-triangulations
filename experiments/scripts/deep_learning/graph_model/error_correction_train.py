@@ -1,5 +1,3 @@
-""" """
-
 import logging
 import pathlib
 import pickle
@@ -10,16 +8,17 @@ import jax.numpy as jnp
 import numpy as np
 import optax
 from flax.training import train_state
-from pachner_traversal.data_io_dehydration import Dataset
-from pachner_traversal.glue_encoding import (
+from regina import Triangulation3
+
+from pachner_traversal.data.dehydration_io import Dataset
+from pachner_traversal.data.glue_encoding import (
     get_face_graph,
     get_vertex_graph,
     jax_encode,
     tri_to_gluing,
 )
-from pachner_traversal.graphomer import EdgeReconstructionGraphomer
+from pachner_traversal.deep_learning.graphomer import EdgeReconstructionGraphomer
 from pachner_traversal.utils import create_results_path, data_root
-from regina import Triangulation3
 
 logger = logging.getLogger(__name__)
 print(jax.devices())
@@ -266,7 +265,7 @@ def train_model(
         state = state.replace(dropout_key=dropout_key)
 
         if (step + 1) % 500 == 0 or (step + 1) == num_train_steps:
-            logger.info(f"Step {step+1}/{num_train_steps}, Loss: {float(l):.6f}")
+            logger.info(f"Step {step + 1}/{num_train_steps}, Loss: {float(l):.6f}")
 
             write_loss(save_path / "train_losses.csv", step + 1, float(l))
 

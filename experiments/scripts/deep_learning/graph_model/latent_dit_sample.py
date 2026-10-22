@@ -1,4 +1,3 @@
-import pathlib
 import pickle
 import sys
 
@@ -6,7 +5,7 @@ import jax
 import jax.numpy as jnp
 import numpy as np
 
-from pachner_traversal.dit import DiT
+from pachner_traversal.deep_learning.dit import DiT
 
 
 def sample_dit(

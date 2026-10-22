@@ -14,10 +14,11 @@ import jax
 import jax.numpy as jnp
 import numpy as np
 import optax
-from pachner_traversal.data import char_list15
-from pachner_traversal.data_io_dehydration import Dataset, Encoder
-from pachner_traversal.transformer import Transformer
-from pachner_traversal.transformer_training import (
+
+from pachner_traversal.data.data import char_list15
+from pachner_traversal.data.dehydration_io import Dataset, Encoder
+from pachner_traversal.deep_learning.transformer import Transformer
+from pachner_traversal.deep_learning.transformer_training import (
     BaseConfig,
     create_get_test_loss,
     create_train_step,
@@ -377,9 +378,11 @@ def main_train(
     config_path: pathlib.Path,
     run_model_tag: str,
     nci: bool = False,
-    data_cache: dict = {},
+    data_cache: dict | None = None,
     read_shm: bool = False,
 ):
+    data_cache = data_cache or {}
+
     # Set logging.
     silence_jax()
 
@@ -450,7 +453,13 @@ if __name__ == "__main__":
     nci = "nci" in tag
 
     data_root = get_data_root(nci)
-    config_path = data_root.parent / "experiments" / "configs" / "statistical_tests"
+    config_path = (
+        data_root.parent
+        / "experiments"
+        / "configs"
+        / "deep_learning"
+        / "statistical_tests"
+    )
     logger.info(f"Checking {config_path!s} for {tag!s}")
 
     data_cache = {}

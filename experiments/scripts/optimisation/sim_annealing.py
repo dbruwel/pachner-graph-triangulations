@@ -1,15 +1,20 @@
+"""Runs the simulated annealing heuristic to attempt to optimise some objective function."""
+
 import logging
+from collections.abc import Callable
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any
 
 import numpy as np
 import pandas as pd
 
-import pachner_traversal.potential_functions as potentials
-from pachner_traversal.simulated_annealing import run_chains
-from pachner_traversal.utils import create_results_path
+import pachner_traversal.math.potential_functions as potentials
+from pachner_traversal.classical_search.simulated_annealing import run_chains
+from pachner_traversal.utils import create_results_path, get_data_root
 
 logger = logging.getLogger(__name__)
+
+data_root = get_data_root()
 
 
 def run_sim_annealing(
@@ -18,7 +23,16 @@ def run_sim_annealing(
         [str], tuple[float | np.floating[Any], float | np.floating[Any], int, bool]
     ],
 ) -> None:
-    path = create_results_path(res_path)
+    """Runs simulated annealing on some potential function.
+
+    Parameters
+    ----------
+    res_path : Path
+        The result path
+    potential : Callable[ [str], tuple[float  |  np.floating[Any], float  |  np.floating[Any], int, bool] ]
+        The potential function.
+    """
+    path = create_results_path(res_path, data_root)
 
     res = run_chains(
         beta=1.0,

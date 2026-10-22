@@ -206,9 +206,8 @@ marimo/_static/
 marimo/_lsp/
 __marimo__/
 
-data/
+/data/
 backup_data/
-data
 .vscode/
 *.zip
 
@@ -219,3 +218,4 @@ push_rds.sh
 *.csv
 *.pdf
 *.txt
+CONTRIBUTING_plan.md

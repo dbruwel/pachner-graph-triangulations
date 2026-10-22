@@ -8,9 +8,10 @@ from dataclasses import asdict, dataclass
 import jax.numpy as jnp
 import numpy as np
 import optax
-from pachner_traversal.data_io_dehydration import Dataset, Encoder
-from pachner_traversal.transformer import ScalarTransformer
-from pachner_traversal.transformer_training import (
+
+from pachner_traversal.data.dehydration_io import Dataset, Encoder
+from pachner_traversal.deep_learning.transformer import ScalarTransformer
+from pachner_traversal.deep_learning.transformer_training import (
     BaseConfig,
     create_get_test_loss,
     create_train_step,

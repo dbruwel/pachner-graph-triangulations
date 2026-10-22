@@ -1,6 +1,5 @@
 import math
 import multiprocessing
-from typing import Optional, Type
 
 import numpy as np
 import regina
@@ -123,7 +122,6 @@ class KnottedFrac(Score):
 
 
 def process_edge(args):
-    """"""
     start_index, end_index, iso_sig, potential_obj = args
 
     results = []
@@ -154,7 +152,7 @@ def process_edge(args):
 
 
 class Potential:
-    def __init__(self, potential: Type[Score], max_size: Optional[int] = 30):
+    def __init__(self, potential: type[Score], max_size: int | None = 30):
         self.max_size = max_size
         self.potential = potential
 
@@ -276,10 +274,7 @@ def calc_composite_potential(iso):
                 score_num_gen = NumGenerators.base_score
                 knotted.append(0)
                 all_knotted = False
-        except Exception:
-            import pdb
-
-            pdb.set_trace()
+        except Exception:  # noqa
             raise RuntimeError()
 
         scores_alex_norm.append(score_alex_norm)

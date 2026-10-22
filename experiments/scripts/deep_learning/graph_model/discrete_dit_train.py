@@ -27,11 +27,14 @@ import jax.numpy as jnp
 import numpy as np
 import optax
 from flax.training import train_state
-from pachner_traversal.data_io_dehydration import Dataset
-from pachner_traversal.dit_discrete import DiscreteDiT
-from pachner_traversal.glue_encoding import encode, jax_encode, tri_to_gluing
-from pachner_traversal.utils import create_results_path, data_root
 from regina import Triangulation3
+
+from pachner_traversal.data.dehydration_io import Dataset
+from pachner_traversal.data.glue_encoding import encode, jax_encode, tri_to_gluing
+from pachner_traversal.deep_learning.dit_discrete import DiscreteDiT
+from pachner_traversal.utils import create_results_path, get_data_root
+
+data_root = get_data_root()
 
 logger = logging.getLogger(__name__)
 
@@ -298,7 +301,7 @@ def train_model(
         state = state.replace(dropout_key=dropout_key)
 
         if (step + 1) % 500 == 0 or (step + 1) == num_train_steps:
-            logger.info(f"Step {step+1}/{num_train_steps}, Loss: {float(l):.6f}")
+            logger.info(f"Step {step + 1}/{num_train_steps}, Loss: {float(l):.6f}")
             if test_set:
                 test_l, _ = train_step(
                     state.params,

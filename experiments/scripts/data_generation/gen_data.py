@@ -1,9 +1,15 @@
+"""Generates a list of triangulations of a target size.
+
+Designed for small runs on a laptop.
+"""
+
 import logging
 import random
 
 import numpy as np
-from pachner_traversal.data import leading_chars
-from pachner_traversal.mcmc import run_chain_multi_arg
+
+from pachner_traversal.classical_search.mcmc import run_chain_multi_arg
+from pachner_traversal.data.data import leading_chars
 from pachner_traversal.utils import get_data_root
 
 logger = logging.getLogger(__name__)

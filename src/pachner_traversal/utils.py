@@ -84,8 +84,7 @@ def write_loss(save_path, step, loss):
             f.write(f"{step},{loss}\n")
     else:
         with open(save_path, "a") as f:
-            for st, lo in zip(step, loss):
-                f.write(f"{st},{lo}\n")
+            f.writelines(f"{st},{lo}\n" for st, lo in zip(step, loss))
 
 
 def save_model(save_path, state, tag=None):

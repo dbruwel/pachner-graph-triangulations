@@ -1,10 +1,14 @@
-# adapted from J. Spreer
+"""Discrete Morse Theory functions for triangulations.
+
+Addapted from J. Spreer.
+"""
+
 from __future__ import annotations
 
 import logging
 import random
 import sys
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any
 
 import numpy as np
 from regina import Triangulation3, Triangulation4
@@ -59,8 +63,8 @@ class PosetNode:
         dim: int,
         name: int,
         cell: Any,
-        parents: Optional[List[PosetNode]] = None,
-        children: Optional[List[PosetNode]] = None,
+        parents: list[PosetNode] | None = None,
+        children: list[PosetNode] | None = None,
     ) -> None:
         """Initializes a PosetNode.
 
@@ -74,20 +78,20 @@ class PosetNode:
         self.cell = cell
         self.name = name
         self.dim = dim
-        self.irregular_parents: List[PosetNode] = []
-        self.irregular_children: List[PosetNode] = []
-        self.morse_matched: Optional[PosetNode] = None
+        self.irregular_parents: list[PosetNode] = []
+        self.irregular_children: list[PosetNode] = []
+        self.morse_matched: PosetNode | None = None
 
         if not parents:
-            self.parents: List[PosetNode] = []
+            self.parents: list[PosetNode] = []
         else:
             self.parents = parents
         if not children:
-            self.children: List[PosetNode] = []
+            self.children: list[PosetNode] = []
         else:
             self.children = children
 
-    def key(self) -> Tuple[int, int]:
+    def key(self) -> tuple[int, int]:
         """Returns the key tuple for the node.
 
         Returns:
@@ -95,7 +99,7 @@ class PosetNode:
         """
         return (self.dim, self.name)
 
-    def __key(self) -> Tuple[int, int]:
+    def __key(self) -> tuple[int, int]:
         return (self.dim, self.name)
 
     def __hash__(self) -> int:
@@ -182,8 +186,8 @@ class FacePoset:
 
     def __init__(
         self,
-        triangulation: Optional[Union[Triangulation3, Triangulation4]] = None,
-        dim: Optional[int] = None,
+        triangulation: Triangulation3 | Triangulation4 | None = None,
+        dim: int | None = None,
     ) -> None:
         """Initializes a FacePoset.
 
@@ -194,7 +198,7 @@ class FacePoset:
         Raises:
             InputError: If only one of triangulation or dim is provided.
         """
-        self.layers: Dict[int, Dict[int, PosetNode]] = {}
+        self.layers: dict[int, dict[int, PosetNode]] = {}
 
         if (dim is None) ^ (triangulation is None):
             msg = "Must provide both a triangulation and its dimension, or neither of these inputs"
@@ -303,7 +307,7 @@ class FacePoset:
         del self.layers[dim][node_label]
         del node
 
-    def add_arc(self, n1_tup: Tuple[int, int], n2_tup: Tuple[int, int]) -> None:
+    def add_arc(self, n1_tup: tuple[int, int], n2_tup: tuple[int, int]) -> None:
         """Adds an arc between two nodes.
 
         Args:
@@ -351,7 +355,7 @@ class FacePoset:
         n2.add_parent(n1)
 
     def remove_arc(
-        self, tup1: Tuple[int, int], tup2: Tuple[int, int], error: bool = False
+        self, tup1: tuple[int, int], tup2: tuple[int, int], error: bool = False
     ) -> None:
         """Removes an arc between two nodes.
 
@@ -441,8 +445,8 @@ class FacePoset:
                 node.parents, node.irregular_parents = res
 
     def separate_duplicates(
-        self, array: List[PosetNode]
-    ) -> Tuple[List[PosetNode], List[PosetNode]]:
+        self, array: list[PosetNode]
+    ) -> tuple[list[PosetNode], list[PosetNode]]:
         """Separates duplicates from a list of nodes.
 
         Args:
@@ -451,7 +455,7 @@ class FacePoset:
         Returns:
             A tuple of (not_duplicates, duplicates).
         """
-        seen: Dict[PosetNode, int] = {}
+        seen: dict[PosetNode, int] = {}
         for x in array:
             seen[x] = seen.get(x, 0) + 1
 
@@ -459,7 +463,7 @@ class FacePoset:
         duplicates = [el for el, count in seen.items() if count > 1]
         return not_duplicates, duplicates
 
-    def match(self, tup1: Tuple[int, int], tup2: Tuple[int, int]) -> None:
+    def match(self, tup1: tuple[int, int], tup2: tuple[int, int]) -> None:
         """Matches two nodes for Morse matching.
 
         Args:
@@ -502,7 +506,7 @@ class FacePoset:
 
     def randomised_morse_matching(
         self, randomise: bool = True
-    ) -> Tuple[List[Tuple[Tuple[int, int], Tuple[int, int]]], List[Tuple[int, int]]]:
+    ) -> tuple[list[tuple[tuple[int, int], tuple[int, int]]], list[tuple[int, int]]]:
         """Performs randomised Morse matching on the poset.
 
         This is implemented in a destructive way, modifying the poset.
@@ -514,10 +518,10 @@ class FacePoset:
             A tuple of (morse_pairs, critical), where morse_pairs is a list of matched pairs
             and critical is a list of critical cells.
         """
-        morse_pairs: List[Tuple[Tuple[int, int], Tuple[int, int]]] = []
-        critical: List[Tuple[int, int]] = []
+        morse_pairs: list[tuple[tuple[int, int], tuple[int, int]]] = []
+        critical: list[tuple[int, int]] = []
         while True:
-            critical_candidate: Optional[PosetNode] = None
+            critical_candidate: PosetNode | None = None
             match_made = False
             for dimension in range(self.dim, -1, -1):
                 nodes = list(self.layers[dimension].items())
@@ -546,7 +550,7 @@ class FacePoset:
                 break
         return morse_pairs, critical
 
-    def keys(self, array: List[PosetNode]) -> List[Tuple[int, int]]:
+    def keys(self, array: list[PosetNode]) -> list[tuple[int, int]]:
         """Returns the keys of a list of nodes.
 
         Args:

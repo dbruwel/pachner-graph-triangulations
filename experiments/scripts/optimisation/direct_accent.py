@@ -1,13 +1,25 @@
+"""Experiment to run the direct ascent search heuristic to optimise some objective functions.
+
+The direct ascent heuristic is a simple search srategy where each "up" neighbour is enumerated
+and for each of these the objectuve function is computed, the next node in the tower is chosen
+randomly biased towards larger objective functions. This is based on the observation that many
+objective functions tend to increase for larger triangulations, and that "going down then up"
+is often not neede.
+"""
+
 import logging
+from collections.abc import Callable
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any
 
 import numpy as np
 import pandas as pd
 
-import pachner_traversal.potential_functions as potentials
-from pachner_traversal.direct_ascent import run_accent
-from pachner_traversal.utils import create_results_path
+import pachner_traversal.math.potential_functions as potentials
+from pachner_traversal.classical_search.direct_ascent import run_accent
+from pachner_traversal.utils import create_results_path, get_data_root
+
+data_root = get_data_root()
 
 
 def run_direct_accent(
@@ -16,6 +28,15 @@ def run_direct_accent(
         [str], tuple[float | np.floating[Any], float | np.floating[Any], int, bool]
     ],
 ) -> None:
+    """Runs the direct ascent heuristic.
+
+    Parameters
+    ----------
+    res_path : Path
+        The result path.
+    potential : Callable[ [str], tuple[float  |  np.floating[Any], float  |  np.floating[Any], int, bool] ]
+        The potential to be optimised during direct ascent.
+    """
     base_isos = ["cMcabbgqs"]
     betas = [np.inf]
 
@@ -39,7 +60,7 @@ def run_direct_accent(
         [isos_list[6] for isos_list in isos_lists], columns=["beta"]
     )
 
-    path = create_results_path(res_path)
+    path = create_results_path(res_path, data_root)
 
     df_isos.to_csv(path / "isos.csv", index=False)
     df_scores.to_csv(path / "scores.csv", index=False)

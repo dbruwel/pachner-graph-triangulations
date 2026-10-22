@@ -1,11 +1,14 @@
+"""Takes a file of dehydration signatures and computes different scalar "scores" for them."""
+
 import logging
 import multiprocessing
 
 import h5py
 import numpy as np
-from pachner_traversal.utils import get_data_root, logger_config
 from regina import Triangulation3
 from snappy import Manifold
+
+from pachner_traversal.utils import get_data_root, logger_config
 
 logger = logging.getLogger(__name__)
 
@@ -214,14 +217,14 @@ def main(raw_data_path, save_path):
 
     scores = {}
 
-    for dataset_name in potential_map:
+    for dataset_name, result_map in potential_map.items():
         logger.info(f"Scoring `{dataset_name}`")
         scores[dataset_name] = []
         for i, sig in enumerate(sigs):
             if i % 1_000 == 0:
                 logger.info(f"Processing signature {i:,} / {len(sigs):,}")
 
-            result = potential_map[dataset_name](sig)
+            result = result_map(sig)
             scores[dataset_name].append(result)
 
     data = [compute_potential_degree_composite(sig) for sig in sigs]
@@ -230,13 +233,21 @@ def main(raw_data_path, save_path):
     with h5py.File(save_path, "w") as f:
         dt = h5py.string_dtype(encoding="utf-8", length=max_len)
         f.create_dataset("isos", data=sigs, dtype=dt)
-        for dataset_name in scores:
-            f.create_dataset(dataset_name, data=scores[dataset_name])
-        for dataset_name in scores_degree:
-            f.create_dataset(dataset_name, data=scores_degree[dataset_name])
+        for dataset_name, data in scores.items():
+            f.create_dataset(dataset_name, data=data)
+        for dataset_name, data in scores_degree.items():
+            f.create_dataset(dataset_name, data=data)
 
 
 if __name__ == "__main__":
-    raw_data_path = "/home/dbruwel/main/honours/pachner_graph_triangulations/data/input_data/dehydration/raw/spheres_10_4m.txt"
-    save_path = "/home/dbruwel/main/honours/pachner_graph_triangulations/data/input_data/dehydration/processed/spheres_10_scored.hdf5"
+    raw_data_path = (
+        data_root / "input_data" / "dehydration" / "raw" / "spheres_10_4m.txt"
+    )
+    save_path = (
+        data_root
+        / "input_data"
+        / "dehydration"
+        / "processed"
+        / "spheres_10_scored.hdf5"
+    )
     main(raw_data_path, save_path)

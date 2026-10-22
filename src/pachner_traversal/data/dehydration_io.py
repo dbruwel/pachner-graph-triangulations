@@ -144,7 +144,7 @@ class Dataset:
                     chars.update(pairs)
                     max_len = max(max_len, len(pairs))
 
-        chars = sorted(list(chars))
+        chars = sorted(chars)
 
         return chars, max_len
 
@@ -258,7 +258,6 @@ if __name__ == "__main__":
 
     dataset = Dataset(dehydration_root / "processed" / "spheres_15_170m.hdf5")
     print(dataset.chars)
-    breakpoint()
 
     # input_path = Path.home() / "final_unique.txt"
     # hdf5_file = dehydration_root / "processed" / "spheres_15_1b.hdf5"
