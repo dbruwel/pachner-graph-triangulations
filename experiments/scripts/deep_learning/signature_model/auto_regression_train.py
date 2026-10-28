@@ -364,6 +364,7 @@ def main_train(config_path: pathlib.Path, run_model_tag: str, nci: bool = False)
 
     # Check tag.
     if config_data["run_model_tag"] != run_model_tag:
+        print(f"Skipping {config_path} because tag is {config_data['run_model_tag']}")
         return
 
     # Fix config.
@@ -414,7 +415,8 @@ if __name__ == "__main__":
         / "autoregression_ntet"
     )
     tag = sys.argv[1] if len(sys.argv) > 1 else "run"
+    print("tag", tag)
     configs = config_path.rglob("*.yaml")
-    print(list(configs))
     for config_file in configs:
+        print(f"Tryinging {config_file}")
         main_train(config_file, tag, nci=nci)
