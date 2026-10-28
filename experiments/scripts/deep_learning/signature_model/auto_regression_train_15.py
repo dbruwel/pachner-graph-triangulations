@@ -461,16 +461,6 @@ if __name__ == "__main__":
         / "frontier_rerun"
     )
 
-    if tag == "ar_ntet_rerun":
-        config_path = (
-            data_root.parent
-            / "experiments"
-            / "configs"
-            / "deep_learning"
-            / "autoregression_ntet"
-            / "lr_0.001"
-        )
-
     logger.info(f"Checking {config_path!s} for {tag!s}")
 
     data_cache = {}
