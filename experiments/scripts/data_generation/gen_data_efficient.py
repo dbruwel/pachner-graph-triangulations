@@ -1,6 +1,8 @@
 """Generates a list of triangulations of a target size.
 
 Designed for parallel processing on a high performance computer.
+
+Run with `parallel -j 50 python gen_data_efficient.py --worker_id={} --iterations=10 ::: {0..400}`
 """
 
 import argparse
@@ -106,13 +108,13 @@ def main():
     gamma_ = 1 / 5
     target_unique = 10_000
     steps = 1
-    size = 10
-    leading_char = "k"
+    size = 9
+    leading_char = "j"
 
     seed_buffer = collections.deque(maxlen=100)
     seed_buffer.extend(seeds)
 
-    save_path = data_root / "input_data" / "dehydration" / "raw" / "s3_mcmc_samples_10"
+    save_path = data_root / "input_data" / "dehydration" / "raw" / "s3_mcmc_samples_9"
     save_path.mkdir(parents=True, exist_ok=True)
     fname = f"samps_{size}_worker_{args.worker_id}.txt"
 
