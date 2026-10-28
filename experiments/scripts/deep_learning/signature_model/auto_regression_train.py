@@ -409,6 +409,6 @@ if __name__ == "__main__":
     config_path = data_root.parent / "experiments" / "configs" / "autoregression_ntet"
     tag = sys.argv[1] if len(sys.argv) > 1 else "run"
     configs = config_path.rglob("*.yaml")
-    print(configs)
+    print(list(configs))
     for config_file in configs:
         main_train(config_file, tag, nci=nci)
