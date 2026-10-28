@@ -2,7 +2,7 @@
 
 Designed for parallel processing on a high performance computer.
 
-Run with `parallel -j 50 python gen_data_efficient.py --worker_id={} --iterations=10 ::: {0..400}`
+Run with `parallel -j 50 --line-buffer --tag python -u gen_data_efficient.py --worker_id={} --iterations=10 ::: {0..399}`
 """
 
 import argparse

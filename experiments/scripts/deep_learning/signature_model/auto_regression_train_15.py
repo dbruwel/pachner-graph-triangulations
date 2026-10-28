@@ -458,7 +458,7 @@ if __name__ == "__main__":
         / "experiments"
         / "configs"
         / "deep_learning"
-        / "frontier_rerun"
+        / "frontier_reruns"
     )
 
     logger.info(f"Checking {config_path!s} for {tag!s}")
