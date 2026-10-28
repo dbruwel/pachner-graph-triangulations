@@ -20,4 +20,4 @@ final_save_model: false
 intrem_sample_size: null
 final_sample_size: 10000
 use_mask: true
-run_model_tag: run_0.001
+run_model_tag: ar_ntet_rerun

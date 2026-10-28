@@ -14,7 +14,6 @@ import jax
 import jax.numpy as jnp
 import numpy as np
 import optax
-
 from pachner_traversal.data.data import char_list15
 from pachner_traversal.data.dehydration_io import Dataset, Encoder
 from pachner_traversal.deep_learning.transformer import Transformer
@@ -458,7 +457,7 @@ if __name__ == "__main__":
         / "experiments"
         / "configs"
         / "deep_learning"
-        / "statistical_tests"
+        / "frontier_rerun"
     )
     logger.info(f"Checking {config_path!s} for {tag!s}")
 
