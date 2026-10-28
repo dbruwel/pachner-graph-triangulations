@@ -403,9 +403,12 @@ def main_train(config_path: pathlib.Path, run_model_tag: str, nci: bool = False)
 
 
 if __name__ == "__main__":
+    print("testing logs")
     nci = False
     data_root = get_data_root(nci)
     config_path = data_root.parent / "experiments" / "configs" / "autoregression_ntet"
     tag = sys.argv[1] if len(sys.argv) > 1 else "run"
-    for config_file in config_path.rglob("*.yaml"):
+    configs = config_path.rglob("*.yaml")
+    print(configs)
+    for config_file in configs:
         main_train(config_file, tag, nci=nci)
