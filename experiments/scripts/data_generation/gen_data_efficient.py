@@ -105,7 +105,7 @@ def main():
 
     logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(message)s")
 
-    gamma_ = 1 / 5
+    gamma_ = 1 / 3.3
     target_unique = 10_000
     steps = 1
     size = 9

@@ -4,7 +4,7 @@ import logging
 import numpy as np
 import regina
 
-from .mcmc import neighbours
+from .neighbours import neighbours
 
 logger = logging.getLogger(__name__)
 
