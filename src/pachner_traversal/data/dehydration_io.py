@@ -256,10 +256,7 @@ if __name__ == "__main__":
 
     dehydration_root = data_root / "input_data" / "dehydration"
 
-    dataset = Dataset(dehydration_root / "processed" / "spheres_15_170m.hdf5")
-    print(dataset.chars)
+    input_path = dehydration_root / "raw" / "s3_mcmc_samples_9" / "final_samples.txt"
+    hdf5_file = dehydration_root / "processed" / "spheres_9_40m.hdf5"
 
-    # input_path = Path.home() / "final_unique.txt"
-    # hdf5_file = dehydration_root / "processed" / "spheres_15_1b.hdf5"
-
-    # convert_to_hdf5(input_path, hdf5_file, max_len=41)
+    convert_to_hdf5(input_path, hdf5_file, max_len=27)

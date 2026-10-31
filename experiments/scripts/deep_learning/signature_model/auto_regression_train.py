@@ -9,6 +9,7 @@ import jax
 import jax.numpy as jnp
 import numpy as np
 import optax
+
 from pachner_traversal.data.dehydration_io import Dataset, Encoder
 from pachner_traversal.deep_learning.transformer import Transformer
 from pachner_traversal.deep_learning.transformer_training import (
@@ -404,7 +405,6 @@ def main_train(config_path: pathlib.Path, run_model_tag: str, nci: bool = False)
 
 
 if __name__ == "__main__":
-    print("testing logs")
     nci = False
     data_root = get_data_root(nci)
     config_path = (
@@ -412,7 +412,7 @@ if __name__ == "__main__":
         / "experiments"
         / "configs"
         / "deep_learning"
-        / "autoregression_ntet"
+        / "statistical_tests"
     )
     tag = sys.argv[1] if len(sys.argv) > 1 else "run"
     print("tag", tag)
