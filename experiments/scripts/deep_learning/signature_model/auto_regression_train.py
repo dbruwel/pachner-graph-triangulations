@@ -406,7 +406,7 @@ def main_train(config_path: pathlib.Path, run_model_tag: str):
 
     # Read config data.
     config_data = read_config(config_path)
-    data_root = get_data_root(nci=False, shm=True)
+    data_root = get_data_root(nci=False)
 
     # Set data path.
     config_data["data_path"] = data_root / config_data["data_path_stem"]
@@ -467,7 +467,7 @@ def main_score(config_path: pathlib.Path, run_model_tag: str):
 
     # Read config data.
     config_data = read_config(config_path)
-    data_root = get_data_root(nci=False, shm=True)
+    data_root = get_data_root(nci=False)
 
     # Set data paths.
     config_data["train_data_path"] = data_root / config_data["train_data_path_stem"]

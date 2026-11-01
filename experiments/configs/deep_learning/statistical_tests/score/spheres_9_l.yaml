@@ -5,4 +5,4 @@ model_params_fname: params.pkl
 d_model: 512
 num_layers: 8
 num_heads: 8
-run_model_tag: shm_score_9tet
+run_model_tag: score_9tet
