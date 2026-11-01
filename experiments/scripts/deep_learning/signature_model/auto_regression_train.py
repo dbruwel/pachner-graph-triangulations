@@ -132,8 +132,6 @@ def load_data(data_path, num_test_samps):
     # Dataset and Encoder.
     logger.debug("Setting up dataset.")
     dataset = Dataset(data_path, num_test_samps, store_in_memory=False)
-    logger.info(f"There are {len(dataset.chars)} chars:")
-    logger.info(dataset.chars)
     logger.debug("Setting up encoder.")
     encoder = Encoder(dataset)
 
@@ -357,6 +355,8 @@ def score_model(
     # Load training data (for dataset creation).
     dataset = Dataset(train_data_path, 1, store_in_memory=False)
     encoder = Encoder(dataset)
+    logger.info(f"There are {len(dataset.chars)} chars:")
+    logger.info(dataset.chars)
 
     # Setup model state.
     params = load_model(model_save_path, model_params_fname)
