@@ -131,7 +131,9 @@ def sample_model_from_save(
 def load_data(data_path, num_test_samps):
     # Dataset and Encoder.
     logger.debug("Setting up dataset.")
-    dataset = Dataset(data_path, num_test_samps, store_in_memory=True)
+    dataset = Dataset(data_path, num_test_samps, store_in_memory=False)
+    logger.info(f"There are {len(dataset.chars)} chars:")
+    logger.info(dataset.chars)
     logger.debug("Setting up encoder.")
     encoder = Encoder(dataset)
 
@@ -372,6 +374,7 @@ def score_model(
     # Load score data.
     with open(score_data_path, "r") as f:
         score_data = f.readlines()
+        score_data = [s.strip() for s in score_data]
 
     # Run predictions.
     results = []
