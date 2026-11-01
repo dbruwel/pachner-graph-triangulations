@@ -355,7 +355,8 @@ def score_model(
     num_heads: int,
 ):
     # Load training data (for dataset creation).
-    dataset, encoder, _, _, _, _ = load_data(train_data_path, 1)
+    dataset = Dataset(train_data_path, 1, store_in_memory=False)
+    encoder = Encoder(dataset)
 
     # Setup model state.
     params = load_model(model_save_path, model_params_fname)

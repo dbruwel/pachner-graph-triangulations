@@ -387,12 +387,19 @@ def score_model(
     cache_key = (str(train_data_path), 1)
     if cache_key in data_cache:
         logger.info("Reading data from cache.")
-        dataset, encoder, test_input, test_label = data_cache[cache_key]
+        dataset, encoder = data_cache[cache_key]
     else:
         logger.warning("Reading data from file.")
-        dataset, encoder, test_input, test_label = load_data(train_data_path, 1)
+        dataset = Dataset(
+            train_data_path,
+            1,
+            chars=char_list15,
+            max_len=41,
+            store_in_memory=True,
+        )
+        encoder = Encoder(dataset)
         data_cache.clear()
-        data_cache[cache_key] = (dataset, encoder, test_input, test_label)
+        data_cache[cache_key] = (dataset, encoder)
 
     # Setup model state.
     params = load_model(model_save_path, model_params_fname)
