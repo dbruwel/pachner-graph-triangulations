@@ -384,7 +384,7 @@ def score_model(
         buffer.append(sample)
 
         if (i == len(score_data) - 1) or ((i + 1) % 1_000 == 0):
-            samples, _ = encoder.encode(buffer)
+            samples, samples_actual = encoder.encode(buffer)
 
             pred = state.apply_fn(
                 {"params": state.params},
@@ -392,15 +392,18 @@ def score_model(
                 training=False,
             )
             pred_fp32 = pred.astype(jnp.float32)
-            pred_fp32_np = np.array(pred_fp32)
-            pred_fp32.delete()
-            del pred_fp32
-            results.append(pred_fp32_np)
+            tok_nll = loss_metric_fn(pred_fp32, samples_actual)
+            nll = tok_nll.sum(axis=-1)
+
+            nll_np = np.array(nll)
+            nll.delete()
+            del nll
+            results.append(nll_np)
 
             buffer = []
 
     logger.info("\n Scoring finished.")
-    return results
+    return np.concat(results)
 
 
 def main_train(config_path: pathlib.Path, run_model_tag: str):
