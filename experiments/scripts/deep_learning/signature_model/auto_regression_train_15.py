@@ -374,6 +374,70 @@ def train_model(
     return test_loss_float, model_size
 
 
+def score_model(
+    train_data_path: pathlib.Path,
+    score_data_path: pathlib.Path,
+    model_save_path: pathlib.Path,
+    model_params_fname: str,
+    d_model: int,
+    num_layers: int,
+    num_heads: int,
+    data_cache: dict,
+):
+    cache_key = (str(train_data_path), 1)
+    if cache_key in data_cache:
+        logger.info("Reading data from cache.")
+        dataset, encoder, test_input, test_label = data_cache[cache_key]
+    else:
+        logger.warning("Reading data from file.")
+        dataset, encoder, test_input, test_label = load_data(train_data_path, 1)
+        data_cache.clear()
+        data_cache[cache_key] = (dataset, encoder, test_input, test_label)
+
+    # Setup model state.
+    params = load_model(model_save_path, model_params_fname)
+    model, keys, meta = init_model(
+        Transformer,
+        dataset,
+        encoder,
+        d_model=d_model,
+        num_layers=num_layers,
+        num_heads=num_heads,
+    )
+    _, _, dropout_key = keys
+    _, _ = meta
+    state = init_train_state(model, params, dropout_key)
+
+    # Load score data.
+    with open(score_data_path, "r") as f:
+        score_data = f.readlines()
+
+    # Run predictions.
+    results = []
+    buffer = []
+    for i, sample in enumerate(score_data):
+        buffer.append(sample)
+
+        if (i == len(score_data) - 1) or ((i + 1) % 1_000 == 0):
+            samples, _ = encoder.encode(buffer)
+
+            pred = state.apply_fn(
+                {"params": state.params},
+                jnp.array(samples),
+                training=False,
+            )
+            pred_fp32 = pred.astype(jnp.float32)
+            pred_fp32_np = np.array(pred_fp32)
+            pred_fp32.delete()
+            del pred_fp32
+            results.append(pred_fp32_np)
+
+            buffer = []
+
+    logger.info("\n Scoring finished.")
+    return results
+
+
 def main_train(
     config_path: pathlib.Path,
     run_model_tag: str,
@@ -444,6 +508,61 @@ def main_train(
         )
 
 
+def main_score(
+    config_path: pathlib.Path,
+    run_model_tag: str,
+    nci: bool = False,
+    read_shm: bool = False,
+    data_cache: dict | None = None,
+):
+    data_cache = data_cache or {}
+
+    # Set logging.
+    logging.basicConfig(**logger_config)
+    silence_jax()
+
+    # Read config data.
+    config_data = read_config(config_path)
+    data_root = get_data_root(nci=nci, shm=read_shm)
+
+    # Set data paths.
+    config_data["train_data_path"] = data_root / config_data["train_data_path_stem"]
+    config_data["score_data_path"] = data_root / config_data["score_data_path_stem"]
+    config_data["model_save_path"] = data_root / config_data["model_save_path_stem"]
+
+    # Check tag.
+    if config_data["run_model_tag"] != run_model_tag:
+        msg = f"Skipping {config_path} because tag is {config_data['run_model_tag']}"
+        logger.info(msg)
+        return
+
+    # Setup config and run model.
+    tic = time.time()
+    score_model(
+        config_data["train_data_path"],
+        config_data["score_data_path"],
+        config_data["model_save_path"],
+        config_data["model_params_fname"],
+        config_data["d_model"],
+        config_data["num_layers"],
+        config_data["num_heads"],
+        data_cache=data_cache,
+    )
+    toc = time.time()
+
+    train_time = toc - tic
+    logger.info(f"Training time: {train_time:.2f} seconds")
+
+    # NTFY.
+    if not nci:
+        message = f"Training time: {train_time:.2f} seconds."
+        send_ntfy(
+            "usyd-knottedness",
+            "Finished scoring model.",
+            message,
+        )
+
+
 if __name__ == "__main__":
     # Set logging.
     logging.basicConfig(**logger_config)
@@ -451,6 +570,7 @@ if __name__ == "__main__":
     logger.info("Main script started.")
     tag = sys.argv[1] if len(sys.argv) > 1 else "run"
     nci = "nci" in tag
+    shm = "shm" in tag
 
     data_root = get_data_root(nci)
 
@@ -471,10 +591,19 @@ if __name__ == "__main__":
 
     for config_file in config_files:
         logger.info(f"{config_file!s}")
-        main_train(
-            config_file,
-            tag,
-            nci=nci,
-            data_cache=data_cache,
-            read_shm=False,
-        )
+        if "score" in tag:
+            main_score(
+                config_file,
+                tag,
+                nci=nci,
+                data_cache=data_cache,
+                read_shm=shm,
+            )
+        else:
+            main_train(
+                config_file,
+                tag,
+                nci=nci,
+                data_cache=data_cache,
+                read_shm=shm,
+            )

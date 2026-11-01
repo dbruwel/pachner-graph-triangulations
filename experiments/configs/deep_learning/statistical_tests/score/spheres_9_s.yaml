@@ -1,0 +1,8 @@
+train_data_path: input_data/dehydration/processed/spheres_9_40m.hdf5
+score_data_path: input_data/dehydration/score_data/samps_9_worker_example.txt
+model_save_path: results/sgd_models_dehydration/statistical_tests/statistical_n9_256_4
+model_params_fname: params.pkl
+d_model: 256
+num_layers: 4
+num_heads: 4
+run_model_tag: shm_score_9tet

@@ -343,14 +343,70 @@ def train_model(
     return test_loss_float, model_size
 
 
-def main_train(config_path: pathlib.Path, run_model_tag: str, nci: bool = False):
+def score_model(
+    train_data_path: pathlib.Path,
+    score_data_path: pathlib.Path,
+    model_save_path: pathlib.Path,
+    model_params_fname: str,
+    d_model: int,
+    num_layers: int,
+    num_heads: int,
+):
+    # Load training data (for dataset creation).
+    dataset, encoder, _, _, _, _ = load_data(train_data_path, 1)
+
+    # Setup model state.
+    params = load_model(model_save_path, model_params_fname)
+    model, keys, meta = init_model(
+        Transformer,
+        dataset,
+        encoder,
+        d_model=d_model,
+        num_layers=num_layers,
+        num_heads=num_heads,
+    )
+    _, _, dropout_key = keys
+    _, _ = meta
+    state = init_train_state(model, params, dropout_key)
+
+    # Load score data.
+    with open(score_data_path, "r") as f:
+        score_data = f.readlines()
+
+    # Run predictions.
+    results = []
+    buffer = []
+    for i, sample in enumerate(score_data):
+        buffer.append(sample)
+
+        if (i == len(score_data) - 1) or ((i + 1) % 1_000 == 0):
+            samples, _ = encoder.encode(buffer)
+
+            pred = state.apply_fn(
+                {"params": state.params},
+                jnp.array(samples),
+                training=False,
+            )
+            pred_fp32 = pred.astype(jnp.float32)
+            pred_fp32_np = np.array(pred_fp32)
+            pred_fp32.delete()
+            del pred_fp32
+            results.append(pred_fp32_np)
+
+            buffer = []
+
+    logger.info("\n Scoring finished.")
+    return results
+
+
+def main_train(config_path: pathlib.Path, run_model_tag: str):
     # Set logging.
     logging.basicConfig(**logger_config)
     silence_jax()
 
     # Read config data.
     config_data = read_config(config_path)
-    data_root = get_data_root(nci)
+    data_root = get_data_root(nci=False, shm=True)
 
     # Set data path.
     config_data["data_path"] = data_root / config_data["data_path_stem"]
@@ -361,7 +417,7 @@ def main_train(config_path: pathlib.Path, run_model_tag: str, nci: bool = False)
     config_data["save_path"] = save_path
 
     # Set NCI.
-    config_data["nci"] = nci
+    config_data["nci"] = False
 
     # Check tag.
     if config_data["run_model_tag"] != run_model_tag:
@@ -404,19 +460,69 @@ def main_train(config_path: pathlib.Path, run_model_tag: str, nci: bool = False)
         )
 
 
+def main_score(config_path: pathlib.Path, run_model_tag: str):
+    # Set logging.
+    logging.basicConfig(**logger_config)
+    silence_jax()
+
+    # Read config data.
+    config_data = read_config(config_path)
+    data_root = get_data_root(nci=False, shm=True)
+
+    # Set data paths.
+    config_data["train_data_path"] = data_root / config_data["train_data_path_stem"]
+    config_data["score_data_path"] = data_root / config_data["score_data_path_stem"]
+    config_data["model_save_path"] = data_root / config_data["model_save_path_stem"]
+
+    # Check tag.
+    if config_data["run_model_tag"] != run_model_tag:
+        msg = f"Skipping {config_path} because tag is {config_data['run_model_tag']}"
+        logger.info(msg)
+        return
+
+    # Setup config and run model.
+    tic = time.time()
+    score_model(
+        config_data["train_data_path"],
+        config_data["score_data_path"],
+        config_data["model_save_path"],
+        config_data["model_params_fname"],
+        config_data["d_model"],
+        config_data["num_layers"],
+        config_data["num_heads"],
+    )
+    toc = time.time()
+
+    train_time = toc - tic
+    logger.info(f"Training time: {train_time:.2f} seconds")
+
+    # NTFY.
+    if not nci:
+        message = f"Training time: {train_time:.2f} seconds."
+        send_ntfy(
+            "usyd-knottedness",
+            "Finished scoring model.",
+            message,
+        )
+
+
 if __name__ == "__main__":
     nci = False
-    data_root = get_data_root(nci)
+    data_root = get_data_root()
     config_path = (
         data_root.parent
         / "experiments"
         / "configs"
         / "deep_learning"
         / "statistical_tests"
+        / "score"
     )
     tag = sys.argv[1] if len(sys.argv) > 1 else "run"
-    print("tag", tag)
+    logger.info(f"tag: {tag}")
     configs = config_path.rglob("*.yaml")
     for config_file in configs:
-        print(f"Tryinging {config_file}")
-        main_train(config_file, tag, nci=nci)
+        logger.info(f"Tryinging {config_file}")
+        if "score" in tag:
+            main_score(config_file, tag)
+        else:
+            main_train(config_file, tag)
