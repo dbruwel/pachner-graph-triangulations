@@ -482,7 +482,7 @@ def main_score(config_path: pathlib.Path, run_model_tag: str):
 
     # Setup config and run model.
     tic = time.time()
-    score_model(
+    results = score_model(
         config_data["train_data_path"],
         config_data["score_data_path"],
         config_data["model_save_path"],
@@ -491,6 +491,7 @@ def main_score(config_path: pathlib.Path, run_model_tag: str):
         config_data["num_layers"],
         config_data["num_heads"],
     )
+    logger.info(results)
     toc = time.time()
 
     train_time = toc - tic
