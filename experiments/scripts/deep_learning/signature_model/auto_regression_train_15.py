@@ -14,6 +14,7 @@ import jax
 import jax.numpy as jnp
 import numpy as np
 import optax
+import pandas as pd
 
 from pachner_traversal.data.data import char_lists
 from pachner_traversal.data.dehydration_io import Dataset, Encoder
@@ -428,7 +429,7 @@ def score_model(
         buffer.append(sample)
 
         if (i == len(score_data) - 1) or ((i + 1) % 1_000 == 0):
-            samples, _ = encoder.encode(buffer)
+            samples, samples_actual = encoder.encode(buffer)
 
             pred = state.apply_fn(
                 {"params": state.params},
@@ -436,15 +437,19 @@ def score_model(
                 training=False,
             )
             pred_fp32 = pred.astype(jnp.float32)
-            pred_fp32_np = np.array(pred_fp32)
-            pred_fp32.delete()
-            del pred_fp32
-            results.append(pred_fp32_np)
+            tok_nll = loss_metric_fn(pred_fp32, samples_actual)
+            nll = tok_nll.sum(axis=-1)
+
+            nll_np = np.array(nll)
+            nll.delete()
+            del nll
+            results.append(nll_np)
 
             buffer = []
 
     logger.info("\n Scoring finished.")
-    return results
+
+    return pd.Series(np.concat(results), index=score_data)
 
 
 def main_train(
@@ -547,7 +552,7 @@ def main_score(
 
     # Setup config and run model.
     tic = time.time()
-    score_model(
+    results = score_model(
         config_data["train_data_path"],
         config_data["score_data_path"],
         config_data["model_save_path"],
@@ -557,6 +562,7 @@ def main_score(
         config_data["num_heads"],
         data_cache=data_cache,
     )
+    results.to_csv(config_data["model_save_path"] / config_data["save_name"])
     toc = time.time()
 
     train_time = toc - tic

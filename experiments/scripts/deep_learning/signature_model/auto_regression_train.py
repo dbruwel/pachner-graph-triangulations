@@ -500,7 +500,7 @@ def main_score(config_path: pathlib.Path, run_model_tag: str):
         config_data["num_layers"],
         config_data["num_heads"],
     )
-    results.to_csv(config_data["model_save_path"] / config_data["scored_data.csv"])
+    results.to_csv(config_data["model_save_path"] / config_data["save_name"])
     toc = time.time()
 
     train_time = toc - tic
