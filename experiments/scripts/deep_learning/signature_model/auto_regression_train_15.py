@@ -602,7 +602,7 @@ if __name__ == "__main__":
         / "deep_learning"
         / "statistical_tests"
         / "score"
-        / "score15_spheres_frontier"
+        / "score15_large"
     )
 
     logger.info(f"Checking {config_path!s} for {tag!s}")

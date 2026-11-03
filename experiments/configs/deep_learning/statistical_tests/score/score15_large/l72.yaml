@@ -1,0 +1,9 @@
+train_data_path_stem: /
+score_data_path_stem: input_data/dehydration/score_data/ntet15/l72.txt
+model_save_path_stem: results/sgd_models_dehydration/statistical_tests_nci/statistical_9000pflop_768_12
+model_params_fname: params.pkl
+save_name: scored_l72_data.csv
+d_model: 768
+num_layers: 12
+num_heads: 12
+run_model_tag: score_15tet_large
