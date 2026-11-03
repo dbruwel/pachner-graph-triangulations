@@ -1,0 +1,9 @@
+train_data_path_stem: /
+score_data_path_stem: input_data/dehydration/score_data/spheres15/uniform.txt
+model_save_path_stem: results/sgd_models_dehydration/frontier_rerun_nci/frontier_rerun_6pflop_192_3
+model_params_fname: params.pkl
+save_name: scored_spheres_data.csv
+d_model: 192
+num_layers: 3
+num_heads: 3
+run_model_tag: score_15tet_spheres

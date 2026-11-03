@@ -395,10 +395,10 @@ def score_model(
         logger.warning("Reading data from file.")
         dataset = Dataset(
             train_data_path,
-            1,
+            None,
             chars=char_list15,
             max_len=41,
-            store_in_memory=True,
+            store_in_memory=False,
         )
         encoder = Encoder(dataset)
         data_cache.clear()
