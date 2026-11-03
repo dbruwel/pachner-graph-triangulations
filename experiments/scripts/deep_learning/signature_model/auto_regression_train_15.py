@@ -467,6 +467,10 @@ def main_train(
     # Read config data.
     config_data = read_config(config_path)
 
+    # Check tag.
+    if config_data["run_model_tag"] != run_model_tag:
+        return
+
     # Set data path.
     data_root = get_data_root(nci, shm=read_shm)
     config_data["data_path"] = data_root / config_data["data_path_stem"]
@@ -481,10 +485,6 @@ def main_train(
 
     # Set NCI.
     config_data["nci"] = nci
-
-    # Check tag.
-    if config_data["run_model_tag"] != run_model_tag:
-        return
 
     # Fix config.
     if "num_heads" not in config_data:
@@ -537,6 +537,10 @@ def main_score(
 
     # Read config data.
     config_data = read_config(config_path)
+    # Check tag.
+    if config_data["run_model_tag"] != run_model_tag:
+        return
+
     data_root = get_data_root(nci=nci, shm=read_shm)
 
     # Set data paths.
@@ -594,7 +598,9 @@ if __name__ == "__main__":
         / "experiments"
         / "configs"
         / "deep_learning"
-        / "frontier_reruns"
+        / "statistical_tests"
+        / "score"
+        / "score15_spheres_frontier"
     )
 
     logger.info(f"Checking {config_path!s} for {tag!s}")
