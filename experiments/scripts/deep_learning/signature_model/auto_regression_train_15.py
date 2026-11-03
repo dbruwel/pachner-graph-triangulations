@@ -439,7 +439,7 @@ def score_model(
                 training=False,
             )
             pred_fp32 = pred.astype(jnp.float32)
-            logger.info(np.array(pred_fp32))
+            breakpoint()
             tok_nll = loss_metric_fn(pred_fp32, samples_actual)
             nll = tok_nll.sum(axis=-1)
 
