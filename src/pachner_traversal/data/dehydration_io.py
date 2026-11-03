@@ -6,6 +6,8 @@ import numpy as np
 
 from pachner_traversal.utils import get_data_root
 
+from .data import char_lists, char_to_ntet
+
 logger = logging.getLogger(__name__)
 data_root = get_data_root()
 
@@ -26,34 +28,36 @@ def convert_to_hdf5(input_text_file, output_hdf5_file, max_len=None):
     i = 1
     if max_len is None:
         max_len = get_max_len_txt(input_text_file)
-    with open(input_text_file, "r", encoding="utf-8") as f:
-        with h5py.File(output_hdf5_file, "w") as hf:
-            dt = h5py.string_dtype(encoding="utf-8", length=max_len)
-            dset = hf.create_dataset(
-                "isos",
-                shape=(0,),
-                maxshape=(None,),
-                dtype=dt,
-                chunks=(100_000,),
-            )
+    with (
+        open(input_text_file, "r", encoding="utf-8") as f,
+        h5py.File(output_hdf5_file, "w") as hf,
+    ):
+        dt = h5py.string_dtype(encoding="utf-8", length=max_len)
+        dset = hf.create_dataset(
+            "isos",
+            shape=(0,),
+            maxshape=(None,),
+            dtype=dt,
+            chunks=(100_000,),
+        )
 
-            chunk_size = 1_000_000
-            lines_buffer = []
+        chunk_size = 1_000_000
+        lines_buffer = []
 
-            for line in f:
-                line = line.strip()
-                lines_buffer.append(line)
+        for line in f:
+            line = line.strip()
+            lines_buffer.append(line)
 
-                if len(lines_buffer) >= chunk_size:
-                    logger.info(f"Writing Chunk {i}.")
-                    dset.resize(dset.shape[0] + len(lines_buffer), axis=0)
-                    dset[-len(lines_buffer) :] = lines_buffer
-                    lines_buffer = []
-                    i += 1
-
-            if lines_buffer:
+            if len(lines_buffer) >= chunk_size:
+                logger.info(f"Writing Chunk {i}.")
                 dset.resize(dset.shape[0] + len(lines_buffer), axis=0)
                 dset[-len(lines_buffer) :] = lines_buffer
+                lines_buffer = []
+                i += 1
+
+        if lines_buffer:
+            dset.resize(dset.shape[0] + len(lines_buffer), axis=0)
+            dset[-len(lines_buffer) :] = lines_buffer
 
 
 def split_to_encoding(signature: str) -> list[str]:
@@ -133,6 +137,15 @@ class Dataset:
         max_len = 0
         with h5py.File(self.hdf5_file, "r") as hf:
             dset = hf["isos"]
+            leading_iso = dset[0].decode("utf-8")  # type: ignore
+
+            ntet = char_to_ntet.get(leading_iso[0])
+
+            if ntet is not None:
+                chars = char_lists[ntet]
+                max_len = len(leading_iso)
+                return chars, max_len
+
             chunk_size = 10_000
 
             for i in range(0, len(self), chunk_size):

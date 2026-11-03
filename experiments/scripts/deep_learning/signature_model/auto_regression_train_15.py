@@ -15,7 +15,7 @@ import jax.numpy as jnp
 import numpy as np
 import optax
 
-from pachner_traversal.data.data import char_list15
+from pachner_traversal.data.data import char_lists
 from pachner_traversal.data.dehydration_io import Dataset, Encoder
 from pachner_traversal.deep_learning.transformer import Transformer
 from pachner_traversal.deep_learning.transformer_training import (
@@ -43,6 +43,8 @@ from pachner_traversal.utils import (
     write_loss,
     write_stat,
 )
+
+char_list15 = char_lists[15]
 
 
 @dataclass

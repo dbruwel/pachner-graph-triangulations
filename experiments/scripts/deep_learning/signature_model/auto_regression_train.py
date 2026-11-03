@@ -9,6 +9,7 @@ import jax
 import jax.numpy as jnp
 import numpy as np
 import optax
+import pandas as pd
 
 from pachner_traversal.data.dehydration_io import Dataset, Encoder
 from pachner_traversal.deep_learning.transformer import Transformer
@@ -403,7 +404,8 @@ def score_model(
             buffer = []
 
     logger.info("\n Scoring finished.")
-    return np.concat(results)
+
+    return pd.Series(np.concat(results), index=score_data)
 
 
 def main_train(config_path: pathlib.Path, run_model_tag: str):
@@ -498,7 +500,7 @@ def main_score(config_path: pathlib.Path, run_model_tag: str):
         config_data["num_layers"],
         config_data["num_heads"],
     )
-    logger.info(results)
+    results.to_csv(config_data["model_save_path"] / config_data["scored_data.csv"])
     toc = time.time()
 
     train_time = toc - tic

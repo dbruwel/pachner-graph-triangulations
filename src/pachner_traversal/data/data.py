@@ -1,4 +1,4 @@
-char_list15 = [
+base_char_list = [
     "Ha",
     "Hb",
     "Hc",
@@ -39,6 +39,9 @@ char_list15 = [
     "Nn",
     "No",
     "Np",
+]
+
+where_char_list = [
     "Wa",
     "Wb",
     "Wc",
@@ -54,11 +57,22 @@ char_list15 = [
     "Wm",
     "Wn",
     "Wo",
-    "p",
+    "Wp",
+    "Wq",
+    "Wr",
+    "Ws",
+    "Wt",
+    "Wu",
+    "Wv",
+    "Ww",
+    "Wx",
+    "Wy",
+    "Wz",
 ]
 
 
 leading_chars = {
+    9: "j",
     10: "k",
     11: "l",
     12: "m",
@@ -71,3 +85,24 @@ leading_chars = {
     19: "t",
     20: "u",
 }
+
+char_to_ntet = {
+    "j": 9,
+    "k": 10,
+    "l": 11,
+    "m": 12,
+    "n": 13,
+    "o": 14,
+    "p": 15,
+    "q": 16,
+    "r": 17,
+    "s": 18,
+    "t": 19,
+    "u": 20,
+}
+
+char_lists = {}
+for ntet, leading_char in leading_chars.items():
+    char_list = base_char_list.copy()
+    char_list.extend(where_char_list[:ntet])
+    char_list.append(leading_char)

@@ -120,11 +120,11 @@ def get_sites(tri: Triangulation3, f: list[int], a: int) -> list[int]:
 
 ### Choose move from proposal
 def choosemove(
-    sig: str,
+    tri: Triangulation3,
     gamma: float,
     f: list[int] | None = None,
     aut: int | None = None,
-) -> tuple[str, list[int], int]:
+) -> tuple[Triangulation3, list[int], int]:
     """Perform one step of the MCMC chain.
 
     Proposes an up move with probability exp(-gamma * f_3) (else a down move),
@@ -136,8 +136,8 @@ def choosemove(
 
     Parameters
     ----------
-    sig : str
-        Dehydration signature of the current triangulation.
+    tri : Triangulation3
+        The current triangulation.
     gamma : float
         Parameter controlling the up/down proposal, and hence the typical number of tetrahedra.
     f : list[int] | None, optional
@@ -147,16 +147,14 @@ def choosemove(
 
     Returns
     -------
-    tuple[str, list[int], int]
-        The dehydration signature, f-vector and automorphism group size of the next state.
+    tuple[Triangulation3, list[int], int]
+        The triangulation, f-vector and automorphism group size of the next state.
 
     Raises
     ------
     RuntimeError
         If no branch returns (should never happen).
     """
-    tri = Triangulation3.rehydrate(sig)
-
     if aut is None:
         aut = get_aut(tri)
     if f is None:
@@ -176,15 +174,15 @@ def choosemove(
     # go up (2-3)
     if a == 1:
         if i > float(num_sites) / float(f[2]):
-            return tri.dehydrate(), f, aut
+            return tri, f, aut
         else:
             tri_prop = perform_move(tri, a, random.choice(sites))
             aut_prop = get_aut(tri_prop)
             accept_prob = min(1, aut_prop / aut)
             if u > accept_prob:
-                return tri.dehydrate(), f, aut
+                return tri, f, aut
             return (
-                tri_prop.dehydrate(),
+                tri_prop,
                 [
                     f[0],
                     f[1] + 1,
@@ -197,17 +195,17 @@ def choosemove(
     # go down
     elif a == 2:
         if f[3] <= 2:
-            return tri.dehydrate(), f, aut
+            return tri, f, aut
         if i > float(num_sites) / float(f[2] - 2):
-            return tri.dehydrate(), f, aut
+            return tri, f, aut
         else:
             tri_prop = perform_move(tri, a, random.choice(sites))
             aut_prop = get_aut(tri_prop)
             accept_prob = min(1, aut_prop / aut)
             if u > accept_prob:
-                return tri.dehydrate(), f, aut
+                return tri, f, aut
             return (
-                tri_prop.dehydrate(),
+                tri_prop,
                 [
                     f[0],
                     f[1] - 1,
@@ -221,7 +219,7 @@ def choosemove(
 
 
 def randomise(
-    sig: str,
+    tri: Triangulation3,
     steps: int,
     gamma: float,
     interval: float,
@@ -230,80 +228,24 @@ def randomise(
     f: list[int] | None = None,
     aut: int | None = None,
 ) -> bool:
-    "This is the main function taking in see triangulation `sig` with f-vector `f`. It performs a random walk in the Pachner graph of length `steps` with parameter `gamma`. Parameter `verbose` decides print behaviour, `name` is the filename for the output file."
-    # initialise number of steps
+    "This is the main function taking in see triangulation `tri` with f-vector `f`. It performs a random walk in the Pachner graph of length `steps` with parameter `gamma`. Parameter `verbose` decides print behaviour, `name` is the filename for the output file."
     st = 0
     with open(name, "w") as fl:
         fl.write("")
     while st < steps + offset * interval - 1:
         st += 1
-        sig, f, aut = choosemove(sig, f=f, gamma=gamma, aut=aut)
-        if interval != 0 and st % interval == 0 and st >= offset * interval:
-            # open output file
-            with open(name, "a") as fl:
-                fl.write(sig + "\n")
-            print(
-                "collecting triangulation",
-                int((st - offset * interval) / interval + 1),
-                ":",
-                sig,
-            )
+        tri, f, aut = choosemove(tri, f=f, gamma=gamma, aut=aut)
     return True
 
 
-def iterate(sig: str, gamma: float, steps: int = 1) -> str:
+def iterate(tri: Triangulation3, gamma: float, steps: int = 1) -> Triangulation3:
     # initialise number of steps
-    t = Triangulation3.rehydrate(sig)
-    f = t.fVector()
-    aut = get_aut(t)
+    f = tri.fVector()
+    aut = get_aut(tri)
 
     for _ in range(int(steps)):
-        sig, f, aut = choosemove(sig, f=f, gamma=gamma, aut=aut)
-    return sig
-
-
-def mcmc3d(
-    sig, gamma, samples=10, offset=0, interval=100, verbose=True, printToFile=False
-):
-    "Collects 'samples' samples of triangulations by performing a random walk in the Pachner graph starting from 'sig' with parameter `gamma`. offset' is the number of triangulations to be burnt (discarded initially). 'interval' is the number of triangulations between successive samples. Parameter `verbose` decides print behaviour, `printToFile` is the filename for the output file in the folder outputs/."
-    # initialise number of steps
-    t = Triangulation3.rehydrate(sig)
-    f = t.fVector()
-    aut = get_aut(t)
-    samp = 0
-
-    # output
-    name = (
-        "outputs/mcmc3d_"
-        + str(printToFile)
-        + "_gamma_"
-        + str(gamma)
-        + "_samples_"
-        + str(samples)
-        + ".txt"
-    )
-
-    # burn
-    if offset > 0:
-        for i in range(int(offset)):
-            sig, f, aut = choosemove(sig, f=f, gamma=gamma, aut=aut)
-
-    while samp < samples:
-        # interval between samples
-        for i in range(int(interval)):
-            sig, f, aut = choosemove(sig, f=f, gamma=gamma, aut=aut)
-
-        # sample
-        samp += 1
-        if verbose:
-            print(
-                "collecting triangulation", int(samp), " of ", int(samples), " :", sig
-            )
-        if printToFile:
-            # open output file
-            with open(name, "a") as fl:
-                fl.write(sig + "\n")
-    return True
+        tri, f, aut = choosemove(tri, f=f, gamma=gamma, aut=aut)
+    return tri
 
 
 ###
@@ -315,18 +257,35 @@ def sample_chain(
     itts: int,
     steps: int,
     chain_id: int,
+    dehydrate: bool = True,
 ):
     sigs = [seed]
+    if dehydrate:
+        tri = Triangulation3.rehydrate(seed)
+    else:
+        tri = Triangulation3.fromIsoSig(seed)
+
+    fails = 0
 
     for itt in range(itts):
-        if (itt % 10_000 == 0) and (chain_id == 0):
+        if (itt % 1_000 == 0) and (chain_id == 0):
             logger.info(
                 f"Chain {chain_id}: iteration {itt:,.0f}/{itts:,.0f} at {datetime.now().strftime('%H:%M:%S')}"
             )
-        current_sig = sigs[-1]
 
-        proposed_sig = iterate(current_sig, gamma_, steps=steps)
-        sigs.append(proposed_sig)
+        tri = iterate(tri, gamma_, steps=steps)
+
+        if dehydrate:
+            try:
+                proposed_sig = tri.dehydrate()
+                sigs.append(proposed_sig)
+            except Exception:  # noqa
+                fails += 1
+        else:
+            proposed_sig = tri.isoSig()
+            sigs.append(proposed_sig)
+
+    logger.info(f"There were {fails} fails.")
 
     return sigs
 
