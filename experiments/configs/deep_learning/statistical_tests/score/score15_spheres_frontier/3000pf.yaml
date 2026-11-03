@@ -4,6 +4,6 @@ model_save_path_stem: results/sgd_models_dehydration/frontier_rerun_nci/frontier
 model_params_fname: params.pkl
 save_name: scored_spheres_data.csv
 d_model: 640
-num_layers: 9
-num_heads: 9
+num_layers: 10
+num_heads: 10
 run_model_tag: score_15tet_spheres
