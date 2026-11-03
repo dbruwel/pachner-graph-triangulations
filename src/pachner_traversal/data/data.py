@@ -106,3 +106,4 @@ for ntet, leading_char in leading_chars.items():
     char_list = base_char_list.copy()
     char_list.extend(where_char_list[:ntet])
     char_list.append(leading_char)
+    char_lists[ntet] = char_list
