@@ -385,6 +385,8 @@ def score_model(
     d_model: int,
     num_layers: int,
     num_heads: int,
+    use_mup: bool,
+    base_d_model: int,
     data_cache: dict,
 ):
     cache_key = (str(train_data_path), 1)
@@ -414,7 +416,10 @@ def score_model(
         d_model=d_model,
         num_layers=num_layers,
         num_heads=num_heads,
+        use_mup=use_mup,
+        base_d_model=base_d_model,
     )
+
     _, _, dropout_key = keys
     _, _ = meta
     state = init_train_state(model, params, dropout_key)
@@ -567,6 +572,8 @@ def main_score(
         config_data["d_model"],
         config_data["num_layers"],
         config_data["num_heads"],
+        config_data["use_mup"],
+        config_data["base_d_model"],
         data_cache=data_cache,
     )
     results.to_csv(config_data["model_save_path"] / config_data["save_name"])
