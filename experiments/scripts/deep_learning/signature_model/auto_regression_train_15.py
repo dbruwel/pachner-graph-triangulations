@@ -422,6 +422,7 @@ def score_model(
     # Load score data.
     with open(score_data_path, "r") as f:
         score_data = f.readlines()
+        score_data = [s.strip() for s in score_data]
 
     # Run predictions.
     results = []

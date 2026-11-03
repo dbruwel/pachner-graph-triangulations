@@ -354,7 +354,12 @@ def score_model(
     num_heads: int,
 ):
     # Load training data (for dataset creation).
-    dataset = Dataset(train_data_path, None, store_in_memory=False)
+    dataset = Dataset(
+        train_data_path,
+        None,
+        store_in_memory=False,
+        skip_data_size=True,
+    )
     encoder = Encoder(dataset)
     logger.info(f"There are {len(dataset.chars)} chars:")
     logger.info(dataset.chars)
