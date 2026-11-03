@@ -6,4 +6,4 @@ save_name: diagnostic.csv
 d_model: 768
 num_layers: 12
 num_heads: 12
-run_model_tag: diagnose
+run_model_tag: diagnose_score
