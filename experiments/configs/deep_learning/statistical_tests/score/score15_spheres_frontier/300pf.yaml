@@ -6,4 +6,6 @@ save_name: scored_spheres_data.csv
 d_model: 448
 num_layers: 7
 num_heads: 7
+base_d_model: 256
+use_mup: true
 run_model_tag: score_15tet_spheres

@@ -444,7 +444,6 @@ def score_model(
                 training=False,
             )
             pred_fp32 = pred.astype(jnp.float32)
-            breakpoint()
             tok_nll = loss_metric_fn(pred_fp32, samples_actual)
             nll = tok_nll.sum(axis=-1)
 
@@ -610,7 +609,7 @@ if __name__ == "__main__":
         / "deep_learning"
         / "statistical_tests"
         / "score"
-        / "diagnostics"
+        / "score15_large"
     )
 
     logger.info(f"Checking {config_path!s} for {tag!s}")

@@ -352,6 +352,8 @@ def score_model(
     d_model: int,
     num_layers: int,
     num_heads: int,
+    use_mup: bool,
+    base_d_model: int,
 ):
     # Load training data (for dataset creation).
     dataset = Dataset(
@@ -373,6 +375,8 @@ def score_model(
         d_model=d_model,
         num_layers=num_layers,
         num_heads=num_heads,
+        use_mup=use_mup,
+        base_d_model=base_d_model,
     )
     _, _, dropout_key = keys
     _, _ = meta
@@ -504,6 +508,8 @@ def main_score(config_path: pathlib.Path, run_model_tag: str):
         config_data["d_model"],
         config_data["num_layers"],
         config_data["num_heads"],
+        config_data["use_mup"],
+        config_data["base_d_model"],
     )
     results.to_csv(config_data["model_save_path"] / config_data["save_name"])
     toc = time.time()
