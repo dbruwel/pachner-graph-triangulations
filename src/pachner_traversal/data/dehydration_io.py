@@ -93,6 +93,7 @@ class Dataset:
         max_len: int | None = None,
         store_in_memory: bool = False,
         test_rng_seed: int = 42,
+        skip_data_size: bool = False,
     ):
         self.hdf5_file = hdf5_file
         self.num_test_samps = num_test_samps
@@ -100,7 +101,8 @@ class Dataset:
         self.test_rng_seed = test_rng_seed
 
         logger.debug("Getting data size")
-        self.data_size = self.get_data_size()
+        if not skip_data_size:
+            self.data_size = self.get_data_size()
 
         if (chars is None) or (max_len is None):
             logger.info("Getting chars and max length.")

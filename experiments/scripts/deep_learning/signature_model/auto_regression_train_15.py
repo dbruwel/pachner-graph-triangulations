@@ -399,6 +399,7 @@ def score_model(
             chars=char_list15,
             max_len=41,
             store_in_memory=False,
+            skip_data_size=True,
         )
         encoder = Encoder(dataset)
         data_cache.clear()
