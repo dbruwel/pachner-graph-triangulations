@@ -27,9 +27,13 @@ def check(sig):
 
 def count_block(bounds):
     start, stop = bounds
+    print(f"Reading data for {bounds}", flush=True)
     with h5py.File(FILE_PATH, "r") as f:
         block = f[DATASET][start:stop]
-    return sum(1 for x in tqdm(block) if check(x.decode()))
+    print("Data read for {bounds}, checking.", flush=True)
+    res = sum(1 for x in block if check(x.decode()))
+    print(f"Done checking for {bounds}", flush=True)
+    return res
 
 
 if __name__ == "__main__":
