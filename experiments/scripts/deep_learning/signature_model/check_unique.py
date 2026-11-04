@@ -10,16 +10,14 @@ DATASET = "isos"
 BLOCK_SIZE = 5_000_000  # entries per block
 WORKERS = os.cpu_count()
 
+print(f"There are {WORKERS} workers.")
 
 sphere_list_path = "/g/data/io00/db4467/generated_spheres_iso.txt"
-
-print("Opening file.")
-
 with open(sphere_list_path) as f:
     generated_isosigs = f.readlines()
     generated_isosigs = [s.strip() for s in generated_isosigs]
 
-print("Complete.")
+print("Complete setup.")
 
 
 def check(sig):
@@ -31,7 +29,7 @@ def count_block(bounds):
     start, stop = bounds
     with h5py.File(FILE_PATH, "r") as f:
         block = f[DATASET][start:stop]
-    return sum(1 for x in block if check(x.decode()))
+    return sum(1 for x in tqdm(block) if check(x.decode()))
 
 
 if __name__ == "__main__":
