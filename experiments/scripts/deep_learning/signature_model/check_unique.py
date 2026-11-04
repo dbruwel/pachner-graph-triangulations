@@ -45,4 +45,4 @@ if __name__ == "__main__":
         results = pool.imap_unordered(count_block, blocks)
         total = sum(tqdm(results, total=len(blocks), unit="block"))
 
-    print(f"{total:,} / {n:,} entries returned True")
+    print(f"{total:,} / {n:,} entries returned True for dehydration")
