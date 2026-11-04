@@ -13,7 +13,7 @@ WORKERS = os.cpu_count()
 sphere_list_path = "/g/data/io00/db4467/generated_spheres_dehydration.txt"
 with open(sphere_list_path) as f:
     generated_sigs = f.readlines()
-    generated_sigs = [s.strip() for s in generated_sigs]
+    generated_sigs = {s.strip() for s in generated_sigs}
 
 
 def check(sig):
