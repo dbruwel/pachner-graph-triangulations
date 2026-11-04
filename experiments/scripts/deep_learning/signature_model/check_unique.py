@@ -28,7 +28,7 @@ def count_block(bounds):
         block = f[DATASET][start:stop]
 
     res = 0
-    for x in enumerate(block):
+    for x in block:
         if check(x.decode()):
             res = res + 1
 
