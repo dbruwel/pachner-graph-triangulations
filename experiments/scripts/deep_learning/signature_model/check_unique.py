@@ -27,12 +27,23 @@ def check(sig):
 
 def count_block(bounds):
     start, stop = bounds
-    print(f"Reading data for {bounds}", flush=True)
+    log = bounds == (0, 5000000)
+    if log:
+        print(f"Reading data for {bounds}", flush=True)
     with h5py.File(FILE_PATH, "r") as f:
         block = f[DATASET][start:stop]
-    print("Data read for {bounds}, checking.", flush=True)
-    res = sum(1 for x in block if check(x.decode()))
-    print(f"Done checking for {bounds}", flush=True)
+    if log:
+        print(f"Data read for {bounds}, checking.", flush=True)
+
+    res = 0
+    for i, x in enumerate(block):
+        if check(x.decode()):
+            res = res + 1
+        if i % 100 == 0:
+            print(i / BLOCK_SIZE)
+
+    if log:
+        print(f"Done checking for {bounds}", flush=True)
     return res
 
 
