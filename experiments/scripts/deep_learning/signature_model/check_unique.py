@@ -13,9 +13,13 @@ WORKERS = os.cpu_count()
 
 sphere_list_path = "/g/data/io00/db4467/generated_spheres_iso.txt"
 
+print("Opening file.")
+
 with open(sphere_list_path) as f:
     generated_isosigs = f.readlines()
     generated_isosigs = [s.strip() for s in generated_isosigs]
+
+print("Complete.")
 
 
 def check(sig):
